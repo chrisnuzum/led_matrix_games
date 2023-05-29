@@ -69,13 +69,13 @@ public:
     
     bool inputs_current[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
-    bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
+    // bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
-    void update()       // just get 1 input per update(), so probably have an input_vals_prev that stores a whole second set of variables
-    {                   // to compare to, and maybe a third array that is actually checked by the outside for a new press
+    void update()
+    {
         for (int i = 0; i < num_inputs; i++)
         {
-            inputs_vals_prev[i] = inputs_current[i];
+            // inputs_vals_prev[i] = inputs_current[i];
             inputs_current[i] = !digitalRead(ALL_PINS[i]);   // pressed = LOW = 0 = false, so flipping it to mean pressed = true
 
             if (inputs_current[i] == true && *inputs_new_press[i] == false)
@@ -86,18 +86,6 @@ public:
             {
                 *inputs_new_press[i] = false;
             }
-
-
-            // if (inputs_current[i] == LOW)
-            // {
-            //     *inputs_new_press[i] = true;
-            //     Serial.println("button pressed");
-            // }
-            // if (*inputs_new_press[i] != inputs_vals_prev[i])
-            // {
-            //     inputs_vals_prev[i] = *inputs_new_press[i];
-
-            // }
         }
     };
 };
