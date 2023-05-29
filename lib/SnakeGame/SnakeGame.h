@@ -52,21 +52,25 @@ private:
     bool do_pause_toggle;
 
     uint8_t score;
-
-    class Snake
-    {
-        LinkedList<Point *> snakePositions;
-        enum direction
+    enum direction
         {
             UP,
             DOWN,
             LEFT,
             RIGHT
-        } currect_direction;
-        bool containsPosition(int x, int y);
+        };
+
+    class Snake
+    {
+    public:
+        int player;
+        LinkedList<Point *> segmentPositions;
+        direction currectDirection;
+        bool occupiesPoint(int x, int y);
+        bool isNextPointValid(Point *p);
     };
 
-    Snake snakes[2];
+    Snake snakes[2];    // for now just setting this to maximum players
 
     Point *applePosition;
     uint8_t num_players;
@@ -82,12 +86,12 @@ private:
 
     Point *getApplePosition();
     void updateCurrentDirection();
-    Point *getHead();
-    Point *getTail();
+    // Point *getHead();
+    // Point *getTail();
     void addToBeginning(Point *p);
     void removeTail();
-    Point *getNextPosition();
-    bool isNextPointValid(Point *p);
+    Point *getNextPositions();
+    
     void renderApple();
     void renderSnake();
     void increaseSpeed();

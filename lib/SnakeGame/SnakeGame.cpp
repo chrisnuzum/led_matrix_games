@@ -1,11 +1,11 @@
 #include "SnakeGame.h"
 
-// check if the x y coordinates are covered by a part of the snake
-bool SnakeGame::Snake::containsPosition(int x, int y)
+// check if the point is occupied by the snake
+bool SnakeGame::Snake::occupiesPoint(int x, int y)
 {
-    for (int i = 0; i < snakePositions.size(); i++)
+    for (int i = 0; i < segmentPositions.size(); i++)
     {
-        if (snakePositions.get(i)->isEqual(x, y))
+        if (segmentPositions.get(i)->isEqual(x, y))
         {
             return true;
         }
@@ -13,25 +13,44 @@ bool SnakeGame::Snake::containsPosition(int x, int y)
     return false;
 }
 
-// generate the position of the apple so it is not out of bounds or within the snake
+// make sure the next point for the head of the snake is in a valid position
+bool SnakeGame::Snake::isNextPointValid(Point *p)
+{
+    int x = p->x;
+    int y = p->y;
+
+    // check if within boundary or in the snake
+    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT || occupiesPoint(x, y))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+// choose an apple position that is not within a snake
 Point *SnakeGame::getApplePosition()
 {
-    int x = random(MATRIX_WIDTH - 1);
-    int y = random(MATRIX_HEIGHT - 1);
+    int x, y;
+    bool insideSnake = false;
 
-    // make sure to generate an apple that is not in the same position as the snake
-    while (snakeContainsPosition(x, y))
+    do
     {
         x = random(MATRIX_WIDTH - 1);
         y = random(MATRIX_HEIGHT - 1);
-    }
+        for (Snake s : snakes)
+        {
+            insideSnake = insideSnake || s.occupiesPoint(x, y);
+        }
+    } while (!insideSnake);
+
     return new Point(x, y);
 }
 
 SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs) : MATRIX_WIDTH(MATRIX_WIDTH),
-                                                                                             MATRIX_HEIGHT(MATRIX_HEIGHT),
-                                                                                             display(display),
-                                                                                             inputs(inputs)
+                                                                                                     MATRIX_HEIGHT(MATRIX_HEIGHT),
+                                                                                                     display(display),
+                                                                                                     inputs(inputs)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
@@ -48,14 +67,22 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     last_temp_state = HIGH;
     do_pause_toggle = false;
 
-    currect_direction = UP;
-
     score = 0;
+
+    for (int i = 0; i < num_players; i++)
+    {
+        snakes[i].player = i + 1;
+        snakes[i].currectDirection = UP;
+        snakes[i].segmentPositions = LinkedList<Point *>();
+        snakes[i].segmentPositions.add(new Point((i + 1) * 20, 50));
+    }
 
     applePosition = getApplePosition();
 
-    snakePositions = LinkedList<Point *>();
-    snakePositions.add(new Point(50, 50));
+    // currect_direction = UP;
+
+    // snakePositions = LinkedList<Point *>();
+    // snakePositions.add(new Point(50, 50));
 
     c_red = display.color565(255, 0, 0);
     c_green = display.color565(0, 255, 0);
@@ -75,45 +102,64 @@ void SnakeGame::setPlayers(uint8_t num_players)
 void SnakeGame::updateCurrentDirection()
 {
     inputs.update();
-    bool _up = inputs.UP_P1 == LOW;
-    bool _down = inputs.DOWN_P1 == LOW;
-    bool _left = inputs.LEFT_P1 == LOW;
-    bool _right = inputs.RIGHT_P1 == LOW;
 
-    // prevents from moving back against yourself, also favors switching directions if 2 directions are held simultaneously
-    if (_up && currect_direction != UP && currect_direction != DOWN)
+    for (Snake s : snakes)
     {
-        currect_direction = UP;
-        return;
-    }
-    if (_down && currect_direction != DOWN && currect_direction != UP)
-    {
-        currect_direction = DOWN;
-        return;
-    }
-    if (_right && currect_direction != RIGHT && currect_direction != LEFT)
-    {
-        currect_direction = RIGHT;
-        return;
-    }
-    if (_left && currect_direction != LEFT && currect_direction != RIGHT)
-    {
-        currect_direction = LEFT;
-        return;
-    }
+        bool _up;
+        bool _down;
+        bool _left;
+        bool _right;
 
-    // if no input detected just leave current_direction as-is
+        if (s.player == 1)
+        {
+            _up = inputs.UP_P1_active == LOW;
+            _down = inputs.DOWN_P1_active == LOW;
+            _left = inputs.LEFT_P1_active == LOW;
+            _right = inputs.RIGHT_P1_active == LOW;
+        }
+        else if (s.player == 2)
+        {
+            _up = inputs.UP_P2_active == LOW;
+            _down = inputs.DOWN_P2_active == LOW;
+            _left = inputs.LEFT_P2_active == LOW;
+            _right = inputs.RIGHT_P2_active == LOW;
+        }
+
+        // prevents moving back against yourself, also favors switching directions if 2 directions are held simultaneously
+        if (_up && s.currectDirection != UP && s.currectDirection != DOWN)
+        {
+            s.currectDirection = UP;
+            return;
+        }
+        if (_down && s.currectDirection != DOWN && s.currectDirection != UP)
+        {
+            s.currectDirection = DOWN;
+            return;
+        }
+        if (_right && s.currectDirection != RIGHT && s.currectDirection != LEFT)
+        {
+            s.currectDirection = RIGHT;
+            return;
+        }
+        if (_left && s.currectDirection != LEFT && s.currectDirection != RIGHT)
+        {
+            s.currectDirection = LEFT;
+            return;
+        }
+
+        // if no input detected just leave current_direction as-is
+    }
 }
 
-Point *SnakeGame::getHead()
-{
-    return snakePositions.get(0);
-}
+// Point *SnakeGame::getHead()
+// {
+//     return snakePositions.get(0);
+// }
 
-Point *SnakeGame::getTail()
-{
-    return snakePositions.get(snakePositions.size() - 1);
-}
+// Point *SnakeGame::getTail()
+// {
+//     return snakePositions.get(snakePositions.size() - 1);
+// }
 
 void SnakeGame::addToBeginning(Point *p)
 {
@@ -126,42 +172,30 @@ void SnakeGame::removeTail()
 }
 
 // calculate the next position based on the current head position and the current direction
-Point *SnakeGame::getNextPosition()
+Point *SnakeGame::getNextPositions()        // THIS DOESN'T WORK, WILL RETURN FROM FIRST SNAKE. probably pass a snake instead or have this function in the Snake class
 {
-    Point *head = getHead();
-    switch (currect_direction)
+    for (Snake s : snakes)
     {
-    case UP:
-        Serial.println("Up");
-        return new Point(head->x, head->y - 1);
-    case DOWN:
-        Serial.println("Down");
-        return new Point(head->x, head->y + 1);
-    case LEFT:
-        Serial.println("Left");
-        return new Point(head->x - 1, head->y);
-    case RIGHT:
-        Serial.println("Right");
-        return new Point(head->x + 1, head->y);
-    default:
-        Serial.println("NOT VALID current_direction");
-        return 0;
+        Point *head = s.segmentPositions.get(0);
+        switch (s.currectDirection)
+        {
+        case UP:
+            Serial.println("Up");
+            return new Point(head->x, head->y - 1);
+        case DOWN:
+            Serial.println("Down");
+            return new Point(head->x, head->y + 1);
+        case LEFT:
+            Serial.println("Left");
+            return new Point(head->x - 1, head->y);
+        case RIGHT:
+            Serial.println("Right");
+            return new Point(head->x + 1, head->y);
+        default:
+            Serial.println("NOT VALID current_direction");
+            return 0;
+        }
     }
-}
-
-// make sure the next point for the head of the snake is in a valid position
-bool SnakeGame::isNextPointValid(Point *p)
-{
-    int x = p->x;
-    int y = p->y;
-
-    // check if within boundary or in the snake
-    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT || snakeContainsPosition(x, y))
-    {
-        return false;
-    }
-
-    return true;
 }
 
 // draw the apple
@@ -171,7 +205,7 @@ void SnakeGame::renderApple()
 }
 
 // draw the snake
-void SnakeGame::renderSnake()       // IT BREAKS HERE, FURTHER TESTING NEEDED. ADD PRINTLNS HERE
+void SnakeGame::renderSnake()
 {
     Point *p;
     for (int i = 0; i < snakePositions.size(); i++)
@@ -232,7 +266,7 @@ void SnakeGame::resetApple()
     applePosition = getApplePosition();
 }
 
-void SnakeGame::checkForApple(Point *nextPoint)
+void SnakeGame::checkForApple(Point *nextPoint)     // needs to check per snake
 {
     // if we land on an apple grow the snake
     if (applePosition->isEqual(nextPoint->x, nextPoint->y))
