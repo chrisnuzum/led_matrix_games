@@ -1,11 +1,16 @@
 #include "SnakeGame.h"
 
+Point *SnakeGame::Snake::getInitialPosition()
+{
+    return new Point(player * 20, 50);
+}
+
 // check if the point is occupied by the snake
 bool SnakeGame::Snake::occupiesPoint(int x, int y)
 {
-    for (int i = 0; i < segmentPositions.size(); i++)
+    for (int i = 0; i < segments.size(); i++)
     {
-        if (segmentPositions.get(i)->isEqual(x, y))
+        if (segments.get(i)->isEqual(x, y))
         {
             return true;
         }
@@ -14,13 +19,13 @@ bool SnakeGame::Snake::occupiesPoint(int x, int y)
 }
 
 // make sure the next point for the head of the snake is in a valid position
-bool SnakeGame::Snake::isNextPointValid(Point *p)
+bool SnakeGame::Snake::isNextPointValid(Point *p) // TODO: for other game modes, check if hits another player's snake
 {
     int x = p->x;
     int y = p->y;
 
     // check if within boundary or in the snake
-    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT || occupiesPoint(x, y))
+    if (x < 0 || x >= MATRIX_WIDTH || y < 0 || y >= MATRIX_HEIGHT || occupiesPoint(x, y)) // TODO: fix matrix size variables
     {
         return false;
     }
@@ -55,26 +60,27 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
     SPEED_LOSS = 5;
-    RESET_DELAY = 5000;
+    RESET_DELAY = 10000;
 
-    game_delay = MAX_DELAY;
+    gameDelay = MAX_DELAY;
 
-    ms_current = 0;
-    ms_previous = 0;
-    last_debounce_time = 0;
+    msCurrent = 0;
+    msPrevious = 0;
+    lastDebounceTime = 0;
 
     paused = false;
-    last_temp_state = HIGH;
-    do_pause_toggle = false;
+    lastTempState = HIGH;
+    doPauseToggle = false;
 
-    score = 0;
-
-    for (int i = 0; i < num_players; i++)
+    for (int i = 0; i < numPlayers; i++)
     {
+        snakes[i].MATRIX_WIDTH = MATRIX_WIDTH;
+        snakes[i].MATRIX_HEIGHT = MATRIX_HEIGHT;
         snakes[i].player = i + 1;
         snakes[i].currectDirection = UP;
-        snakes[i].segmentPositions = LinkedList<Point *>();
-        snakes[i].segmentPositions.add(new Point((i + 1) * 20, 50));
+        snakes[i].segments = LinkedList<Point *>();
+        snakes[i].segments.add(snakes[i].getInitialPosition());
+        snakes[i].score = 0;
     }
 
     applePosition = getApplePosition();
@@ -94,12 +100,12 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     c_black = display.color565(0, 0, 0);
 }
 
-void SnakeGame::setPlayers(uint8_t num_players)
+void SnakeGame::setPlayers(uint8_t numPlayers)
 {
-    this->num_players = num_players;
+    this->numPlayers = numPlayers;
 }
 
-void SnakeGame::updateCurrentDirection()
+void SnakeGame::updateSnakeDirections()
 {
     inputs.update();
 
@@ -146,7 +152,6 @@ void SnakeGame::updateCurrentDirection()
             s.currectDirection = LEFT;
             return;
         }
-
         // if no input detected just leave current_direction as-is
     }
 }
@@ -161,136 +166,134 @@ void SnakeGame::updateCurrentDirection()
 //     return snakePositions.get(snakePositions.size() - 1);
 // }
 
-void SnakeGame::addToBeginning(Point *p)
-{
-    snakePositions.add(0, p);
-}
+// void SnakeGame::addToBeginning(Point *p)
+// {
+//     snakePositions.add(0, p);
+// }
 
-void SnakeGame::removeTail()
-{
-    delete (snakePositions.pop());
-}
+// void SnakeGame::removeTail()
+// {
+//     delete (snakePositions.pop());
+// }
 
 // calculate the next position based on the current head position and the current direction
-Point *SnakeGame::getNextPositions()        // THIS DOESN'T WORK, WILL RETURN FROM FIRST SNAKE. probably pass a snake instead or have this function in the Snake class
+Point *SnakeGame::Snake::getNextPosition()
 {
-    for (Snake s : snakes)
+    Point *head = segments.get(0);
+    switch (currectDirection)
     {
-        Point *head = s.segmentPositions.get(0);
-        switch (s.currectDirection)
-        {
-        case UP:
-            Serial.println("Up");
-            return new Point(head->x, head->y - 1);
-        case DOWN:
-            Serial.println("Down");
-            return new Point(head->x, head->y + 1);
-        case LEFT:
-            Serial.println("Left");
-            return new Point(head->x - 1, head->y);
-        case RIGHT:
-            Serial.println("Right");
-            return new Point(head->x + 1, head->y);
-        default:
-            Serial.println("NOT VALID current_direction");
-            return 0;
-        }
+    case UP:
+        Serial.println("Up");
+        return new Point(head->x, head->y - 1);
+    case DOWN:
+        Serial.println("Down");
+        return new Point(head->x, head->y + 1);
+    case LEFT:
+        Serial.println("Left");
+        return new Point(head->x - 1, head->y);
+    case RIGHT:
+        Serial.println("Right");
+        return new Point(head->x + 1, head->y);
+    default:
+        Serial.println("NOT VALID current_direction");
+        return 0;
     }
 }
 
-// draw the apple
-void SnakeGame::renderApple()
+void SnakeGame::drawApple()
 {
     display.drawPixel(applePosition->x, applePosition->y, paused ? c_cyan : c_red);
 }
 
-// draw the snake
-void SnakeGame::renderSnake()
+void SnakeGame::drawSnakes()
 {
-    Point *p;
-    for (int i = 0; i < snakePositions.size(); i++)
+    for (Snake s : snakes)
     {
-        p = snakePositions.get(i);
-        display.drawPixel(p->x, p->y, paused ? c_blue : c_green);
+        Point *p;
+        for (int i = 0; i < s.segments.size(); i++)
+        {
+            p = s.segments.get(i);
+            display.drawPixel(p->x, p->y, paused ? c_blue : c_green);
+        }
     }
 }
 
 void SnakeGame::increaseSpeed()
 {
-    if (game_delay > MIN_DELAY)
+    if (gameDelay > MIN_DELAY)
     {
-        game_delay -= SPEED_LOSS;
+        gameDelay -= SPEED_LOSS;
     }
 }
 
 void SnakeGame::checkForPause()
 {
     inputs.update();
-    bool temp_state = inputs.START;
-    if (temp_state)
+    bool tempState = inputs.START;
+    if (tempState)
     {
-        if (!last_temp_state)
+        if (!lastTempState)
         {
-            last_debounce_time = millis();
-            do_pause_toggle = true;
+            lastDebounceTime = millis();
+            doPauseToggle = true;
         }
-        if (millis() - last_debounce_time > 50 && do_pause_toggle)
+        if (millis() - lastDebounceTime > 50 && doPauseToggle)
         {
             paused = !paused;
             Serial.print("Paused: ");
             Serial.println(paused);
             display.clearDisplay();
-            renderSnake();
-            renderApple();
-            ms_previous = millis();
-            do_pause_toggle = false;
+            drawSnakes();
+            drawApple();
+            msPrevious = millis();
+            doPauseToggle = false;
         }
     }
-    last_temp_state = temp_state;
+    lastTempState = tempState;
 }
 
-// delete the snake and create a new one
-void SnakeGame::resetSnake()
+// delete snakes and create new ones
+void SnakeGame::resetSnakes()
 {
-    while (snakePositions.size() > 0)
+    for (Snake s : snakes)
     {
-        delete (snakePositions.pop());
+        while (s.segments.size() > 0)
+        {
+            delete (s.segments.pop());
+        }
+        s.segments.add(s.getInitialPosition());
     }
-    snakePositions.add(getStartingPosition());
 }
 
-// delete the current position and draw a new apple
 void SnakeGame::resetApple()
 {
     delete (applePosition);
     applePosition = getApplePosition();
 }
 
-void SnakeGame::checkForApple(Point *nextPoint)     // needs to check per snake
-{
-    // if we land on an apple grow the snake
-    if (applePosition->isEqual(nextPoint->x, nextPoint->y))
-    {
-        score++;
-        addToBeginning(nextPoint);
-        resetApple();
-        increaseSpeed();
-    }
-    else
-    {
-        addToBeginning(nextPoint);
-        removeTail();
-    }
-}
+// void SnakeGame::checkForApple(Point *nextPoint) // needs to check per snake
+// {
+//     // if we land on an apple grow the snake
+//     if (applePosition->isEqual(nextPoint->x, nextPoint->y))
+//     {
+//         score++;
+//         // addToBeginning(nextPoint);
+//         snakePositions.add(0, nextPoint);
+//         resetApple();
+//         increaseSpeed();
+//     }
+//     else
+//     {
+//         // addToBeginning(nextPoint);
+//         snakePositions.add(0, nextPoint);
+//         // removeTail();
+//         delete (snakePositions.pop());
+//     }
+// }
 
 // show an end screen and reset the game state
-void SnakeGame::resetGame()
+void SnakeGame::gameOver()
 {
-    resetSnake();
-    resetApple();
-    game_delay = MAX_DELAY;
-    currect_direction = UP;
-
     display.fillScreen(c_yellow);
     delay(250);
     display.clearDisplay();
@@ -306,29 +309,45 @@ void SnakeGame::resetGame()
     display.setTextColor(c_cyan);
     display.setFont();
     display.setCursor(1, 1);
-    display.print("SCORE:");
-    display.print(score);
-    display.setFont(&Tiny3x3a2pt7b);
-    display.setCursor(1, 12);
-    display.print("SCORE:");
-    display.print(score);
-    display.setFont(&TomThumb); // 2 shorter
-    display.setCursor(1, 20);
-    display.print("SCORE:");
-    display.print(score);
-    display.setFont(&Org_01); // 1
-    display.setCursor(1, 28);
-    display.print("SCORE:");
-    display.print(score);
-    display.setFont(&Picopixel);
-    display.setCursor(1, 35);
-    display.print("SCORE:");
-    display.print(score);
-    score = 0;
+    for (Snake s : snakes)
+    {
+        display.setCursor(1, (s.player - 1) * 8 + 1);
+        display.print("P");
+        display.print(s.player);
+        display.print(": ");
+        display.print(s.score);
+    }
+    // display.print("SCORE:");
+    // display.print(score);
+    // display.setFont(&Tiny3x3a2pt7b);
+    // display.setCursor(1, 12);
+    // display.print("SCORE:");
+    // display.print(score);
+    // display.setFont(&TomThumb); // 2 shorter
+    // display.setCursor(1, 20);
+    // display.print("SCORE:");
+    // display.print(score);
+    // display.setFont(&Org_01); // 1
+    // display.setCursor(1, 28);
+    // display.print("SCORE:");
+    // display.print(score);
+    // display.setFont(&Picopixel);
+    // display.setCursor(1, 35);
+    // display.print("SCORE:");
+    // display.print(score);
 
     // use SPIFFS to store a high score file
 
-    delay(RESET_DELAY + 20000);
+    resetSnakes();
+    resetApple();
+    gameDelay = MAX_DELAY;
+    for (Snake s : snakes)
+    {
+        s.currectDirection = UP;
+        s.score = 0;
+    } // probably in future go back to main menu
+
+    delay(RESET_DELAY);
 }
 
 void SnakeGame::loopGame()
@@ -337,24 +356,48 @@ void SnakeGame::loopGame()
 
     if (!paused)
     {
-        ms_current = millis();
-        if ((ms_current - ms_previous) > game_delay)
+        msCurrent = millis();
+        if ((msCurrent - msPrevious) > gameDelay)
         {
-            updateCurrentDirection();
-            Point *nextPoint = getNextPosition();
-            if (isNextPointValid(nextPoint))
+            updateSnakeDirections();
+            bool snakeCollision = false;
+            for (Snake s : snakes)
             {
-                display.clearDisplay();
-                checkForApple(nextPoint);
-                renderSnake();
-                renderApple();
+                Point *nextPoint = s.getNextPosition();
+                if (s.isNextPointValid(nextPoint))
+                {
+                    s.segments.add(0, nextPoint);
+
+                    // check if snake got the apple
+                    if (applePosition->isEqual(nextPoint->x, nextPoint->y))
+                    {
+                        s.score++;
+                        resetApple();
+                        increaseSpeed();
+                    }
+                    else
+                    {
+                        delete (s.segments.pop());
+                    }
+                }
+                else
+                {
+                    snakeCollision = true;
+                }
+            }
+            if (snakeCollision)
+            {
+                gameOver();
             }
             else
             {
-                resetGame();
+                display.clearDisplay();
+                drawSnakes();
+                drawApple();
             }
+
             // displayFPS();
-            ms_previous = ms_current;
+            msPrevious = msCurrent;
         }
     }
 

@@ -27,7 +27,7 @@ class SnakeGame
 {
 public:
     SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs);
-    void setPlayers(uint8_t num_players);
+    void setPlayers(uint8_t numPlayers);
     void loopGame();
 
 private:
@@ -41,17 +41,16 @@ private:
     uint8_t SPEED_LOSS;
     uint16_t RESET_DELAY;
 
-    uint8_t game_delay;
+    uint8_t gameDelay;
 
-    unsigned long ms_current;
-    unsigned long ms_previous;
-    unsigned long last_debounce_time;
+    unsigned long msCurrent;
+    unsigned long msPrevious;
+    unsigned long lastDebounceTime;
 
     bool paused;
-    bool last_temp_state;
-    bool do_pause_toggle;
+    bool lastTempState;
+    bool doPauseToggle;
 
-    uint8_t score;
     enum direction
         {
             UP,
@@ -63,17 +62,22 @@ private:
     class Snake
     {
     public:
+        uint8_t MATRIX_WIDTH;
+        uint8_t MATRIX_HEIGHT;
         int player;
-        LinkedList<Point *> segmentPositions;
+        int score;
+        LinkedList<Point *> segments;
         direction currectDirection;
+        Point *getInitialPosition();
         bool occupiesPoint(int x, int y);
         bool isNextPointValid(Point *p);
+        Point *getNextPosition();
     };
 
     Snake snakes[2];    // for now just setting this to maximum players
 
     Point *applePosition;
-    uint8_t num_players;
+    uint8_t numPlayers;
 
     uint16_t c_red;
     uint16_t c_green;
@@ -85,21 +89,20 @@ private:
     uint16_t c_black;
 
     Point *getApplePosition();
-    void updateCurrentDirection();
+    void updateSnakeDirections();
     // Point *getHead();
     // Point *getTail();
-    void addToBeginning(Point *p);
-    void removeTail();
-    Point *getNextPositions();
+    // void addToBeginning(Point *p);
+    // void removeTail();
     
-    void renderApple();
-    void renderSnake();
+    void drawApple();
+    void drawSnakes();
     void increaseSpeed();
     void checkForPause();
-    void resetSnake();
+    void resetSnakes();
     void resetApple();
-    void checkForApple(Point *nextPoint);
-    void resetGame();
+    // void checkForApple(Point *nextPoint);
+    void gameOver();
 };
 
 #endif
