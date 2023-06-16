@@ -26,8 +26,8 @@ struct Point
 class SnakeGame
 {
 public:
-    SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs);
-    void setPlayers(uint8_t numPlayers);
+    SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs, uint8_t numPlayers);
+    // void setPlayers(uint8_t numPlayers);
     void loopGame();
 
 private:
@@ -67,14 +67,14 @@ private:
         int player;
         int score;
         LinkedList<Point *> segments;
-        direction currectDirection;
+        direction currentDirection;
         Point *getInitialPosition();
         bool occupiesPoint(int x, int y);
         bool isNextPointValid(Point *p);
         Point *getNextPosition();
     };
 
-    Snake snakes[2];    // for now just setting this to maximum players
+    Snake snakes;    // for now just setting this to maximum players
 
     Point *applePosition;
     uint8_t numPlayers;

@@ -2,6 +2,8 @@
 
 Point *SnakeGame::Snake::getInitialPosition()
 {
+    Serial.print("creating starting position for player ");
+    Serial.println(player);
     return new Point(player * 20, 50);
 }
 
@@ -10,10 +12,20 @@ bool SnakeGame::Snake::occupiesPoint(int x, int y)
 {
     for (int i = 0; i < segments.size(); i++)
     {
+        Serial.print("checking if ");
+        Serial.print(x);
+        Serial.print(", ");
+        Serial.print(y);
+        Serial.print(" is equal to ");
+        Serial.print(segments.get(i)->x);
+        Serial.print(", ");
+        Serial.println(segments.get(i)->y);
         if (segments.get(i)->isEqual(x, y))
         {
+            Serial.println("yes");
             return true;
         }
+        Serial.println("no");
     }
     return false;
 }
@@ -41,21 +53,26 @@ Point *SnakeGame::getApplePosition()
 
     do
     {
+        Serial.println("start of do loop");
         x = random(MATRIX_WIDTH - 1);
         y = random(MATRIX_HEIGHT - 1);
-        for (Snake s : snakes)
+        for (int i = 0; i < numPlayers; i++)
         {
+            Snake s = snakes[i];
+            Serial.println("start of getApplePosition do for loop");
             insideSnake = insideSnake || s.occupiesPoint(x, y);
+            Serial.println("end of getApplePosition do for loop");
         }
-    } while (!insideSnake);
+    } while (insideSnake);
 
     return new Point(x, y);
 }
 
-SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs) : MATRIX_WIDTH(MATRIX_WIDTH),
-                                                                                                     MATRIX_HEIGHT(MATRIX_HEIGHT),
-                                                                                                     display(display),
-                                                                                                     inputs(inputs)
+SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs, uint8_t numPlayers) : MATRIX_WIDTH(MATRIX_WIDTH),
+                                                                                                                         MATRIX_HEIGHT(MATRIX_HEIGHT),
+                                                                                                                         display(display),
+                                                                                                                         inputs(inputs),
+                                                                                                                         numPlayers(numPlayers)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
@@ -72,18 +89,25 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     lastTempState = HIGH;
     doPauseToggle = false;
 
+    // snakes = new Snake[numPlayers]();
+
     for (int i = 0; i < numPlayers; i++)
     {
+        Serial.print("Setting up Snake ");
+        Serial.println(i);
         snakes[i].MATRIX_WIDTH = MATRIX_WIDTH;
         snakes[i].MATRIX_HEIGHT = MATRIX_HEIGHT;
         snakes[i].player = i + 1;
-        snakes[i].currectDirection = UP;
+        snakes[i].currentDirection = UP;
         snakes[i].segments = LinkedList<Point *>();
         snakes[i].segments.add(snakes[i].getInitialPosition());
         snakes[i].score = 0;
     }
+    Serial.println("getting apple position");
 
     applePosition = getApplePosition();
+
+    Serial.println("got apple position");
 
     // currect_direction = UP;
 
@@ -98,19 +122,22 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     c_cyan = display.color565(0, 255, 255);
     c_magenta = display.color565(255, 0, 255);
     c_black = display.color565(0, 0, 0);
+    Serial.println("done constructor");
 }
 
-void SnakeGame::setPlayers(uint8_t numPlayers)
-{
-    this->numPlayers = numPlayers;
-}
+// void SnakeGame::setPlayers(uint8_t numPlayers)
+// {
+//     this->numPlayers = numPlayers;
+// }
 
 void SnakeGame::updateSnakeDirections()
 {
     inputs.update();
 
-    for (Snake s : snakes)
+    for (int i = 0; i < numPlayers; i++)
     {
+        Snake s = snakes[i];
+        Serial.println("updating snake direction for loop");
         bool _up;
         bool _down;
         bool _left;
@@ -118,42 +145,49 @@ void SnakeGame::updateSnakeDirections()
 
         if (s.player == 1)
         {
-            _up = inputs.UP_P1_active == LOW;
-            _down = inputs.DOWN_P1_active == LOW;
-            _left = inputs.LEFT_P1_active == LOW;
-            _right = inputs.RIGHT_P1_active == LOW;
+            Serial.println("current is player 1");
+            _up = inputs.UP_P1_active;
+            _down = inputs.DOWN_P1_active;
+            _left = inputs.LEFT_P1_active;
+            _right = inputs.RIGHT_P1_active;
+            Serial.println("done setting temp direction vars");
         }
         else if (s.player == 2)
         {
-            _up = inputs.UP_P2_active == LOW;
-            _down = inputs.DOWN_P2_active == LOW;
-            _left = inputs.LEFT_P2_active == LOW;
-            _right = inputs.RIGHT_P2_active == LOW;
+            _up = inputs.UP_P2_active;
+            _down = inputs.DOWN_P2_active;
+            _left = inputs.LEFT_P2_active;
+            _right = inputs.RIGHT_P2_active;
         }
-
+        heap_caps_check_integrity_all(true);
         // prevents moving back against yourself, also favors switching directions if 2 directions are held simultaneously
-        if (_up && s.currectDirection != UP && s.currectDirection != DOWN)
+        if (_up && s.currentDirection != UP && s.currentDirection != DOWN)
         {
-            s.currectDirection = UP;
-            return;
+            Serial.println("up");
+            s.currentDirection = UP;
         }
-        if (_down && s.currectDirection != DOWN && s.currectDirection != UP)
+        else if (_down && s.currentDirection != DOWN && s.currentDirection != UP)
         {
-            s.currectDirection = DOWN;
-            return;
+            Serial.println("down");
+            s.currentDirection = DOWN;
         }
-        if (_right && s.currectDirection != RIGHT && s.currectDirection != LEFT)
+        else if (_right && s.currentDirection != RIGHT && s.currentDirection != LEFT)
         {
-            s.currectDirection = RIGHT;
-            return;
+            Serial.println("right");
+            s.currentDirection = RIGHT;
         }
-        if (_left && s.currectDirection != LEFT && s.currectDirection != RIGHT)
+        else if (_left && s.currentDirection != LEFT && s.currentDirection != RIGHT)
         {
-            s.currectDirection = LEFT;
-            return;
+            Serial.println("left");
+            s.currentDirection = LEFT;
+            heap_caps_check_integrity_all(true); // test
+            Serial.println("set currentDirection to left");
         }
-        // if no input detected just leave current_direction as-is
+        heap_caps_check_integrity_all(true); // test
+        Serial.println("checked all");
+        // if no input detected or already moving in desired direction or attempting to move back on self, just leave currentDirection as-is
     }
+    Serial.println("done for loop in updateSnakeDirections");
 }
 
 // Point *SnakeGame::getHead()
@@ -180,7 +214,7 @@ void SnakeGame::updateSnakeDirections()
 Point *SnakeGame::Snake::getNextPosition()
 {
     Point *head = segments.get(0);
-    switch (currectDirection)
+    switch (currentDirection)
     {
     case UP:
         Serial.println("Up");
@@ -207,8 +241,9 @@ void SnakeGame::drawApple()
 
 void SnakeGame::drawSnakes()
 {
-    for (Snake s : snakes)
+    for (int i = 0; i < numPlayers; i++)
     {
+        Snake s = snakes[i];
         Point *p;
         for (int i = 0; i < s.segments.size(); i++)
         {
@@ -255,8 +290,9 @@ void SnakeGame::checkForPause()
 // delete snakes and create new ones
 void SnakeGame::resetSnakes()
 {
-    for (Snake s : snakes)
+    for (int i = 0; i < numPlayers; i++)
     {
+        Snake s = snakes[i];
         while (s.segments.size() > 0)
         {
             delete (s.segments.pop());
@@ -309,8 +345,9 @@ void SnakeGame::gameOver()
     display.setTextColor(c_cyan);
     display.setFont();
     display.setCursor(1, 1);
-    for (Snake s : snakes)
+    for (int i = 0; i < numPlayers; i++)
     {
+        Snake s = snakes[i];
         display.setCursor(1, (s.player - 1) * 8 + 1);
         display.print("P");
         display.print(s.player);
@@ -341,9 +378,10 @@ void SnakeGame::gameOver()
     resetSnakes();
     resetApple();
     gameDelay = MAX_DELAY;
-    for (Snake s : snakes)
+    for (int i = 0; i < numPlayers; i++)
     {
-        s.currectDirection = UP;
+        Snake s = snakes[i];
+        s.currentDirection = UP;
         s.score = 0;
     } // probably in future go back to main menu
 
@@ -353,16 +391,20 @@ void SnakeGame::gameOver()
 void SnakeGame::loopGame()
 {
     checkForPause();
-
+    Serial.println("done check for pause");
+    heap_caps_check_integrity_all(true);
     if (!paused)
     {
         msCurrent = millis();
         if ((msCurrent - msPrevious) > gameDelay)
         {
             updateSnakeDirections();
+            Serial.println("done check for directions");
             bool snakeCollision = false;
-            for (Snake s : snakes)
+            for (int i = 0; i < numPlayers; i++)
             {
+                Snake s = snakes[i];
+                Serial.println("start of Snake for loopGame loop");
                 Point *nextPoint = s.getNextPosition();
                 if (s.isNextPointValid(nextPoint))
                 {

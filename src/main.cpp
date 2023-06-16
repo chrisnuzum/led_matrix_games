@@ -144,18 +144,22 @@ void setup()
     delay(2000);
     Serial.println("finished setup");
 
-    snake_game = new SnakeGame(MATRIX_WIDTH, MATRIX_HEIGHT, display, inputs);
-
     selected_game = selectMenuItem(game_strings, num_games);
     selected_players = selectMenuItem(player_strings, num_player_options);
 
     if (selected_game == 1)
     {
         // set up Snake
-        snake_game->setPlayers(selected_players);
-        Serial.println("players were set");
+        // snake_game->setPlayers(selected_players);
+        // Serial.println("players were set");
+
+        Serial.print("players: ");
+        Serial.println(selected_players);
+        snake_game = new SnakeGame(MATRIX_WIDTH, MATRIX_HEIGHT, display, inputs, selected_players);
+        Serial.println("done make snake_game");
+        delay(3000);
     }
-    else if (selected_game == 1)
+    else if (selected_game == 2)
     {
         // set up Tetris
     }
