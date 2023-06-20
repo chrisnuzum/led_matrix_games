@@ -2,9 +2,9 @@
 #define PxMATRIX_double_buffer true
 
 #include <Arduino.h>
-#include <PxMatrix.h>       // if issues down the road, PlatformIO Library manager installs latest release, 
-                            // but ArduinoIDE installs the lastest version of the master branch
-                            // only the latest version works, maybe consider manually adding library to project
+#include <PxMatrix.h> // if issues down the road, PlatformIO Library manager installs latest release,
+                      // but ArduinoIDE installs the lastest version of the master branch
+                      // only the latest version works, maybe consider manually adding library to project
 #include <SnakeGame.h>
 #include <InputsFonts.h>
 
@@ -40,7 +40,9 @@ unsigned long loop_time = 0;
 
 Inputs inputs;
 
-SnakeGame *snake_game;      // display wouldn't work right if defining this in setup()
+SnakeGame *snake_game; // display wouldn't work right if defining this in setup()
+
+TaskHandle_t Task1;
 
 void IRAM_ATTR display_updater()
 {
@@ -127,6 +129,17 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
     }
 }
 
+// void Task1code(void *pvParameters)
+// {
+//     Serial.print("Task1 running on core ");
+//     Serial.println(xPortGetCoreID());
+
+//     for (;;)
+//     {
+//         snake_game->loopGame();
+//     }
+// }
+
 void setup()
 {
     Serial.begin(115200);
@@ -157,7 +170,15 @@ void setup()
         Serial.println(selected_players);
         snake_game = new SnakeGame(MATRIX_WIDTH, MATRIX_HEIGHT, display, inputs, selected_players);
         Serial.println("done make snake_game");
-        delay(3000);
+        delay(500);
+    //     xTaskCreatePinnedToCore(
+    //         Task1code, /* Task function. */
+    //         "Task1",   /* name of task. */
+    //         20000,     /* Stack size of task */
+    //         NULL,      /* parameter of the task */
+    //         1,         /* priority of the task */
+    //         &Task1,    /* Task handle to keep track of created task */
+    //         0);        /* pin task to core 0 */
     }
     else if (selected_game == 2)
     {
@@ -203,4 +224,3 @@ void loop()
 //     yield();
 //   }
 // }
-

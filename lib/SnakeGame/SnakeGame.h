@@ -13,7 +13,10 @@ struct Point
 
     Point(uint8_t x, uint8_t y)
     {
-        Serial.println("creating new Point...");
+        Serial.print("creating new Point of x: ");
+        Serial.print(x);
+        Serial.print(", y: ");
+        Serial.println(y);
         this->x = x;
         this->y = y;
     }
@@ -21,6 +24,32 @@ struct Point
     {
         return this->x == x && this->y == y;
     }
+};
+
+enum direction
+{
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT
+};
+
+class Snake
+{
+    uint8_t MATRIX_WIDTH;
+    uint8_t MATRIX_HEIGHT;
+
+public:
+    // Snake();
+    Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
+    uint8_t player;
+    uint8_t score;
+    LinkedList<Point *> segments;
+    direction currentDirection;
+    Point *getInitialPosition();
+    bool occupiesPoint(int x, int y);
+    bool isNextPointValid(Point *p);
+    Point *getNextPosition();
 };
 
 class SnakeGame
@@ -52,32 +81,33 @@ private:
     bool lastTempState;
     bool doPauseToggle;
 
-    enum direction
-        {
-            UP,
-            DOWN,
-            LEFT,
-            RIGHT
-        };
+    // enum direction
+    // {
+    //     UP,
+    //     DOWN,
+    //     LEFT,
+    //     RIGHT
+    // };
 
-    class Snake
-    {
-        uint8_t MATRIX_WIDTH;
-        uint8_t MATRIX_HEIGHT;
-    public:
-        // Snake();
-        Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
-        uint8_t player;
-        uint8_t score;
-        LinkedList<Point *> segments;
-        direction currentDirection;
-        Point *getInitialPosition();
-        bool occupiesPoint(int x, int y);
-        bool isNextPointValid(Point *p);
-        Point *getNextPosition();
-    };
+    // class Snake
+    // {
+    //     uint8_t MATRIX_WIDTH;
+    //     uint8_t MATRIX_HEIGHT;
+    // public:
+    //     // Snake();
+    //     Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
+    //     uint8_t player;
+    //     uint8_t score;
+    //     LinkedList<Point *> segments;
+    //     direction currentDirection;
+    //     Point *getInitialPosition();
+    //     bool occupiesPoint(int x, int y);
+    //     bool isNextPointValid(Point *p);
+    //     Point *getNextPosition();
+    // };
 
-    Snake *snakes[2];    // for now just setting this to maximum players
+    // Snake *snakes[2]; // for now just setting this to maximum players
+    Snake *snakes;
     // Snake snakeP1;  //does this call constructor??
     // Snake snakeP2;
 
@@ -98,7 +128,7 @@ private:
     // Point *getTail();
     // void addToBeginning(Point *p);
     // void removeTail();
-    
+
     void drawApple();
     void drawSnakes();
     void increaseSpeed();

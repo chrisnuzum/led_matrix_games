@@ -30,6 +30,8 @@ private:
     uint8_t ALL_PINS[num_inputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
                                     A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
 
+    unsigned long lastUpdate = 0;
+
 public:
     Inputs()
     {
@@ -82,10 +84,11 @@ public:
             inputs_vals_prev[i] = *inputs_current[i];
             *inputs_current[i] = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
 
-            if (*inputs_current[i] == true && inputs_vals_prev[i] == false)
+            if (*inputs_current[i] == true && inputs_vals_prev[i] == false && (millis() - lastUpdate > 50))
             {
                 *inputs_new_press[i] = true;
                 Serial.println("button pressed");
+                lastUpdate = millis();  // TODO: this should be per button...maybe 1 for all directions
             }
             else
             {
@@ -105,6 +108,10 @@ public:
             Serial.println(input_current_string);
             input_new_string = "new  [" + input_new_string + "]";
             Serial.println(input_new_string);
+            Serial.print("millis(): ");
+            Serial.println(millis());
+            Serial.print("lastUpdate: ");
+            Serial.println(lastUpdate);
         }
     };
 };
