@@ -13,7 +13,7 @@
 class Utility
 {
 private:
-    class Inputs
+    class Inputs2
     {
     private:
         static constexpr uint8_t START_PIN = 25;
@@ -36,7 +36,7 @@ private:
                                         A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
 
     public:
-        Inputs()
+        Inputs2()
         {
             pinMode(START_PIN, INPUT_PULLUP);
             pinMode(A_P1_PIN, INPUT_PULLUP);
@@ -97,7 +97,7 @@ private:
         };
     };
 
-    class Fonts
+    class Fonts2
     {
     public:
         const GFXfont *pico = &Picopixel;
@@ -111,10 +111,10 @@ public:
                                                                              MATRIX_HEIGHT(MATRIX_HEIGHT),
                                                                              display(display)
     {
-        Inputs inputs;
-        Fonts fonts;
+        Inputs2 inputs;
+        Fonts2 fonts;
     }
-    
+
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     const PxMATRIX display;

@@ -7,6 +7,28 @@ Point *SnakeGame::Snake::getInitialPosition()
     return new Point(player * 20, 50);
 }
 
+// SnakeGame::Snake::Snake()
+// {
+//     Serial.println("no param constructor????");
+//     MATRIX_WIDTH = 64;
+//     MATRIX_HEIGHT = 64;
+//     player = 1;
+//     score = 0;
+//     currentDirection = UP;
+//     segments = LinkedList<Point *>();
+//     segments.add(getInitialPosition());
+// }
+
+SnakeGame::Snake::Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player) : MATRIX_WIDTH(MATRIX_WIDTH),
+                                                                                       MATRIX_HEIGHT(MATRIX_HEIGHT),
+                                                                                       player(player)
+{
+    score = 0;
+    currentDirection = UP;
+    segments = LinkedList<Point *>();
+    segments.add(getInitialPosition());
+}
+
 // check if the point is occupied by the snake
 bool SnakeGame::Snake::occupiesPoint(int x, int y)
 {
@@ -58,7 +80,7 @@ Point *SnakeGame::getApplePosition()
         y = random(MATRIX_HEIGHT - 1);
         for (int i = 0; i < numPlayers; i++)
         {
-            Snake s = snakes[i];
+            Snake s = *snakes[i];
             Serial.println("start of getApplePosition do for loop");
             insideSnake = insideSnake || s.occupiesPoint(x, y);
             Serial.println("end of getApplePosition do for loop");
@@ -89,20 +111,18 @@ SnakeGame::SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX displ
     lastTempState = HIGH;
     doPauseToggle = false;
 
-    // snakes = new Snake[numPlayers]();
+    // snakes = new Snake[numPlayers](MATRIX_WIDTH, MATRIX_HEIGHT);
 
+    // try without pointers again??
+
+    // OPTION 1 to try:
     for (int i = 0; i < numPlayers; i++)
     {
         Serial.print("Setting up Snake ");
         Serial.println(i);
-        snakes[i].MATRIX_WIDTH = MATRIX_WIDTH;
-        snakes[i].MATRIX_HEIGHT = MATRIX_HEIGHT;
-        snakes[i].player = i + 1;
-        snakes[i].currentDirection = UP;
-        snakes[i].segments = LinkedList<Point *>();
-        snakes[i].segments.add(snakes[i].getInitialPosition());
-        snakes[i].score = 0;
+        snakes[i] = new Snake(MATRIX_WIDTH, MATRIX_HEIGHT, i + 1);
     }
+
     Serial.println("getting apple position");
 
     applePosition = getApplePosition();
@@ -136,7 +156,7 @@ void SnakeGame::updateSnakeDirections()
 
     for (int i = 0; i < numPlayers; i++)
     {
-        Snake s = snakes[i];
+        Snake s = *snakes[i];
         Serial.println("updating snake direction for loop");
         bool _up;
         bool _down;
@@ -243,7 +263,7 @@ void SnakeGame::drawSnakes()
 {
     for (int i = 0; i < numPlayers; i++)
     {
-        Snake s = snakes[i];
+        Snake s = *snakes[i];
         Point *p;
         for (int i = 0; i < s.segments.size(); i++)
         {
@@ -292,7 +312,7 @@ void SnakeGame::resetSnakes()
 {
     for (int i = 0; i < numPlayers; i++)
     {
-        Snake s = snakes[i];
+        Snake s = *snakes[i];
         while (s.segments.size() > 0)
         {
             delete (s.segments.pop());
@@ -347,7 +367,7 @@ void SnakeGame::gameOver()
     display.setCursor(1, 1);
     for (int i = 0; i < numPlayers; i++)
     {
-        Snake s = snakes[i];
+        Snake s = *snakes[i];
         display.setCursor(1, (s.player - 1) * 8 + 1);
         display.print("P");
         display.print(s.player);
@@ -380,7 +400,7 @@ void SnakeGame::gameOver()
     gameDelay = MAX_DELAY;
     for (int i = 0; i < numPlayers; i++)
     {
-        Snake s = snakes[i];
+        Snake s = *snakes[i];
         s.currentDirection = UP;
         s.score = 0;
     } // probably in future go back to main menu
@@ -403,7 +423,7 @@ void SnakeGame::loopGame()
             bool snakeCollision = false;
             for (int i = 0; i < numPlayers; i++)
             {
-                Snake s = snakes[i];
+                Snake s = *snakes[i];
                 Serial.println("start of Snake for loopGame loop");
                 Point *nextPoint = s.getNextPosition();
                 if (s.isNextPointValid(nextPoint))

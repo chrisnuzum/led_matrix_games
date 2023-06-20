@@ -35,6 +35,7 @@ private:
     uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
     Inputs inputs;
+    uint8_t numPlayers;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -61,11 +62,13 @@ private:
 
     class Snake
     {
-    public:
         uint8_t MATRIX_WIDTH;
         uint8_t MATRIX_HEIGHT;
-        int player;
-        int score;
+    public:
+        Snake();
+        Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
+        uint8_t player;
+        uint8_t score;
         LinkedList<Point *> segments;
         direction currentDirection;
         Point *getInitialPosition();
@@ -74,10 +77,11 @@ private:
         Point *getNextPosition();
     };
 
-    Snake snakes;    // for now just setting this to maximum players
+    Snake *snakes[2];    // for now just setting this to maximum players
+    // Snake snakeP1;  //does this call constructor??
+    // Snake snakeP2;
 
     Point *applePosition;
-    uint8_t numPlayers;
 
     uint16_t c_red;
     uint16_t c_green;
