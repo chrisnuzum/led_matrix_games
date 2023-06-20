@@ -4,7 +4,7 @@
 #include "Arduino.h"
 #include <LinkedList.h>
 #include <PxMatrix.h>
-#include <InputsFonts.h>
+#include <Utility.h>
 
 struct Point
 {
@@ -17,11 +17,11 @@ struct Point
         Serial.print(x);
         Serial.print(", y: ");
         Serial.println(y);
-    }
+    };
     bool isEqual(int x, int y)
     {
         return this->x == x && this->y == y;
-    }
+    };
 };
 
 enum direction
@@ -38,22 +38,22 @@ class Snake
     uint8_t MATRIX_HEIGHT;
 
 public:
-    // Snake();
+    Snake() : Snake(80, 80, 5) {};
     Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
     uint8_t player;
     uint8_t score;
     LinkedList<Point> segments;
     direction currentDirection;
     Point getInitialPosition();
-    bool occupiesPoint(int x, int y);
-    bool isNextPointValid(Point p);
+    bool occupiesPoint(const int &x, const int &y);
+    bool isNextPointValid(const Point &p);
     Point getNextPosition();
 };
 
 class SnakeGame
 {
 public:
-    SnakeGame(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs, uint8_t numPlayers);
+    SnakeGame(Utility utility, uint8_t numPlayers);
     // void setPlayers(uint8_t numPlayers);
     void loopGame();
 
@@ -61,7 +61,7 @@ private:
     uint8_t MATRIX_WIDTH;
     uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
-    Inputs inputs;
+    Utility utility;    // could declare Inputs inputs then in constructor inputs(utility.inputs)
     uint8_t numPlayers;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;
@@ -104,11 +104,10 @@ private:
     //     Point *getNextPosition();
     // };
 
-    // Snake *snakes[2]; // for now just setting this to maximum players
-    Snake *snakes;
-    // Snake snakeP1;  //does this call constructor??
+    // Snake *snakes;
+    Snake snakeP1;
     // Snake snakeP2;
-
+    
     Point applePosition;
 
     uint16_t c_red;

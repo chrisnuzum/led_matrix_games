@@ -6,7 +6,7 @@
                       // but ArduinoIDE installs the lastest version of the master branch
                       // only the latest version works, maybe consider manually adding library to project
 #include <SnakeGame.h>
-#include <InputsFonts.h>
+#include <Utility.h>
 
 // Pins for LED MATRIX
 #define P_LAT 22
@@ -38,7 +38,7 @@ uint16_t loops = 0;
 uint16_t fps = 0;
 unsigned long loop_time = 0;
 
-Inputs inputs;
+Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
 SnakeGame *snake_game; // display wouldn't work right if defining this in setup()
 
@@ -102,10 +102,11 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
     displaySelectMenu(items, num_items, selected);
     while (true)
     {
-        inputs.update();
-        bool _up = inputs.UP_P1 || inputs.UP_P2;
-        bool _down = inputs.DOWN_P1 || inputs.DOWN_P2;
-        bool _start = inputs.START;
+        // inputs.update();
+        utility.inputs.update();
+        bool _up = utility.inputs.UP_P1 || utility.inputs.UP_P2;
+        bool _down = utility.inputs.DOWN_P1 || utility.inputs.DOWN_P2;
+        bool _start = utility.inputs.START;
         if (_start)
         {
             return selected;
@@ -168,7 +169,7 @@ void setup()
 
         Serial.print("players: ");
         Serial.println(selected_players);
-        snake_game = new SnakeGame(MATRIX_WIDTH, MATRIX_HEIGHT, display, inputs, selected_players);
+        snake_game = new SnakeGame(utility, selected_players);
         Serial.println("done make snake_game");
         delay(500);
     //     xTaskCreatePinnedToCore(

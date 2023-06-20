@@ -17,23 +17,25 @@ private:
     {
     private:
         static constexpr uint8_t START_PIN = 25;
-        static constexpr uint8_t A_P1_PIN = 32;
-        static constexpr uint8_t B_P1_PIN = 33;
+        static constexpr uint8_t A_P1_PIN = 27;
+        static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
-        static constexpr uint8_t LEFT_P1_PIN = 25;
-        static constexpr uint8_t RIGHT_P1_PIN = 25;
-        static constexpr uint8_t A_P2_PIN = 25;
-        static constexpr uint8_t B_P2_PIN = 25;
-        static constexpr uint8_t UP_P2_PIN = 25;
-        static constexpr uint8_t DOWN_P2_PIN = 25;
-        static constexpr uint8_t LEFT_P2_PIN = 25;
-        static constexpr uint8_t RIGHT_P2_PIN = 25;
+        static constexpr uint8_t LEFT_P1_PIN = 27; // 25
+        static constexpr uint8_t RIGHT_P1_PIN = 26;
+        static constexpr uint8_t A_P2_PIN = 27;
+        static constexpr uint8_t B_P2_PIN = 27;
+        static constexpr uint8_t UP_P2_PIN = 27;
+        static constexpr uint8_t DOWN_P2_PIN = 27;
+        static constexpr uint8_t LEFT_P2_PIN = 27;
+        static constexpr uint8_t RIGHT_P2_PIN = 27;
 
         static constexpr uint8_t num_inputs = 13;
 
         uint8_t ALL_PINS[num_inputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
                                         A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
+
+        unsigned long lastPress = 0;
 
     public:
         Inputs2()
@@ -77,22 +79,40 @@ private:
 
         bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
-        void update()
+        void update() // need debounce
         {
+            String input_prev_string = "";
+            String input_current_string = "";
+            String input_new_string = "";
             for (int i = 0; i < num_inputs; i++)
             {
-                inputs_vals_prev[i] = inputs_current[i];
+                inputs_vals_prev[i] = *inputs_current[i];
                 *inputs_current[i] = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
 
-                if (*inputs_current[i] == true && inputs_vals_prev[i] == false)
+                if (*inputs_current[i] == true && inputs_vals_prev[i] == false && (millis() - lastPress > 50))
                 {
                     *inputs_new_press[i] = true;
                     Serial.println("button pressed");
+                    lastPress = millis(); // TODO: this should be per button...maybe 1 for all directions
                 }
                 else
                 {
                     *inputs_new_press[i] = false;
                 }
+                input_prev_string += inputs_vals_prev[i];
+                input_current_string += *inputs_current[i];
+                input_new_string += *inputs_new_press[i];
+            }
+
+            if (!input_prev_string.equals("0000000000000") || !input_current_string.equals("0000000000000") || !input_new_string.equals("0000000000000"))
+            {
+                Serial.println("key   SAB^D<>AB^D<>");
+                input_prev_string = "prev [" + input_prev_string + "]";
+                Serial.println(input_prev_string);
+                input_current_string = "curr [" + input_current_string + "]";
+                Serial.println(input_current_string);
+                input_new_string = "new  [" + input_new_string + "]";
+                Serial.println(input_new_string);
             }
         };
     };
@@ -111,9 +131,9 @@ public:
                                                                              MATRIX_HEIGHT(MATRIX_HEIGHT),
                                                                              display(display)
     {
-        Inputs2 inputs;
-        Fonts2 fonts;
     }
+    Inputs2 inputs;
+    Fonts2 fonts;
 
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
