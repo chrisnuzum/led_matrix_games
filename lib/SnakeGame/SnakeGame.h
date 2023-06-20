@@ -10,15 +10,13 @@ struct Point
 {
     uint8_t x;
     uint8_t y;
-
-    Point(uint8_t x, uint8_t y)
+    Point() : Point(0, 0) {};
+    Point(uint8_t x, uint8_t y) : x(x), y(y)
     {
         Serial.print("creating new Point of x: ");
         Serial.print(x);
         Serial.print(", y: ");
         Serial.println(y);
-        this->x = x; //
-        this->y = y;
     }
     bool isEqual(int x, int y)
     {
@@ -44,12 +42,12 @@ public:
     Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
     uint8_t player;
     uint8_t score;
-    LinkedList<Point *> segments;
+    LinkedList<Point> segments;
     direction currentDirection;
-    Point *getInitialPosition();
+    Point getInitialPosition();
     bool occupiesPoint(int x, int y);
-    bool isNextPointValid(Point *p);
-    Point *getNextPosition();
+    bool isNextPointValid(Point p);
+    Point getNextPosition();
 };
 
 class SnakeGame
@@ -111,7 +109,7 @@ private:
     // Snake snakeP1;  //does this call constructor??
     // Snake snakeP2;
 
-    Point *applePosition;
+    Point applePosition;
 
     uint16_t c_red;
     uint16_t c_green;
@@ -122,7 +120,7 @@ private:
     uint16_t c_magenta;
     uint16_t c_black;
 
-    Point *getApplePosition();
+    Point getApplePosition();
     void updateSnakeDirections();
     // Point *getHead();
     // Point *getTail();
