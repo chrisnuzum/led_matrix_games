@@ -65,7 +65,7 @@ private:
         uint8_t MATRIX_WIDTH;
         uint8_t MATRIX_HEIGHT;
     public:
-        Snake();
+        // Snake();
         Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
         uint8_t player;
         uint8_t score;
