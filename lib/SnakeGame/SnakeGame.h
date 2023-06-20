@@ -17,7 +17,7 @@ struct Point
         Serial.print(x);
         Serial.print(", y: ");
         Serial.println(y);
-        this->x = x;
+        this->x = x; //
         this->y = y;
     }
     bool isEqual(int x, int y)
