@@ -17,11 +17,11 @@ struct Point
         Serial.print(x);
         Serial.print(", y: ");
         Serial.println(y);
-    };
+    }
     bool isEqual(int x, int y)
     {
         return this->x == x && this->y == y;
-    };
+    }
 };
 
 enum direction
@@ -38,7 +38,7 @@ class Snake
     uint8_t MATRIX_HEIGHT;
 
 public:
-    Snake() : Snake(80, 80, 11) {};
+    Snake() : Snake(64, 64, 1) {};
     Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
     uint8_t player;
     uint8_t score;
@@ -73,11 +73,8 @@ private:
 
     unsigned long msCurrent;
     unsigned long msPrevious;
-    // unsigned long lastDebounceTime;
 
     bool paused;
-    // bool lastTempState;
-    // bool doPauseToggle;
 
     // enum direction
     // {
@@ -121,10 +118,6 @@ private:
 
     Point getApplePosition();
     void updateSnakeDirections();
-    // Point *getHead();
-    // Point *getTail();
-    // void addToBeginning(Point *p);
-    // void removeTail();
 
     void drawApple();
     void drawSnakes();
@@ -132,7 +125,7 @@ private:
     void checkForPause();
     void resetSnakes();
     void resetApple();
-    // void checkForApple(Point *nextPoint);
+
     void gameOver();
 };
 

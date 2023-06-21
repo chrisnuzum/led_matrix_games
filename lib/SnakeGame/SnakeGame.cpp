@@ -102,11 +102,8 @@ SnakeGame::SnakeGame(const Utility &utility, uint8_t numPlayers) : utility(utili
 
     msCurrent = 0;
     msPrevious = 0;
-    // lastDebounceTime = 0;
 
     paused = false;
-    // lastTempState = HIGH;
-    // doPauseToggle = false;
 
     // for (int i = 0; i < numPlayers; i++)
     // {
@@ -115,7 +112,7 @@ SnakeGame::SnakeGame(const Utility &utility, uint8_t numPlayers) : utility(utili
     //     // snakes[i] = new Snake(MATRIX_WIDTH, MATRIX_HEIGHT, i + 1);
     //     snakes = new Snake(MATRIX_WIDTH, MATRIX_HEIGHT, i + 1);
     // }
-    snakeP1 = Snake(MATRIX_WIDTH, MATRIX_HEIGHT, 1);
+    // snakeP1 = Snake(MATRIX_WIDTH, MATRIX_HEIGHT, 1);
 
     Serial.println("getting apple position");
 
