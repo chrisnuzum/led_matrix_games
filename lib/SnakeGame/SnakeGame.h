@@ -8,9 +8,9 @@
 
 struct Point
 {
-    uint8_t x;
-    uint8_t y;
-    Point() : Point(0, 0) {};
+    uint8_t x{0};
+    uint8_t y{0};
+    Point() = default;
     Point(uint8_t x, uint8_t y) : x(x), y(y)
     {
         Serial.print("creating new Point of x: ");
@@ -38,7 +38,7 @@ class Snake
     uint8_t MATRIX_HEIGHT;
 
 public:
-    Snake() : Snake(80, 80, 5) {};
+    Snake() : Snake(80, 80, 11) {};
     Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
     uint8_t player;
     uint8_t score;
@@ -53,7 +53,7 @@ public:
 class SnakeGame
 {
 public:
-    SnakeGame(Utility utility, uint8_t numPlayers);
+    SnakeGame(const Utility &utility, uint8_t numPlayers);
     // void setPlayers(uint8_t numPlayers);
     void loopGame();
 
@@ -73,11 +73,11 @@ private:
 
     unsigned long msCurrent;
     unsigned long msPrevious;
-    unsigned long lastDebounceTime;
+    // unsigned long lastDebounceTime;
 
     bool paused;
-    bool lastTempState;
-    bool doPauseToggle;
+    // bool lastTempState;
+    // bool doPauseToggle;
 
     // enum direction
     // {

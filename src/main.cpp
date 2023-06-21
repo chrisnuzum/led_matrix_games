@@ -40,7 +40,8 @@ unsigned long loop_time = 0;
 
 Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
-SnakeGame *snake_game; // display wouldn't work right if defining this in setup()
+// SnakeGame *snake_game; // display wouldn't work right if defining this in setup()
+SnakeGame snakeGame(utility, 1);
 
 TaskHandle_t Task1;
 
@@ -169,9 +170,10 @@ void setup()
 
         Serial.print("players: ");
         Serial.println(selected_players);
-        snake_game = new SnakeGame(utility, selected_players);
+        // snake_game = new SnakeGame(utility, selected_players);
         Serial.println("done make snake_game");
         delay(500);
+
     //     xTaskCreatePinnedToCore(
     //         Task1code, /* Task function. */
     //         "Task1",   /* name of task. */
@@ -189,7 +191,8 @@ void setup()
 
 void loop()
 {
-    snake_game->loopGame();
+    // snake_game->loopGame();
+    snakeGame.loopGame();
 }
 
 // void displayFPS()

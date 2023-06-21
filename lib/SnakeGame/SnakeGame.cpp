@@ -14,7 +14,11 @@ Snake::Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player) : MATR
     score = 0;
     currentDirection = UP;
     segments = LinkedList<Point>();
-    segments.add(getInitialPosition());
+    Serial.println("before making initial position");
+    Point p = getInitialPosition();
+    Serial.println("made initial position");
+    segments.add(p);
+    Serial.println("done making snake");
 }
 
 // check if the point is occupied by the snake
@@ -85,7 +89,7 @@ Point SnakeGame::getApplePosition()
     return Point(x, y);
 }
 
-SnakeGame::SnakeGame(Utility utility, uint8_t numPlayers) : utility(utility),
+SnakeGame::SnakeGame(const Utility &utility, uint8_t numPlayers) : utility(utility),
                                                             numPlayers(numPlayers),
                                                             display(utility.display)
 {
@@ -98,11 +102,11 @@ SnakeGame::SnakeGame(Utility utility, uint8_t numPlayers) : utility(utility),
 
     msCurrent = 0;
     msPrevious = 0;
-    lastDebounceTime = 0;
+    // lastDebounceTime = 0;
 
     paused = false;
-    lastTempState = HIGH;
-    doPauseToggle = false;
+    // lastTempState = HIGH;
+    // doPauseToggle = false;
 
     // for (int i = 0; i < numPlayers; i++)
     // {
@@ -302,30 +306,42 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     Serial.println(snakeP1.segments.get(0).y);
 
     utility.inputs.update();
-    bool tempState = utility.inputs.START;
-    Serial.print("tempState: ");
-    Serial.println(tempState);
-    if (tempState)
+    // bool tempState = utility.inputs.START;
+    // Serial.print("tempState: ");
+    // Serial.println(tempState);
+    // if (tempState)
+    // {
+    //     Serial.println("in check for pause if block");
+    //     if (!lastTempState)
+    //     {
+    //         lastDebounceTime = millis();
+    //         doPauseToggle = true;
+    //     }
+    //     if (millis() - lastDebounceTime > 50 && doPauseToggle)
+    String tempPrint = "";
+    for (int i = 0; i < 13; i++)
     {
-        Serial.println("in check for pause if block");
-        if (!lastTempState)
-        {
-            lastDebounceTime = millis();
-            doPauseToggle = true;
-        }
-        if (millis() - lastDebounceTime > 50 && doPauseToggle)
-        {
-            paused = !paused;
-            Serial.print("Paused: ");
-            Serial.println(paused);
-            display.clearDisplay();
-            drawSnakes();
-            drawApple();
-            msPrevious = millis();
-            doPauseToggle = false;
-        }
+        tempPrint += *utility.inputs.inputs_new_press[i];
     }
-    lastTempState = tempState;
+    Serial.println(tempPrint);
+    Serial.print("START: ");
+    Serial.println(utility.inputs.START);
+    Serial.print("P2A: ");
+    Serial.println(utility.inputs.A_P2);
+    if (utility.inputs.START_active)
+    {
+        paused = !paused;
+        Serial.print("Paused: ");
+        Serial.println(paused);
+        display.clearDisplay();
+        drawSnakes();
+        drawApple();
+        msPrevious = millis();
+        Serial.println("done pause if block");
+        // doPauseToggle = false;
+    }
+    // }
+    // lastTempState = tempState;
 
     Serial.print("checkForPause() end head - ");
     Serial.print(snakeP1.segments.get(0).x);
