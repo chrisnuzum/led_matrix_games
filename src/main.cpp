@@ -152,12 +152,11 @@ void setup()
     display.setFastUpdate(true);
 
     display.clearDisplay();
-    display.setTextColor(c_cyan);
-    display.setCursor(2, 0);
-    display.print("Snake");
     display_update_enable(true);
     delay(2000);
     Serial.println("finished setup");
+    utility.setDisplay(display);
+    // display.setFont(utility.fonts.tom);
 
     selected_game = selectMenuItem(game_strings, num_games);
     selected_players = selectMenuItem(player_strings, num_player_options);
@@ -194,6 +193,14 @@ void loop()
     // snake_game->loopGame();
     snakeGame.loopGame();
 }
+
+// possibility to separate display from the Game files: game source code compiles a list/array of points (with colors) to draw and passes
+// that back to loop function
+// Point drawPoints[] = snakeGame.loopGame();       //couldn't actually be an array cuz of set size unless it contains all points in matrix
+// for (Point p : drawPoints)
+// {
+//  display.drawPixel(p.x, p.y, p.color);
+// }
 
 // void displayFPS()
 // {

@@ -90,8 +90,8 @@ Point SnakeGame::getApplePosition()
 }
 
 SnakeGame::SnakeGame(const Utility &utility, uint8_t numPlayers) : utility(utility),
-                                                            numPlayers(numPlayers),
-                                                            display(utility.display)
+                                                                   numPlayers(numPlayers),
+                                                                   display(utility.display)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
@@ -281,9 +281,14 @@ void SnakeGame::drawSnakes()
     // for (int i = 0; i < s.segments.size(); i++)
     for (int i = 0; i < snakeP1.segments.size(); i++)
     {
+        Serial.print("drawing segment ");
+        Serial.println(i);
         Point p = snakeP1.segments.get(i);
+        Serial.println("got current segment");
         display.drawPixel(p.x, p.y, paused ? c_blue : c_green);
+        Serial.println("segment drawn");
     }
+    Serial.println("end of drawSnakes()");
     // }
 }
 
@@ -463,6 +468,12 @@ void SnakeGame::gameOver()
 
 void SnakeGame::loopGame()
 {
+    delay(250);
+    display.clearDisplay();
+    delay(250);
+    display.fillScreen(c_yellow);
+    delay(250);
+    display.fillScreen(c_magenta);
     Serial.println();
     Serial.println();
     Serial.println();
@@ -548,8 +559,11 @@ void SnakeGame::loopGame()
             {
                 Serial.println("draw scene");
                 display.clearDisplay();
+                Serial.println("display cleared");
                 drawSnakes();
+                Serial.println("snakes drawn");
                 drawApple();
+                Serial.println("end of drawing scene");
             }
 
             // displayFPS();

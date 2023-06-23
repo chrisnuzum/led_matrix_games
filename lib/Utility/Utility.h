@@ -13,7 +13,7 @@
 class Utility
 {
 private:
-    class Inputs2
+    class Inputs
     {
     private:
         static constexpr uint8_t START_PIN = 25;
@@ -38,7 +38,7 @@ private:
         unsigned long lastPress = 0;
 
     public:
-        Inputs2()
+        Inputs()
         {
             pinMode(START_PIN, INPUT_PULLUP);
             pinMode(A_P1_PIN, INPUT_PULLUP);
@@ -117,7 +117,7 @@ private:
         };
     };
 
-    class Fonts2
+    class Fonts
     {
     public:
         const GFXfont *pico = &Picopixel;
@@ -132,12 +132,17 @@ public:
                                                                              display(display)
     {
     }
-    Inputs2 inputs;
-    Fonts2 fonts;
+    Inputs inputs;
+    Fonts fonts;   // TODO: add colors here to share
 
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
-    const PxMATRIX display;
+    PxMATRIX display;
+
+    void setDisplay(PxMATRIX d)
+    {
+        this->display = d;
+    }
 };
 
 #endif
