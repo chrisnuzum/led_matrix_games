@@ -89,9 +89,9 @@ Point SnakeGame::getApplePosition()
     return Point(x, y);
 }
 
-SnakeGame::SnakeGame(const Utility &utility, uint8_t numPlayers) : utility(utility),
-                                                                   numPlayers(numPlayers),
-                                                                   display(utility.display)
+SnakeGame::SnakeGame(const Utility &utility, PxMATRIX disp, u_int8_t numPlayers) : utility(utility),
+                                                                                   numPlayers(numPlayers),
+                                                                                   display(disp)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
@@ -328,6 +328,9 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     Serial.println(tempPrint);
     Serial.print("START: ");
     Serial.println(utility.inputs.START);
+    bool _start = utility.inputs.START;
+    Serial.print("START2: ");
+    Serial.println(_start);
     Serial.print("P2A: ");
     Serial.println(utility.inputs.A_P2);
     if (utility.inputs.START_active)

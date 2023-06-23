@@ -40,8 +40,8 @@ unsigned long loop_time = 0;
 
 Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
-// SnakeGame *snake_game; // display wouldn't work right if defining this in setup()
-SnakeGame snakeGame(utility, 1);
+SnakeGame *snakeGame; // display wouldn't work right if not defining this in setup()
+// SnakeGame snakeGame(utility, 1);
 
 TaskHandle_t Task1;
 
@@ -169,7 +169,7 @@ void setup()
 
         Serial.print("players: ");
         Serial.println(selected_players);
-        // snake_game = new SnakeGame(utility, selected_players);
+        snakeGame = new SnakeGame(utility, display, 1);
         Serial.println("done make snake_game");
         delay(500);
 
@@ -190,8 +190,8 @@ void setup()
 
 void loop()
 {
-    // snake_game->loopGame();
-    snakeGame.loopGame();
+    // snakeGame.loopGame();
+    snakeGame->loopGame();
 }
 
 // possibility to separate display from the Game files: game source code compiles a list/array of points (with colors) to draw and passes
