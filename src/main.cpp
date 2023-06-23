@@ -169,7 +169,7 @@ void setup()
 
         Serial.print("players: ");
         Serial.println(selected_players);
-        snakeGame = new SnakeGame(utility, display, 1);
+        snakeGame = new SnakeGame(utility, 1);
         Serial.println("done make snake_game");
         delay(500);
 

@@ -53,7 +53,7 @@ public:
 class SnakeGame
 {
 public:
-    SnakeGame(const Utility &utility, PxMATRIX disp, uint8_t numPlayers);
+    SnakeGame(const Utility &utility, uint8_t numPlayers);
     // void setPlayers(uint8_t numPlayers);
     void loopGame();
 
@@ -61,7 +61,8 @@ private:
     uint8_t MATRIX_WIDTH;
     uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
-    Utility utility; // could declare Inputs inputs then in constructor inputs(utility.inputs)
+    Utility utility;    // this is probably constructing an empty Utility
+                // could declare Inputs inputs then in constructor inputs(utility.inputs)
     uint8_t numPlayers;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;

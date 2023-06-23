@@ -127,13 +127,13 @@ private:
     };
 
 public:
-    Utility(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display) : MATRIX_WIDTH(MATRIX_WIDTH),
-                                                                             MATRIX_HEIGHT(MATRIX_HEIGHT),
-                                                                             display(display)
+    Utility(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX &display) : MATRIX_WIDTH(MATRIX_WIDTH),
+                                                                              MATRIX_HEIGHT(MATRIX_HEIGHT),
+                                                                              display(display)
     {
     }
     Inputs inputs;
-    Fonts fonts;   // TODO: add colors here to share
+    Fonts fonts; // TODO: add colors here to share
 
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
