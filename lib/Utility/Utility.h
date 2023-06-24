@@ -16,7 +16,7 @@ private:
     class Inputs
     {
     private:
-        static constexpr uint8_t START_PIN = 25;
+        static constexpr uint8_t START_PIN = 25;    // need a button!
         static constexpr uint8_t A_P1_PIN = 27;
         static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
@@ -79,7 +79,7 @@ private:
 
         bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
-        void update() // need debounce
+        void update()
         {
             String input_prev_string = "";
             String input_current_string = "";

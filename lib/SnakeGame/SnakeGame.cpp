@@ -89,9 +89,9 @@ Point SnakeGame::getApplePosition()
     return Point(x, y);
 }
 
-SnakeGame::SnakeGame(const Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utility.MATRIX_WIDTH),
+SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utility.MATRIX_WIDTH),
                                                                     MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
-                                                                    utility(utility),
+                                                                    utility(&utility),
                                                                     numPlayers(numPlayers),
                                                                     display(utility.display)
 {
@@ -158,7 +158,7 @@ SnakeGame::SnakeGame(const Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH
 
 void SnakeGame::updateSnakeDirections()
 {
-    utility.inputs.update();
+    utility->inputs.update();
 
     // for (int i = 0; i < numPlayers; i++)
     // {
@@ -169,10 +169,10 @@ void SnakeGame::updateSnakeDirections()
     bool _left;
     bool _right;
 
-    _up = utility.inputs.UP_P1_active;
-    _down = utility.inputs.DOWN_P1_active;
-    _left = utility.inputs.LEFT_P1_active;
-    _right = utility.inputs.RIGHT_P1_active;
+    _up = utility->inputs.UP_P1_active;
+    _down = utility->inputs.DOWN_P1_active;
+    _left = utility->inputs.LEFT_P1_active;
+    _right = utility->inputs.RIGHT_P1_active;
 
     // // if (s.player == 1)
     // if (snakes->player == 1)
@@ -309,7 +309,7 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     Serial.print(", ");
     Serial.println(snakeP1.segments.get(0).y);
 
-    utility.inputs.update();
+    utility->inputs.update();
     // bool tempState = utility.inputs.START;
     // Serial.print("tempState: ");
     // Serial.println(tempState);
@@ -325,16 +325,16 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     String tempPrint = "";
     for (int i = 0; i < 13; i++)
     {
-        tempPrint += *utility.inputs.inputs_new_press[i];
+        tempPrint += *utility->inputs.inputs_new_press[i];
     }
     Serial.println(tempPrint);
     Serial.print("START: ");
-    Serial.println(utility.inputs.START);
-    bool _start = utility.inputs.START;
+    Serial.println(utility->inputs.START);
+    bool _start = utility->inputs.START;
     Serial.print("START2: ");
     Serial.println(_start);
     Serial.print("P2A: ");
-    Serial.println(utility.inputs.A_P2);
+    Serial.println(utility->inputs.A_P2);
     // if (utility.inputs.START)
     if (false)
     {
@@ -409,7 +409,7 @@ void SnakeGame::resetApple()
 // show an end screen and reset the game state
 void SnakeGame::gameOver()
 {
-    display.fillScreen(c_yellow);
+    display.fillScreen(c_red);
     delay(250);
     display.clearDisplay();
     delay(250);
@@ -417,7 +417,7 @@ void SnakeGame::gameOver()
     delay(250);
     display.clearDisplay();
     delay(250);
-    display.fillScreen(c_yellow);
+    display.fillScreen(c_red);
     delay(250);
     display.clearDisplay();
 
@@ -474,12 +474,6 @@ void SnakeGame::gameOver()
 
 void SnakeGame::loopGame()
 {
-    // delay(250);
-    // display.clearDisplay();
-    // delay(250);
-    // display.fillScreen(c_yellow);
-    // delay(250);
-    // display.fillScreen(c_magenta);
     Serial.println();
     Serial.println();
     Serial.println();
@@ -585,3 +579,8 @@ void SnakeGame::loopGame()
     //     loops = 0;
     // }
 }
+
+// instead of clearing and redrawing, maybe only draw if something changes
+//    when popping a snake segment clear that pixel
+//    when adding a segment draw it
+//    when new apple is made draw it
