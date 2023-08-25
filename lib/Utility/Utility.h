@@ -16,9 +16,9 @@ private:
     class Inputs
     {
     private:
-        static constexpr uint8_t START_PIN = 39;    // need a button!
-        static constexpr uint8_t A_P1_PIN = 36;
-        static constexpr uint8_t B_P1_PIN = 39;
+        static constexpr uint8_t START_PIN = 27;    // need a button!
+        static constexpr uint8_t A_P1_PIN = 12;
+        static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
         static constexpr uint8_t LEFT_P1_PIN = 25; // 25
