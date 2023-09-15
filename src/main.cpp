@@ -144,7 +144,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 
 void setup()
 {
-    Serial.begin(115200);
+    // Serial.begin(115200);
     Serial.println("Serial connection started");
 
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);

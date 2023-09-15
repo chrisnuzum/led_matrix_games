@@ -16,19 +16,19 @@ private:
     class Inputs
     {
     private:
-        static constexpr uint8_t START_PIN = 27;    // need a button!
-        static constexpr uint8_t A_P1_PIN = 12;
+        static constexpr uint8_t START_PIN = 27; // need a button!
+        static constexpr uint8_t A_P1_PIN = 36;
         static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
-        static constexpr uint8_t LEFT_P1_PIN = 25; // 25
+        static constexpr uint8_t LEFT_P1_PIN = 25;
         static constexpr uint8_t RIGHT_P1_PIN = 26;
-        static constexpr uint8_t A_P2_PIN = 27;
-        static constexpr uint8_t B_P2_PIN = 27;
-        static constexpr uint8_t UP_P2_PIN = 27;
-        static constexpr uint8_t DOWN_P2_PIN = 27;
-        static constexpr uint8_t LEFT_P2_PIN = 27;
-        static constexpr uint8_t RIGHT_P2_PIN = 27;
+        static constexpr uint8_t A_P2_PIN = 3;
+        static constexpr uint8_t B_P2_PIN = 21;
+        static constexpr uint8_t UP_P2_PIN = 17;
+        static constexpr uint8_t DOWN_P2_PIN = 4;
+        static constexpr uint8_t LEFT_P2_PIN = 0;
+        static constexpr uint8_t RIGHT_P2_PIN = 2;
 
         static constexpr uint8_t num_inputs = 13;
 
@@ -40,19 +40,27 @@ private:
     public:
         Inputs()
         {
-            pinMode(START_PIN, INPUT_PULLUP);
-            pinMode(A_P1_PIN, INPUT_PULLUP);
-            pinMode(B_P1_PIN, INPUT_PULLUP);
-            pinMode(UP_P1_PIN, INPUT_PULLUP);
-            pinMode(DOWN_P1_PIN, INPUT_PULLUP);
-            pinMode(LEFT_P1_PIN, INPUT_PULLUP);
-            pinMode(RIGHT_P1_PIN, INPUT_PULLUP);
-            pinMode(A_P2_PIN, INPUT_PULLUP);
-            pinMode(B_P2_PIN, INPUT_PULLUP);
-            pinMode(UP_P2_PIN, INPUT_PULLUP);
-            pinMode(DOWN_P2_PIN, INPUT_PULLUP);
-            pinMode(LEFT_P2_PIN, INPUT_PULLUP);
-            pinMode(RIGHT_P2_PIN, INPUT_PULLUP);
+            for (uint8_t PIN_NUMBER : ALL_PINS)
+            {
+                if (PIN_NUMBER == 34 || PIN_NUMBER == 35 || PIN_NUMBER == 36 || PIN_NUMBER == 39 || PIN_NUMBER == 12) // these require external pull-ups, 12 can't be used at all until efuses are burned
+                {
+                    continue;
+                }
+                pinMode(PIN_NUMBER, INPUT_PULLUP);
+            }
+            // pinMode(START_PIN, INPUT_PULLUP);
+            // pinMode(A_P1_PIN, INPUT_PULLUP);
+            // pinMode(B_P1_PIN, INPUT_PULLUP);
+            // pinMode(UP_P1_PIN, INPUT_PULLUP);
+            // pinMode(DOWN_P1_PIN, INPUT_PULLUP);
+            // pinMode(LEFT_P1_PIN, INPUT_PULLUP);
+            // pinMode(RIGHT_P1_PIN, INPUT_PULLUP);
+            // pinMode(A_P2_PIN, INPUT_PULLUP);
+            // pinMode(B_P2_PIN, INPUT_PULLUP);
+            // pinMode(UP_P2_PIN, INPUT_PULLUP);
+            // pinMode(DOWN_P2_PIN, INPUT_PULLUP);
+            // pinMode(LEFT_P2_PIN, INPUT_PULLUP);
+            // pinMode(RIGHT_P2_PIN, INPUT_PULLUP);
         }
 
         // bools are ints, 8 bits in size. To pack them smaller to save space: https://forum.arduino.cc/t/bool-vs-boolean-again/136074/33
@@ -79,8 +87,8 @@ private:
 
         bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
-        void update()
-        {
+        void update() // maybe buffer input, as in when a new input is detected it holds that value until a function call clears it
+        {             // this would help with Snake when it is slow at the beginning
             String input_prev_string = "";
             String input_current_string = "";
             String input_new_string = "";
@@ -104,15 +112,18 @@ private:
                 input_new_string += *inputs_new_press[i];
             }
 
-            if (!input_prev_string.equals("0000000000000") || !input_current_string.equals("0000000000000") || !input_new_string.equals("0000000000000"))
+            if (false)
             {
-                Serial.println("key   SAB^D<>AB^D<>");
-                input_prev_string = "prev [" + input_prev_string + "]";
-                Serial.println(input_prev_string);
-                input_current_string = "curr [" + input_current_string + "]";
-                Serial.println(input_current_string);
-                input_new_string = "new  [" + input_new_string + "]";
-                Serial.println(input_new_string);
+                if (!input_prev_string.equals("0000000000000") || !input_current_string.equals("0000000000000") || !input_new_string.equals("0000000000000"))
+                {
+                    Serial.println("key   SAB^D<>AB^D<>");
+                    input_prev_string = "prev [" + input_prev_string + "]";
+                    Serial.println(input_prev_string);
+                    input_current_string = "curr [" + input_current_string + "]";
+                    Serial.println(input_current_string);
+                    input_new_string = "new  [" + input_new_string + "]";
+                    Serial.println(input_new_string);
+                }
             }
         };
     };

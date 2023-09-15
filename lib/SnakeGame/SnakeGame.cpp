@@ -90,17 +90,17 @@ Point SnakeGame::getApplePosition()
 }
 
 SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utility.MATRIX_WIDTH),
-                                                                    MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
-                                                                    utility(&utility),
-                                                                    numPlayers(numPlayers),
-                                                                    display(utility.display)
+                                                              MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
+                                                              utility(&utility),
+                                                              numPlayers(numPlayers),
+                                                              display(utility.display)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
     SPEED_LOSS = 5;
     RESET_DELAY = 10000;
 
-    gameDelay = MAX_DELAY;
+    gameDelay = MAX_DELAY; // MAX_DELAY       not really working, seems to just be increasing time that screen is off?
 
     msCurrent = 0;
     msPrevious = 0;
@@ -220,26 +220,6 @@ void SnakeGame::updateSnakeDirections()
     Serial.println("done for loop in updateSnakeDirections");
 }
 
-// Point *SnakeGame::getHead()
-// {
-//     return snakePositions.get(0);
-// }
-
-// Point *SnakeGame::getTail()
-// {
-//     return snakePositions.get(snakePositions.size() - 1);
-// }
-
-// void SnakeGame::addToBeginning(Point *p)
-// {
-//     snakePositions.add(0, p);
-// }
-
-// void SnakeGame::removeTail()
-// {
-//     delete (snakePositions.pop());
-// }
-
 // calculate the next position based on the current head position and the current direction
 Point Snake::getNextPosition()
 {
@@ -299,15 +279,17 @@ void SnakeGame::increaseSpeed()
     if (gameDelay > MIN_DELAY)
     {
         gameDelay -= SPEED_LOSS;
+        Serial.print("Game delay in increaseSpeed(): ");
+        Serial.println(gameDelay);
     }
 }
 
 void SnakeGame::checkForPause() // most of this is obsolete and already incorporated into Input library
 {
-    Serial.print("checkForPause() begin head - ");
-    Serial.print(snakeP1.segments.get(0).x);
-    Serial.print(", ");
-    Serial.println(snakeP1.segments.get(0).y);
+    // Serial.print("checkForPause() begin head - ");
+    // Serial.print(snakeP1.segments.get(0).x);
+    // Serial.print(", ");
+    // Serial.println(snakeP1.segments.get(0).y);
 
     utility->inputs.update();
     // bool tempState = utility.inputs.START;
@@ -325,18 +307,17 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     String tempPrint = "";
     for (int i = 0; i < 13; i++)
     {
-        tempPrint += *utility->inputs.inputs_new_press[i];
+        tempPrint += *utility->inputs.inputs_current[i];
     }
-    Serial.println(tempPrint);
-    Serial.print("START: ");
-    Serial.println(utility->inputs.START);
+    // Serial.println(tempPrint);
+    // Serial.print("START: ");
+    // Serial.println(utility->inputs.START);
     bool _start = utility->inputs.START;
-    Serial.print("START2: ");
-    Serial.println(_start);
-    Serial.print("P2A: ");
-    Serial.println(utility->inputs.A_P2);
-    // if (utility.inputs.START)
-    if (false)
+    // Serial.print("START2: ");
+    // Serial.println(_start);
+    // Serial.print("P2A: ");
+    // Serial.println(utility->inputs.A_P2);
+    if (_start)
     {
         paused = !paused;
         Serial.print("Paused: ");
@@ -351,10 +332,10 @@ void SnakeGame::checkForPause() // most of this is obsolete and already incorpor
     // }
     // lastTempState = tempState;
 
-    Serial.print("checkForPause() end head - ");
-    Serial.print(snakeP1.segments.get(0).x);
-    Serial.print(", ");
-    Serial.println(snakeP1.segments.get(0).y);
+    // Serial.print("checkForPause() end head - ");
+    // Serial.print(snakeP1.segments.get(0).x);
+    // Serial.print(", ");
+    // Serial.println(snakeP1.segments.get(0).y);
 }
 
 // delete snakes and create new ones
@@ -481,47 +462,51 @@ void SnakeGame::loopGame()
     // Serial.print(snakes->segments.get(0).x);
     // Serial.print(", ");
     // Serial.println(snakes->segments.get(0).y);
-    Serial.print("loopGame() begin head - ");
-    Serial.print(snakeP1.segments.get(0).x);
-    Serial.print(", ");
-    Serial.println(snakeP1.segments.get(0).y);
+    // Serial.print("loopGame() begin head - ");
+    // Serial.print(snakeP1.segments.get(0).x);
+    // Serial.print(", ");
+    // Serial.println(snakeP1.segments.get(0).y);
 
     checkForPause();
 
-    Serial.print("loopGame() after pause check head - ");
-    Serial.print(snakeP1.segments.get(0).x);
-    Serial.print(", ");
-    Serial.println(snakeP1.segments.get(0).y);
+    // Serial.print("loopGame() after pause check head - ");
+    // Serial.print(snakeP1.segments.get(0).x);
+    // Serial.print(", ");
+    // Serial.println(snakeP1.segments.get(0).y);
 
-    Serial.println("done check for pause");
+    Serial.print("done check for pause, paused=");
+    Serial.println(paused);
+
     if (!paused)
     {
         msCurrent = millis();
         if ((msCurrent - msPrevious) > gameDelay)
         {
-            Serial.print("loopGame() before dirs head - ");
-            Serial.print(snakeP1.segments.get(0).x);
-            Serial.print(", ");
-            Serial.println(snakeP1.segments.get(0).y);
+            Serial.print("Game delay in loopGame(): ");
+            Serial.println(gameDelay);
+            // Serial.print("loopGame() before dirs head - ");
+            // Serial.print(snakeP1.segments.get(0).x);
+            // Serial.print(", ");
+            // Serial.println(snakeP1.segments.get(0).y);
 
             updateSnakeDirections();
 
-            Serial.print("loopGame() after dirs head - ");
-            Serial.print(snakeP1.segments.get(0).x);
-            Serial.print(", ");
-            Serial.println(snakeP1.segments.get(0).y);
+            // Serial.print("loopGame() after dirs head - ");
+            // Serial.print(snakeP1.segments.get(0).x);
+            // Serial.print(", ");
+            // Serial.println(snakeP1.segments.get(0).y);
 
             Serial.println("done check for directions");
             bool snakeCollision = false;
             for (int i = 0; i < numPlayers; i++)
             {
-                Serial.println("start of Snake for loopGame loop");
-                // Snake s = *snakes[i];
-                // Snake s = *snakes;
-                Serial.print("loopGame() head - ");
-                Serial.print(snakeP1.segments.get(0).x);
-                Serial.print(", ");
-                Serial.println(snakeP1.segments.get(0).y);
+                // Serial.println("start of Snake for loopGame loop");
+                // // Snake s = *snakes[i];
+                // // Snake s = *snakes;
+                // Serial.print("loopGame() head - ");
+                // Serial.print(snakeP1.segments.get(0).x);
+                // Serial.print(", ");
+                // Serial.println(snakeP1.segments.get(0).y);
                 Point nextPoint = snakeP1.getNextPosition();
                 if (snakeP1.isNextPointValid(nextPoint))
                 {
@@ -557,7 +542,7 @@ void SnakeGame::loopGame()
             }
             else
             {
-                Serial.println("draw scene");
+                Serial.println("start of drawing scene");
                 display.clearDisplay();
                 Serial.println("display cleared");
                 drawSnakes();
