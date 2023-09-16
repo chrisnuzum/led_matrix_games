@@ -38,8 +38,8 @@ class Snake
     uint8_t MATRIX_HEIGHT;
 
 public:
-    Snake() : Snake(64, 64, 1){};
-    Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, uint8_t player);
+    // Snake() : Snake(64, 64, 1){};
+    Snake(uint8_t player, uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT);
     uint8_t player;
     uint8_t score;
     LinkedList<Point> segments;
@@ -103,8 +103,10 @@ private:
     // };
 
     // Snake *snakes;
-    Snake snakeP1;
-    // Snake snakeP2;
+    Snake snakeP1 = Snake(1, 64, 64);
+    // Snake snakeP2 = Snake(2, 64, 64);
+
+    // Snake snakes[2] = {snakeP1, snakeP2};
 
     Point applePosition;
 

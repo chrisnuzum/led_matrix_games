@@ -79,7 +79,7 @@ uint8_t selected_players = 1;
 
 void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
 {
-    display.clearDisplay();
+    display.clearDisplay(); // could check if items and selected are the same as previous instead of clearing every time
     for (int i = 0; i < num_items; i++)
     {
         display.setCursor(1, (i * 8) + 2);
@@ -101,9 +101,9 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 {
     uint8_t selected = 1;
     displaySelectMenu(items, num_items, selected);
+    
     while (true)
     {
-        // inputs.update();
         utility.inputs.update();
         bool _up = utility.inputs.UP_P1 || utility.inputs.UP_P2;
         bool _down = utility.inputs.DOWN_P1 || utility.inputs.DOWN_P2;
@@ -131,17 +131,6 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
     }
 }
 
-// void Task1code(void *pvParameters)
-// {
-//     Serial.print("Task1 running on core ");
-//     Serial.println(xPortGetCoreID());
-
-//     for (;;)
-//     {
-//         snake_game->loopGame();
-//     }
-// }
-
 void setup()
 {
     // Serial.begin(115200);
@@ -154,7 +143,6 @@ void setup()
     display.clearDisplay();
     display_update_enable(true);
     delay(2000);
-    Serial.println("finished setup");
     utility.setDisplay(display);
     // display.setFont(utility.fonts.tom);
 
@@ -165,22 +153,9 @@ void setup()
     {
         // set up Snake
         // snake_game->setPlayers(selected_players);
-        // Serial.println("players were set");
 
-        Serial.print("players: ");
-        Serial.println(selected_players);
-        snakeGame = new SnakeGame(utility, 1);
-        Serial.println("done make snake_game");
+        snakeGame = new SnakeGame(utility, selected_players);
         delay(500);
-
-    //     xTaskCreatePinnedToCore(
-    //         Task1code, /* Task function. */
-    //         "Task1",   /* name of task. */
-    //         20000,     /* Stack size of task */
-    //         NULL,      /* parameter of the task */
-    //         1,         /* priority of the task */
-    //         &Task1,    /* Task handle to keep track of created task */
-    //         0);        /* pin task to core 0 */
     }
     else if (selected_game == 2)
     {
@@ -217,7 +192,7 @@ void loop()
 //   display.setRotation(0);
 //   display.setTextColor(display.color565(colorR, colorG, colorB));
 
-//   // Asuming 5 pixel average character width
+//   // Assuming 5 pixel average character width
 //   for (int xpos = MATRIX_WIDTH; xpos > -(MATRIX_WIDTH + text_length * 5); xpos--) {
 //     display.setTextColor(display.color565(colorR, colorG, colorB));
 //     display.clearDisplay();
