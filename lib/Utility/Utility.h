@@ -25,10 +25,10 @@ private:
         static constexpr uint8_t RIGHT_P1_PIN = 26;
         static constexpr uint8_t A_P2_PIN = 3;
         static constexpr uint8_t B_P2_PIN = 21;
-        static constexpr uint8_t UP_P2_PIN = 17;
-        static constexpr uint8_t DOWN_P2_PIN = 4;
-        static constexpr uint8_t LEFT_P2_PIN = 0;
-        static constexpr uint8_t RIGHT_P2_PIN = 2;
+        static constexpr uint8_t UP_P2_PIN = 4;
+        static constexpr uint8_t DOWN_P2_PIN = 17;
+        static constexpr uint8_t LEFT_P2_PIN = 2;
+        static constexpr uint8_t RIGHT_P2_PIN = 0;
 
         static constexpr uint8_t num_inputs = 13;
 

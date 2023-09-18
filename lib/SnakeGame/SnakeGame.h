@@ -38,12 +38,14 @@ class Snake
     uint8_t MATRIX_HEIGHT;
 
 public:
-    // Snake() : Snake(64, 64, 1){};
+    // Snake() : Snake(1, 64, 64){};
     Snake(uint8_t player, uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT);
+    // Snake(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT);
     uint8_t player;
     uint8_t score;
     LinkedList<Point> segments;
     direction currentDirection;
+    // void setPlayer(uint8_t playerNum);
     Point getInitialPosition();
     bool occupiesPoint(const int &x, const int &y);
     bool isNextPointValid(const Point &p);
@@ -61,8 +63,7 @@ private:
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
-    Utility *utility;
-                // could declare Inputs inputs then in constructor inputs(utility.inputs)
+    Utility *utility;   //                              maybe this being a pointer is a problem??
     uint8_t numPlayers;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;
@@ -104,9 +105,8 @@ private:
 
     // Snake *snakes;
     Snake snakeP1 = Snake(1, 64, 64);
-    // Snake snakeP2 = Snake(2, 64, 64);
-
-    // Snake snakes[2] = {snakeP1, snakeP2};
+    Snake snakeP2 = Snake(2, 64, 64);
+    // Snake snakeP2;  // try taking this out and see if it will run; 2 player code breaks it
 
     Point applePosition;
 
