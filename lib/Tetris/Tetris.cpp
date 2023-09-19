@@ -41,10 +41,10 @@
 //   if rotation won't fit to left(right) > try rotated position shifted 1 to the right(left)
 //   if not good, rotation fails (could try shifting piece up or down like the kick tables)
 
-Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs) : MATRIX_WIDTH(MATRIX_WIDTH),
+Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Utility &utility) : MATRIX_WIDTH(MATRIX_WIDTH),
                                                                                                      MATRIX_HEIGHT(MATRIX_HEIGHT),
                                                                                                      display(display),
-                                                                                                     inputs(inputs)
+                                                                                                     utility(&utility)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
@@ -83,8 +83,8 @@ void Tetris::setPlayers(uint8_t numPlayers)
 
 void Tetris::checkForPause()
 {
-    inputs.update();
-    bool tempState = inputs.START;
+    utility->inputs.update();
+    bool tempState = utility->inputs.START;
     if (tempState)
     {
         if (!lastTempState)

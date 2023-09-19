@@ -136,6 +136,7 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utili
     msPrevious = 0;
 
     paused = false;
+    justStarted = true;
 
     // for (int i = 0; i < numPlayers; i++)
     // {
@@ -454,11 +455,19 @@ void SnakeGame::gameOver()
     // }
 
     delay(RESET_DELAY);
-    ESP.restart();
+    // ESP.restart();
 }
 
-void SnakeGame::loopGame()
+bool SnakeGame::loopGame()
 {
+    if (justStarted)
+    {
+        display.clearDisplay();
+        drawSnakes();
+        drawApple();
+        delay(1000);
+        justStarted = false;    // probably won't reset if played 2 times in a row
+    }
     checkForPause();
 
     Serial.print("done check for pause, paused=");
@@ -566,6 +575,7 @@ void SnakeGame::loopGame()
             {
                 Serial.println("game over");
                 gameOver();
+                return false;
             }
             else
             {
@@ -580,6 +590,7 @@ void SnakeGame::loopGame()
             msPrevious = msCurrent;
         }
     }
+    return true;
 
     // loops++;
     // if (millis() - loop_time > 1000)

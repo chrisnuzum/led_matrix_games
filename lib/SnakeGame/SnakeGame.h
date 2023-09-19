@@ -5,7 +5,22 @@
 #include <LinkedList.h>
 #include <PxMatrix.h>
 #include <Utility.h>
+    /*
+    Changes:
+    Right now if both snakes reach apple at the same time, only P1 gets it.
+    "Buffer" direction changes. This would prevent the situation of quickly
+        clicking and releasing a direction not doing anything on slow speeds.
+        Not sure if this would need to be implemented in Utility code or here...
+    In 2-player snakes should be different color.
 
+    Ideas:
+    Multiple apples at a time (maybe only in 2-player).
+    Obstacles?
+    Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
+        Would have to check if only the head of the snake got the apple (currently the case)
+    Should snakes collide?
+    
+    */
 struct Point
 {
     uint8_t x{0};
@@ -57,13 +72,13 @@ class SnakeGame
 public:
     SnakeGame(Utility &utility, uint8_t numPlayers);
     // void setPlayers(uint8_t numPlayers);
-    void loopGame();
+    bool loopGame();
 
 private:
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
-    Utility *utility;   //                              maybe this being a pointer is a problem??
+    Utility *utility;
     uint8_t numPlayers;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;
@@ -76,6 +91,7 @@ private:
     unsigned long msCurrent;
     unsigned long msPrevious;
 
+    bool justStarted;
     bool paused;
 
     // enum direction
@@ -106,7 +122,8 @@ private:
     // Snake *snakes;
     Snake snakeP1 = Snake(1, 64, 64);
     Snake snakeP2 = Snake(2, 64, 64);
-    // Snake snakeP2;  // try taking this out and see if it will run; 2 player code breaks it
+    // Try going back to pointers to snakes or an array of pointers to snakes. Seems like the Snake objects need to be
+    // created here in the header though.
 
     Point applePosition;
 

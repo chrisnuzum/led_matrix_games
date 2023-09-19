@@ -48,19 +48,6 @@ private:
                 }
                 pinMode(PIN_NUMBER, INPUT_PULLUP);
             }
-            // pinMode(START_PIN, INPUT_PULLUP);
-            // pinMode(A_P1_PIN, INPUT_PULLUP);
-            // pinMode(B_P1_PIN, INPUT_PULLUP);
-            // pinMode(UP_P1_PIN, INPUT_PULLUP);
-            // pinMode(DOWN_P1_PIN, INPUT_PULLUP);
-            // pinMode(LEFT_P1_PIN, INPUT_PULLUP);
-            // pinMode(RIGHT_P1_PIN, INPUT_PULLUP);
-            // pinMode(A_P2_PIN, INPUT_PULLUP);
-            // pinMode(B_P2_PIN, INPUT_PULLUP);
-            // pinMode(UP_P2_PIN, INPUT_PULLUP);
-            // pinMode(DOWN_P2_PIN, INPUT_PULLUP);
-            // pinMode(LEFT_P2_PIN, INPUT_PULLUP);
-            // pinMode(RIGHT_P2_PIN, INPUT_PULLUP);
         }
 
         // bools are ints, 8 bits in size. To pack them smaller to save space: https://forum.arduino.cc/t/bool-vs-boolean-again/136074/33

@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include <LinkedList.h>
 #include <PxMatrix.h>
-#include <InputsFonts.h>
+#include <Utility.h>
 
 struct TetrisPiece
 {
@@ -45,7 +45,7 @@ class Tetris
     uint8_t MATRIX_WIDTH;
     uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
-    Inputs inputs;
+    Utility *utility;
     // constexpr may save SRAM? but it wants them to be static and initialized here
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -76,6 +76,6 @@ class Tetris
     void loopGame();
 
 public:
-    Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Inputs inputs);
+    Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Utility &utility);
     void setPlayers(uint8_t numPlayers);
 };

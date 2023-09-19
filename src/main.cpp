@@ -6,7 +6,12 @@
                       // but ArduinoIDE installs the lastest version of the master branch
                       // only the latest version works, maybe consider manually adding library to project
 #include <SnakeGame.h>
+#include <Tetris.h>
 #include <Utility.h>
+
+// esp-idf extension in VSCode should have more functionality, but not sure if a lot of things will break vs PlatformIO
+// that should allow the commands to burn eFuses to be able to use GPIO (I think) 12
+// also heap tracing: https://github.com/espressif/vscode-esp-idf-extension/blob/HEAD/docs/tutorial/heap_tracing.md
 
 // Pins for LED MATRIX
 #define P_LAT 22
@@ -41,9 +46,9 @@ unsigned long loop_time = 0;
 Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
 SnakeGame *snakeGame; // display wouldn't work right if not defining this in setup()
-// SnakeGame snakeGame(utility, 1);
+Tetris *tetris;
 
-TaskHandle_t Task1;
+bool gameRunning = false;
 
 void IRAM_ATTR display_updater()
 {
@@ -101,7 +106,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 {
     uint8_t selected = 1;
     displaySelectMenu(items, num_items, selected);
-    
+
     while (true)
     {
         utility.inputs.update();
@@ -145,32 +150,40 @@ void setup()
     delay(2000);
     utility.setDisplay(display);
     // display.setFont(utility.fonts.tom);
-
-    selected_game = selectMenuItem(game_strings, num_games);
-    selected_players = selectMenuItem(player_strings, num_player_options);
-
-    if (selected_game == 1)
-    {
-        // set up Snake
-        // snake_game->setPlayers(selected_players);
-
-        snakeGame = new SnakeGame(utility, selected_players);
-        delay(500);
-    }
-    else if (selected_game == 2)
-    {
-        // set up Tetris
-    }
 }
 
 void loop()
 {
-    // snakeGame.loopGame();
-    snakeGame->loopGame();
+    if (!gameRunning)
+    {
+        selected_game = selectMenuItem(game_strings, num_games);
+        selected_players = selectMenuItem(player_strings, num_player_options);
+
+        if (selected_game == 1)
+        {
+            snakeGame = new SnakeGame(utility, selected_players);
+            gameRunning = true;
+        }
+        else if (selected_game == 2)
+        {
+            // set up Tetris
+        }
+    }
+    else // game is running
+    {
+        if (selected_game == 1)
+        {
+            gameRunning = snakeGame->loopGame();
+        }
+        else if (selected_game == 2)
+        {
+            // loop Tetris
+        }
+    }
 }
 
-// possibility to separate display from the Game files: game source code compiles a list/array of points (with colors) to draw and passes
-// that back to loop function
+// possibility to separate display from the Game files: game source code compiles a list/array of points (with colors) to draw
+// and passes that back to loop function
 // Point drawPoints[] = snakeGame.loopGame();       //couldn't actually be an array cuz of set size unless it contains all points in matrix
 // for (Point p : drawPoints)
 // {
