@@ -17,7 +17,7 @@ private:
     {
     private:
         static constexpr uint8_t START_PIN = 27; // need a button!
-        static constexpr uint8_t A_P1_PIN = 36;
+        static constexpr uint8_t A_P1_PIN = 36;  // might have an issue with this button (external pull-up)
         static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
@@ -84,11 +84,12 @@ private:
                 inputs_vals_prev[i] = *inputs_current[i];
                 *inputs_current[i] = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
 
-                if (*inputs_current[i] == true && inputs_vals_prev[i] == false && (millis() - lastPress > 50))
+                if (*inputs_current[i] == true && inputs_vals_prev[i] == false && (millis() - lastPress > 50)) // 50ms debounce
                 {
                     *inputs_new_press[i] = true;
                     Serial.println("button pressed");
-                    lastPress = millis(); // TODO: this should be per button...maybe 1 for all directions
+                    lastPress = millis(); // TODO: this should be per button, currently 1 press blocks inputs checks for all other
+                                          // buttons for 50ms...maybe 1 for all 4 directions
                 }
                 else
                 {
@@ -124,18 +125,40 @@ private:
         const GFXfont *org = &Org_01;
     };
 
+    class Colors
+    {
+    public:
+        uint16_t red;
+        uint16_t green;
+        uint16_t blue;
+        uint16_t white;
+        uint16_t yellow;
+        uint16_t cyan;
+        uint16_t magenta;
+        uint16_t black;
+    };
+
 public:
     Utility(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX &display) : MATRIX_WIDTH(MATRIX_WIDTH),
                                                                               MATRIX_HEIGHT(MATRIX_HEIGHT),
                                                                               display(display)
     {
+        colors.red = display.color565(255, 0, 0);
+        colors.green = display.color565(0, 255, 0);
+        colors.blue = display.color565(0, 0, 255);
+        colors.white = display.color565(255, 255, 255);
+        colors.yellow = display.color565(255, 255, 0);
+        colors.cyan = display.color565(0, 255, 255);
+        colors.magenta = display.color565(255, 0, 255);
+        colors.black = display.color565(0, 0, 0);
     }
-    Inputs inputs;
-    Fonts fonts; // TODO: add colors here to share
-
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     PxMATRIX display;
+
+    Inputs inputs;
+    Fonts fonts;
+    Colors colors;
 
     void setDisplay(PxMATRIX d)
     {

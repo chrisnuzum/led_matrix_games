@@ -27,7 +27,7 @@
 //    T: pink
 //    Z: red
 // "bag" of all seven pieces is randomly ordered from the start
-// this ensures that bad pieces are continuously drawn in a row repeatedly
+// this ensures that a streak of bad pieces does not occur
 
 // as a piece falls (no input):
 //   check to see that each spot under the piece is not occupied
@@ -38,7 +38,8 @@
 // when a rotate is requested:
 //   check rotation table for desired position of piece
 //   if good > display the rotation immediately
-//   if rotation won't fit to left(right) > try rotated position shifted 1 to the right(left)
+//   if rotation won't fit to left(or right) > try rotated position shifted 1 to the right(or left)
+//   to kick off of the sides most pieces would only need to shift 1, but I piece could need to shift 2
 //   if not good, rotation fails (could try shifting piece up or down like the kick tables)
 
 Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Utility &utility) : MATRIX_WIDTH(MATRIX_WIDTH),
@@ -65,15 +66,6 @@ Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Ut
     {
         
     }
-
-    c_red = display.color565(255, 0, 0);
-    c_green = display.color565(0, 255, 0);
-    c_blue = display.color565(0, 0, 255);
-    c_white = display.color565(255, 255, 255);
-    c_yellow = display.color565(255, 255, 0);
-    c_cyan = display.color565(0, 255, 255);
-    c_magenta = display.color565(255, 0, 255);
-    c_black = display.color565(0, 0, 0);
 }
 
 void Tetris::setPlayers(uint8_t numPlayers)

@@ -56,15 +56,6 @@ class Tetris
 
     uint8_t numPlayers;
 
-    uint16_t c_red;
-    uint16_t c_green;
-    uint16_t c_blue;
-    uint16_t c_white;
-    uint16_t c_yellow;
-    uint16_t c_cyan;
-    uint16_t c_magenta;
-    uint16_t c_black;
-
     bool paused;
     bool lastTempState;
     bool doPauseToggle;

@@ -45,8 +45,8 @@ unsigned long loop_time = 0;
 
 Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
-SnakeGame *snakeGame; // display wouldn't work right if not defining this in setup()
-Tetris *tetris;
+SnakeGame *snakeGame = nullptr; // display wouldn't work right if not defining this in setup()
+Tetris *tetris = nullptr;
 
 bool gameRunning = false;
 
@@ -78,7 +78,7 @@ const char *game_strings[] = {"Snake", "Tetris"};
 uint8_t num_games = 2;
 const char *player_strings[] = {"1 Player", "2 Players"};
 uint8_t num_player_options = 2;
-uint8_t selected = 1;
+// uint8_t selected = 1;
 uint8_t selected_game = 1;
 uint8_t selected_players = 1;
 
@@ -138,7 +138,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 
 void setup()
 {
-    // Serial.begin(115200);
+    Serial.begin(115200);
     Serial.println("Serial connection started");
 
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
@@ -161,7 +161,12 @@ void loop()
 
         if (selected_game == 1)
         {
-            snakeGame = new SnakeGame(utility, selected_players);
+            if (snakeGame == nullptr)
+            {
+                snakeGame = new SnakeGame(utility, selected_players);
+            }
+            snakeGame->setPlayers(selected_players);
+            snakeGame->justStarted = true;
             gameRunning = true;
         }
         else if (selected_game == 2)
@@ -188,14 +193,6 @@ void loop()
 // for (Point p : drawPoints)
 // {
 //  display.drawPixel(p.x, p.y, p.color);
-// }
-
-// void displayFPS()
-// {
-//     display.setTextColor(c_white);
-//     display.setCursor(1, 1);
-//     display.setFont();
-//     display.print(fps);
 // }
 
 // void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text, uint8_t colorR, uint8_t colorG, uint8_t colorB) {
