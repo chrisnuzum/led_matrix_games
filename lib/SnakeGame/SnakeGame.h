@@ -5,6 +5,7 @@
 #include <LinkedList.h>
 #include <PxMatrix.h>
 #include <Utility.h>
+#include <BaseGame.h>
 /*
 Changes:
 Right now if both snakes reach apple at the same time, only P1 gets it.
@@ -12,7 +13,7 @@ Right now if both snakes reach apple at the same time, only P1 gets it.
     clicking and releasing a direction not doing anything on slow speeds.
     Not sure if this would need to be implemented in Utility code or here...
 In 2-player snakes should be different color.
-Add a frame around the outside with score showing the whole time. Announce the winner at the end.
+Announce the winner at the end.
 
 Ideas:
 Multiple apples at a time (maybe only in 2-player).
@@ -36,13 +37,13 @@ struct Point
     }
 };
 
-class SnakeGame
+class SnakeGame : public BaseGame
 {
 public:
     SnakeGame(Utility &utility, uint8_t numPlayers);
     void setPlayers(uint8_t players);
-    bool justStarted;
     bool loopGame();
+    bool justStarted;
 
 private:
     enum direction
@@ -72,33 +73,29 @@ private:
         Point getNextPosition();
     };
 
-    const uint8_t MATRIX_WIDTH;
-    const uint8_t MATRIX_HEIGHT;
+    // const uint8_t MATRIX_WIDTH;
+    // const uint8_t MATRIX_HEIGHT;
     const uint8_t FRAME_X_MIN;
     const uint8_t FRAME_X_MAX;
     const uint8_t FRAME_Y_MIN;
     const uint8_t FRAME_Y_MAX;
 
-    PxMATRIX display;
-    Utility *utility; // this has to be a pointer or inputs are unreliable, even when it is passed here as reference. not sure why
-    uint8_t numPlayers;
-    // constexpr may save SRAM? but it wants them to be static and initialized here
+    // PxMATRIX display;
+    // Utility *utility; 
+    // uint8_t numPlayers;
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
-    uint16_t RESET_DELAY;
+    // uint16_t GAME_OVER_DELAY;
 
-    uint8_t updateDelay;
+    // uint8_t updateDelay;
 
-    unsigned long msCurrent;
-    unsigned long msPrevious;
+    // unsigned long msCurrent;
+    // unsigned long msPrevious;
 
-    bool paused;
+    // bool paused;
 
-    // Snake snakeP1{1, 64, 64};
-    // Snake snakeP2{2, 64, 64};
-    // Snake* snakes[2] = {&snakeP1, &snakeP2};
-    Snake *snakes[2] = {nullptr};
+    Snake *snakes[2] = {nullptr};   // probably need a destructor to clear this out when switching games
 
     Point applePosition;
 

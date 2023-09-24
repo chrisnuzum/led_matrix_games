@@ -161,7 +161,7 @@ void loop()
 
         if (selected_game == 1)
         {
-            if (snakeGame == nullptr)
+            if (snakeGame == nullptr)   // if game has switched, maybe set previous game to nullptr to conserve RAM
             {
                 snakeGame = new SnakeGame(utility, selected_players);
             }

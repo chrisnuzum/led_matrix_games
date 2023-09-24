@@ -50,7 +50,7 @@ Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Ut
     MIN_DELAY = 10;
     MAX_DELAY = 255; // max value for uint8_t
     SPEED_LOSS = 5;
-    RESET_DELAY = 10000;
+    GAME_OVER_DELAY = 10000;
 
     gameDelay = MAX_DELAY;
 

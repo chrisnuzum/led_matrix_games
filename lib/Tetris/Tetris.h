@@ -50,7 +50,7 @@ class Tetris
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
-    uint16_t RESET_DELAY;
+    uint16_t GAME_OVER_DELAY;
 
     uint8_t gameDelay;
 

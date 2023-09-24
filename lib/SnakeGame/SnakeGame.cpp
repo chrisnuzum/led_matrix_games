@@ -83,12 +83,12 @@ Point SnakeGame::getNewApplePosition()
 
     return Point(x, y);
 }
-
-SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utility.MATRIX_WIDTH),
-                                                              MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
-                                                              utility(&utility),
-                                                              numPlayers(numPlayers),
-                                                              display(utility.display),
+//                                                               utility(&utility),
+//                                                               display(utility.display),
+//                                                               MATRIX_WIDTH(utility.MATRIX_WIDTH),
+//                                                               MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
+//                                                               numPlayers(numPlayers),
+SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility, numPlayers},
                                                               FRAME_X_MIN(1),                        // 1
                                                               FRAME_X_MAX(utility.MATRIX_WIDTH - 2), // 62
                                                               FRAME_Y_MIN(3),                        // 3
@@ -97,7 +97,7 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : MATRIX_WIDTH(utili
     MIN_DELAY = 10;
     MAX_DELAY = 200; // max value for uint8_t is 255
     SPEED_LOSS = 10;
-    RESET_DELAY = 10000;
+    GAME_OVER_DELAY = 10000;
 
     updateDelay = MAX_DELAY;
 
@@ -183,7 +183,7 @@ void SnakeGame::drawFrame()
     display.drawRect(FRAME_X_MIN - 1, FRAME_Y_MIN - 1, width, height, paused ? utility->colors.yellow : utility->colors.red);
 }
 
-void SnakeGame::drawScore()
+void SnakeGame::drawScore() // TODO: make this more readable by converting groups of 5 to 1 pixel of a different color?
 {
     for (int i = 0; i < numPlayers; i++)
     {
@@ -323,7 +323,7 @@ void SnakeGame::gameOver()
     resetApple();
     updateDelay = MAX_DELAY;
 
-    delay(RESET_DELAY);
+    delay(GAME_OVER_DELAY);
 }
 
 bool SnakeGame::loopGame()

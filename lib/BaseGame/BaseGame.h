@@ -15,21 +15,23 @@ public:
                                                      numPlayers(numPlayers)
     {
     }
-    virtual bool loopGame();
+    virtual void setPlayers(uint8_t players)
+    {
+        numPlayers = players;
+    };
+    virtual bool loopGame() = 0;
 
 protected:
-    Utility *utility;
+    Utility *utility; // this has to be a pointer or inputs are unreliable, even when it is passed here as reference. not sure why
     PxMATRIX display;
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     uint8_t numPlayers;
 
-    uint16_t RESET_DELAY;
-
     uint8_t updateDelay;
     unsigned long msCurrent;
     unsigned long msPrevious;
-
+    uint16_t GAME_OVER_DELAY;
     bool paused;
 };
 
