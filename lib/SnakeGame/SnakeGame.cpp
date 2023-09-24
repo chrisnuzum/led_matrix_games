@@ -13,6 +13,7 @@ SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX
 
 {
     score = 0;
+    lastDirection = UP;
     currentDirection = UP;
     segments = LinkedList<Point>();
     Point p = getInitialPosition();
@@ -21,9 +22,9 @@ SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX
 
 bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)
 {
-    for (int i = 0; i < segments.size(); i++)
-    {
-        if (segments.get(i).isEqual(x, y))
+    for (int i = 0; i < segments.size() - 1; i++) // ignores tail segment because that will be in a different place
+    {                                             // if adding snake collision this should be changed because when getting apple the
+        if (segments.get(i).isEqual(x, y))        // tail isn't deleted
         {
             return true;
         }
@@ -62,6 +63,12 @@ Point SnakeGame::Snake::getNextPosition()
     }
 }
 
+void SnakeGame::Snake::setColors(uint16_t color, uint16_t colorPaused)
+{
+    this->color = color;
+    this->colorPaused = colorPaused;
+}
+
 Point SnakeGame::getNewApplePosition()
 {
     int x, y;
@@ -83,11 +90,7 @@ Point SnakeGame::getNewApplePosition()
 
     return Point(x, y);
 }
-//                                                               utility(&utility),
-//                                                               display(utility.display),
-//                                                               MATRIX_WIDTH(utility.MATRIX_WIDTH),
-//                                                               MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
-//                                                               numPlayers(numPlayers),
+
 SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility, numPlayers},
                                                               FRAME_X_MIN(1),                        // 1
                                                               FRAME_X_MAX(utility.MATRIX_WIDTH - 2), // 62
@@ -110,6 +113,14 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility, 
     for (int i = 0; i < numPlayers; i++)
     {
         snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX);
+        if (i == 0)
+        {
+            snakes[i]->setColors(utility.colors.orange, utility.colors.red); // why utility. and not utility-> ??
+        }
+        else if (i == 1)
+        {
+            snakes[i]->setColors(utility.colors.purple, utility.colors.pink);
+        }
     }
 
     applePosition = getNewApplePosition();
@@ -123,6 +134,14 @@ void SnakeGame::setPlayers(uint8_t players)
         if (snakes[i] == nullptr)
         {
             snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX);
+            if (i == 0)
+            {
+                snakes[i]->setColors(utility->colors.orange, utility->colors.red);
+            }
+            else if (i == 1)
+            {
+                snakes[i]->setColors(utility->colors.purple, utility->colors.pink);
+            }
         }
     }
 }
@@ -156,19 +175,19 @@ void SnakeGame::updateSnakeDirections()
         }
 
         // prevents moving back against yourself, also favors switching directions if 2 directions are held simultaneously
-        if (_up && s->currentDirection != UP && s->currentDirection != DOWN)
+        if (_up && s->lastDirection != UP && s->lastDirection != DOWN)
         {
             s->currentDirection = UP;
         }
-        else if (_down && s->currentDirection != DOWN && s->currentDirection != UP)
+        else if (_down && s->lastDirection != DOWN && s->lastDirection != UP)
         {
             s->currentDirection = DOWN;
         }
-        else if (_right && s->currentDirection != RIGHT && s->currentDirection != LEFT)
+        else if (_right && s->lastDirection != RIGHT && s->lastDirection != LEFT)
         {
             s->currentDirection = RIGHT;
         }
-        else if (_left && s->currentDirection != LEFT && s->currentDirection != RIGHT)
+        else if (_left && s->lastDirection != LEFT && s->lastDirection != RIGHT)
         {
             s->currentDirection = LEFT;
         }
@@ -219,7 +238,7 @@ void SnakeGame::drawSnakes()
         for (int i = 0; i < s->segments.size(); i++)
         {
             Point p = s->segments.get(i);
-            display.drawPixel(p.x, p.y, paused ? utility->colors.blue : utility->colors.green);
+            display.drawPixel(p.x, p.y, paused ? s->colorPaused : s->color);
         }
     }
 }
@@ -287,37 +306,43 @@ void SnakeGame::gameOver()
     display.setTextColor(utility->colors.cyan);
     display.setFont();
     display.setCursor(1, 1);
+
+    if (numPlayers == 2)
+    {
+        display.setFont(utility->fonts.org);
+        uint8_t scores[2];
+
+        for (int i = 0; i < numPlayers; i++)
+        {
+            Snake *s = snakes[i];
+            scores[i] = s->score;
+        }
+        if (scores[0] > scores[1])
+        {
+            display.print("Player 1 wins!");
+        }
+        else if (scores[0] > scores[1])
+        {
+            display.print("Player 2 wins!");
+        }
+        else
+        {
+            display.print("It's a draw!");
+        }
+    }
+
+    display.setFont();
+
     for (int i = 0; i < numPlayers; i++)
     {
         Snake *s = snakes[i];
 
-        display.setCursor(1, (s->player - 1) * 8 + 1);
+        display.setCursor(1, (s->player) * 8 + 1);
         display.print("P");
         display.print(s->player);
         display.print(": ");
         display.print(s->score);
     }
-
-    // display.print("SCORE:");
-    // display.print(score);
-    // display.setFont(utility.fonts.tiny);
-    // display.setCursor(1, 12);
-    // display.print("SCORE:");
-    // display.print(score);
-    // display.setFont(utility.fonts.tom); // 2 shorter
-    // display.setCursor(1, 20);
-    // display.print("SCORE:");
-    // display.print(score);
-    // display.setFont(utility.fonts.org); // 1
-    // display.setCursor(1, 28);
-    // display.print("SCORE:");
-    // display.print(score);
-    // display.setFont(utility.fonts.pico);
-    // display.setCursor(1, 35);
-    // display.print("SCORE:");
-    // display.print(score);
-
-    // use SPIFFS to store a high score file
 
     resetSnakes();
     resetApple();
@@ -338,13 +363,15 @@ bool SnakeGame::loopGame()
         justStarted = false;
     }
     checkForPause();
+    updateSnakeDirections();
 
     if (!paused)
     {
         msCurrent = millis();
         if ((msCurrent - msPrevious) > updateDelay)
         {
-            updateSnakeDirections();
+            // updateSnakeDirections();
+            bool snakeGotApple = false;
             bool snakeCollision = false;
 
             for (int i = 0; i < numPlayers; i++)
@@ -355,13 +382,12 @@ bool SnakeGame::loopGame()
                 if (s->isNextPointValid(nextPoint))
                 {
                     s->segments.add(0, nextPoint);
+                    s->lastDirection = s->currentDirection;
 
-                    // check if snake got the apple
-                    if (applePosition.isEqual(nextPoint.x, nextPoint.y))
+                    if (applePosition.isEqual(nextPoint.x, nextPoint.y)) // check if snake got the apple
                     {
                         s->score++;
-                        resetApple();
-                        increaseSpeed();
+                        snakeGotApple = true;
                     }
                     else
                     {
@@ -370,17 +396,25 @@ bool SnakeGame::loopGame()
                 }
                 else // snake has hit something
                 {
-                    if (numPlayers == 2 && s->score - 3 >= 0)
+                    if (numPlayers == 2)
                     {
-                        s->score -= 3;
+                        if (s->score - 3 >= 0)
+                        {
+                            s->score -= 3;
+                        }
+                        else
+                        {
+                            s->score = 0;
+                        }
                     }
-                    else if (numPlayers != 1)
-                    {
-                        s->score = 0;
-                    }
-
                     snakeCollision = true;
                 }
+            }
+
+            if (snakeGotApple)
+            {
+                resetApple();
+                increaseSpeed();
             }
 
             if (snakeCollision)
@@ -407,3 +441,22 @@ bool SnakeGame::loopGame()
 //    when popping a snake segment clear that pixel
 //    when adding a segment draw it
 //    when new apple is made draw it
+
+// display.print("SCORE:");
+// display.print(score);
+// display.setFont(utility.fonts.tiny);
+// display.setCursor(1, 12);
+// display.print("SCORE:");
+// display.print(score);
+// display.setFont(utility.fonts.tom); // 2 shorter
+// display.setCursor(1, 20);
+// display.print("SCORE:");
+// display.print(score);
+// display.setFont(utility.fonts.org); // 1
+// display.setCursor(1, 28);
+// display.print("SCORE:");
+// display.print(score);
+// display.setFont(utility.fonts.pico);
+// display.setCursor(1, 35);
+// display.print("SCORE:");
+// display.print(score);

@@ -8,19 +8,16 @@
 #include <BaseGame.h>
 /*
 Changes:
-Right now if both snakes reach apple at the same time, only P1 gets it.
-"Buffer" direction changes. This would prevent the situation of quickly
-    clicking and releasing a direction not doing anything on slow speeds.
-    Not sure if this would need to be implemented in Utility code or here...
-In 2-player snakes should be different color.
-Announce the winner at the end.
+-Make winner message indicate the position of the player with an arrow.
 
 Ideas:
-Multiple apples at a time (maybe only in 2-player).
-Obstacles?
-Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
+-Multiple apples at a time (maybe only in 2-player)
+-Maybe allow either player to initiate a 1-player game, with it selecting the proper controls depending on the button pushed?
+-Obstacles?
+-Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
     Would have to check if only the head of the snake got the apple (currently the case)
-Should snakes collide?
+-Should snakes collide? If this is added, change occupiesPoint() [see note on that function]
+-Use SPIFFS to store a high score file
 
 */
 struct Point
@@ -63,37 +60,28 @@ private:
 
     public:
         Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX, uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX);
-        uint8_t player;
+        const uint8_t player;
         uint8_t score;
-        LinkedList<Point> segments;
+        uint16_t color;
+        uint16_t colorPaused;
+        direction lastDirection;
         direction currentDirection;
+        LinkedList<Point> segments;
         Point getInitialPosition();
         bool occupiesPoint(const int &x, const int &y);
         bool isNextPointValid(const Point &p);
         Point getNextPosition();
+        void setColors(uint16_t color, uint16_t colorPaused);
     };
 
-    // const uint8_t MATRIX_WIDTH;
-    // const uint8_t MATRIX_HEIGHT;
     const uint8_t FRAME_X_MIN;
     const uint8_t FRAME_X_MAX;
     const uint8_t FRAME_Y_MIN;
     const uint8_t FRAME_Y_MAX;
 
-    // PxMATRIX display;
-    // Utility *utility; 
-    // uint8_t numPlayers;
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
-    // uint16_t GAME_OVER_DELAY;
-
-    // uint8_t updateDelay;
-
-    // unsigned long msCurrent;
-    // unsigned long msPrevious;
-
-    // bool paused;
 
     Snake *snakes[2] = {nullptr};   // probably need a destructor to clear this out when switching games
 

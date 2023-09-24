@@ -128,13 +128,26 @@ private:
     class Colors
     {
     public:
+        uint16_t redLight;
         uint16_t red;
-        uint16_t green;
-        uint16_t blue;
-        uint16_t white;
+        uint16_t redDark;
+        uint16_t orange;
         uint16_t yellow;
+        uint16_t greenYellow;
+        uint16_t greenLight;
+        uint16_t green;
+        uint16_t greenDark;
+        uint16_t greenCyan;
         uint16_t cyan;
+        uint16_t cyanBlue;
+        uint16_t blueLight;
+        uint16_t blue;
+        uint16_t blueDark;
+        uint16_t purple;
         uint16_t magenta;
+        uint16_t pink;
+        uint16_t white;
+        uint16_t gray;
         uint16_t black;
     };
 
@@ -143,13 +156,26 @@ public:
                                                                               MATRIX_HEIGHT(MATRIX_HEIGHT),
                                                                               display(display)
     {
+        colors.redLight = display.color565(255, 140, 140);
         colors.red = display.color565(255, 0, 0);
-        colors.green = display.color565(0, 255, 0);
-        colors.blue = display.color565(0, 0, 255);
-        colors.white = display.color565(255, 255, 255);
+        colors.redDark = display.color565(180, 0, 0);
+        colors.orange = display.color565(255, 128, 0);
         colors.yellow = display.color565(255, 255, 0);
+        colors.greenYellow = display.color565(128, 255, 0);
+        colors.greenLight = display.color565(140, 255, 140);
+        colors.green = display.color565(0, 255, 0);
+        colors.greenDark = display.color565(0, 180, 0);
+        colors.greenCyan = display.color565(0, 255, 128);
         colors.cyan = display.color565(0, 255, 255);
+        colors.cyanBlue = display.color565(0, 128, 255);
+        colors.blueLight = display.color565(140, 140, 255);
+        colors.blue = display.color565(0, 0, 255);        
+        colors.blueDark = display.color565(0, 0, 180);
+        colors.purple = display.color565(128, 0, 255);
         colors.magenta = display.color565(255, 0, 255);
+        colors.pink = display.color565(255, 0, 128);
+        colors.white = display.color565(255, 255, 255);
+        colors.gray = display.color565(128, 128, 128);
         colors.black = display.color565(0, 0, 0);
     }
     const uint8_t MATRIX_WIDTH;
