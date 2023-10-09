@@ -74,8 +74,8 @@ void display_update_enable(bool is_enable)
     }
 }
 
-const char *game_strings[] = {"Snake", "Tetris"};
-uint8_t num_games = 2;
+const char *game_strings[] = {"SNAKE", "TETRIS", "", ""};
+uint8_t num_games = 4;
 const char *player_strings[] = {"1 Player", "2 Players"};
 uint8_t num_player_options = 2;
 // uint8_t selected = 1;
@@ -87,7 +87,7 @@ void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
     display.clearDisplay(); // could check if items and selected are the same as previous instead of clearing every time
     for (int i = 0; i < num_items; i++)
     {
-        display.setCursor(1, (i * 8) + 2);
+        display.setCursor(1, (i * 6) + 5);
         if ((i + 1) == selected)
         {
             display.setTextColor(c_white);
@@ -96,7 +96,7 @@ void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
         else
         {
             display.setTextColor(c_cyan);
-            display.print(" ");
+            display.print("  ");
         }
         display.print(items[i]);
     }
@@ -138,7 +138,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 
 void setup()
 {
-    Serial.begin(115200);
+    // Serial.begin(115200);    //  Serial being active slows down main loop a lot
     Serial.println("Serial connection started");
 
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
@@ -148,12 +148,12 @@ void setup()
     display.clearDisplay();
     display_update_enable(true);
     delay(2000);
-    utility.setDisplay(display);
-    // display.setFont(utility.fonts.tom);
+    utility.setDisplay(display);            // is this necessary? maybe needs re-set after the update_enable?
+    display.setFont(utility.fonts.my5x5round);
 }
 
 void loop()
-{
+{                   // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
     if (!gameRunning)
     {
         selected_game = selectMenuItem(game_strings, num_games);

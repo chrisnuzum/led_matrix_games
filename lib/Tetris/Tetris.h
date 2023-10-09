@@ -2,6 +2,7 @@
 #include <LinkedList.h>
 #include <PxMatrix.h>
 #include <Utility.h>
+#include <BaseGame.h>
 
 struct TetrisPiece
 {
@@ -40,33 +41,19 @@ struct TetrisPiece
 
 };
 
-class Tetris
+class Tetris : public BaseGame
 {
-    uint8_t MATRIX_WIDTH;
-    uint8_t MATRIX_HEIGHT;
-    PxMATRIX display;
-    Utility *utility;
-    // constexpr may save SRAM? but it wants them to be static and initialized here
+public:
+    Tetris(Utility &utility, uint8_t numPlayers);
+    void setPlayers(uint8_t players);
+    bool loopGame();
+    bool justStarted;
+
+private:
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
-    uint16_t GAME_OVER_DELAY;
 
-    uint8_t gameDelay;
-
-    uint8_t numPlayers;
-
-    bool paused;
-    bool lastTempState;
-    bool doPauseToggle;
-    unsigned long lastDebounceTime;
     void checkForPause();
 
-    unsigned long msCurrent;
-    unsigned long msPrevious;
-    void loopGame();
-
-public:
-    Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Utility &utility);
-    void setPlayers(uint8_t numPlayers);
 };

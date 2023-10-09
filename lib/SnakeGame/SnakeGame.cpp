@@ -148,7 +148,7 @@ void SnakeGame::setPlayers(uint8_t players)
 
 void SnakeGame::updateSnakeDirections()
 {
-    utility->inputs.update();
+    // utility->inputs.update();
 
     for (int i = 0; i < numPlayers; i++)
     {
@@ -159,22 +159,42 @@ void SnakeGame::updateSnakeDirections()
         bool _left;
         bool _right;
 
+        // if (s->player == 1)
+        // {
+        //     utility->inputs.update2(utility->inputs.pins.p1Directions);
+        //     _up = utility->inputs.UP_P1;
+        //     _down = utility->inputs.DOWN_P1;
+        //     _left = utility->inputs.LEFT_P1;
+        //     _right = utility->inputs.RIGHT_P1;
+        // }
+        // else if (s->player == 2)
+        // {
+        //     utility->inputs.update2(utility->inputs.pins.p2Directions);
+        //     _up = utility->inputs.UP_P2;
+        //     _down = utility->inputs.DOWN_P2;
+        //     _left = utility->inputs.LEFT_P2;
+        //     _right = utility->inputs.RIGHT_P2;
+        // }
+
         if (s->player == 1)
         {
-            _up = utility->inputs.UP_P1_active;
-            _down = utility->inputs.DOWN_P1_active;
-            _left = utility->inputs.LEFT_P1_active;
-            _right = utility->inputs.RIGHT_P1_active;
+            utility->inputs.update2(utility->inputs.pins.p1Directions);
+            _up = utility->inputs.UP_P1_pressed;
+            _down = utility->inputs.DOWN_P1_pressed;
+            _left = utility->inputs.LEFT_P1_pressed;
+            _right = utility->inputs.RIGHT_P1_pressed;
         }
         else if (s->player == 2)
         {
-            _up = utility->inputs.UP_P2_active;
-            _down = utility->inputs.DOWN_P2_active;
-            _left = utility->inputs.LEFT_P2_active;
-            _right = utility->inputs.RIGHT_P2_active;
+            utility->inputs.update2(utility->inputs.pins.p2Directions);
+            _up = utility->inputs.UP_P2_pressed;
+            _down = utility->inputs.DOWN_P2_pressed;
+            _left = utility->inputs.LEFT_P2_pressed;
+            _right = utility->inputs.RIGHT_P2_pressed;
         }
 
         // prevents moving back against yourself, also favors switching directions if 2 directions are held simultaneously
+        // turning around at fast speeds is janky because of holding down 2 directions for a split second
         if (_up && s->lastDirection != UP && s->lastDirection != DOWN)
         {
             s->currentDirection = UP;
@@ -253,7 +273,7 @@ void SnakeGame::increaseSpeed()
 
 void SnakeGame::checkForPause()
 {
-    utility->inputs.update();
+    utility->inputs.update2(utility->inputs.pins.startButton);
 
     if (utility->inputs.START)
     {
@@ -309,7 +329,7 @@ void SnakeGame::gameOver()
 
     if (numPlayers == 2)
     {
-        display.setFont(utility->fonts.org);
+        display.setFont(utility->fonts.my5x5boxy);
         uint8_t scores[2];
 
         for (int i = 0; i < numPlayers; i++)
@@ -362,17 +382,24 @@ bool SnakeGame::loopGame()
         delay(1000);
         justStarted = false;
     }
+    bool tPaused = paused;
     checkForPause();
-    updateSnakeDirections();
+    if (tPaused != paused)
+    {
+        Serial.print("pause state changed! paused = ");
+        Serial.println(paused);
+    }
+
 
     if (!paused)
     {
+        updateSnakeDirections();
         msCurrent = millis();
         if ((msCurrent - msPrevious) > updateDelay)
         {
             // updateSnakeDirections();
-            bool snakeGotApple = false;
-            bool snakeCollision = false;
+            bool snakeGotApple = false;  // would it better if these were declared outside of the loop? so it isn't
+            bool snakeCollision = false; // allocating new memory every time the loop runs
 
             for (int i = 0; i < numPlayers; i++)
             {

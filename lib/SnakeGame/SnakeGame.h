@@ -2,7 +2,7 @@
 #define _snake_
 
 #include "Arduino.h"
-#include <LinkedList.h>
+#include <LinkedList.h> // https://www.etlcpp.com/home.html     std::list? std::vector?
 #include <PxMatrix.h>
 #include <Utility.h>
 #include <BaseGame.h>
@@ -43,14 +43,6 @@ public:
     bool justStarted;
 
 private:
-    enum direction
-    {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT
-    };
-
     class Snake
     {
         const uint8_t FRAME_X_MIN;

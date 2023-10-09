@@ -42,25 +42,20 @@
 //   to kick off of the sides most pieces would only need to shift 1, but I piece could need to shift 2
 //   if not good, rotation fails (could try shifting piece up or down like the kick tables)
 
-Tetris::Tetris(uint8_t MATRIX_WIDTH, uint8_t MATRIX_HEIGHT, PxMATRIX display, Utility &utility) : MATRIX_WIDTH(MATRIX_WIDTH),
-                                                                                                     MATRIX_HEIGHT(MATRIX_HEIGHT),
-                                                                                                     display(display),
-                                                                                                     utility(&utility)
+Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility, numPlayers}
 {
     MIN_DELAY = 10;
-    MAX_DELAY = 255; // max value for uint8_t
+    MAX_DELAY = 255; // max value for uint8_t is 255
     SPEED_LOSS = 5;
     GAME_OVER_DELAY = 10000;
 
-    gameDelay = MAX_DELAY;
+    updateDelay = MAX_DELAY;
 
     msCurrent = 0;
     msPrevious = 0;
-    lastDebounceTime = 0;
 
     paused = false;
-    lastTempState = HIGH;
-    doPauseToggle = false;
+    justStarted = true;
 
     for (int i = 0; i < numPlayers; i++)
     {
@@ -75,31 +70,18 @@ void Tetris::setPlayers(uint8_t numPlayers)
 
 void Tetris::checkForPause()
 {
-    utility->inputs.update();
-    bool tempState = utility->inputs.START;
-    if (tempState)
+        utility->inputs.update();
+
+    if (utility->inputs.START)
     {
-        if (!lastTempState)
-        {
-            lastDebounceTime = millis();
-            doPauseToggle = true;
-        }
-        if (millis() - lastDebounceTime > 50 && doPauseToggle)
-        {
-            paused = !paused;
-            Serial.print("Paused: ");
-            Serial.println(paused);
-            display.clearDisplay();
-            // drawSnakes();
-            // drawApple();
-            msPrevious = millis();
-            doPauseToggle = false;
-        }
+        paused = !paused;
+        display.clearDisplay();
+        // draw stuff
+        msPrevious = millis();
     }
-    lastTempState = tempState;
 }
 
-void Tetris::loopGame()
+bool Tetris::loopGame()
 {
     checkForPause();
 
@@ -107,4 +89,5 @@ void Tetris::loopGame()
     {
 
     }
+    return true;
 }

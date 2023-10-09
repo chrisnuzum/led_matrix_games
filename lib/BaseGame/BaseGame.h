@@ -7,7 +7,7 @@
 
 class BaseGame
 {
-public:
+public: // https://www.learncpp.com/cpp-tutorial/constructors-and-initialization-of-derived-classes/
     BaseGame(Utility &utility, uint8_t numPlayers) : utility(&utility),
                                                      display(utility.display),
                                                      MATRIX_WIDTH(utility.MATRIX_WIDTH),
@@ -17,9 +17,9 @@ public:
     }
     virtual void setPlayers(uint8_t players)
     {
-        numPlayers = players;
+        this->numPlayers = players;
     };
-    virtual bool loopGame() = 0;
+    virtual bool loopGame() = 0;    // https://www.geeksforgeeks.org/pure-virtual-functions-and-abstract-classes/#
 
 protected:
     Utility *utility; // this has to be a pointer or inputs are unreliable, even when it is passed here as reference. not sure why
@@ -33,6 +33,14 @@ protected:
     unsigned long msPrevious;
     uint16_t GAME_OVER_DELAY;
     bool paused;
+
+    enum direction
+    {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    };
 };
 
 #endif

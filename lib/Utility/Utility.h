@@ -2,23 +2,51 @@
 #define _inputsfonts_
 
 #include <Arduino.h>
+#include <vector>
 
 #include <PxMatrix.h>
 
-#include <Fonts/Picopixel.h>
-#include <Fonts/Tiny3x3a2pt7b.h>
-#include <Fonts/TomThumb.h>
-#include <Fonts/Org_01.h>
+#include <Fonts/Tiny3x3a2pt7b.h>        // 2-3 tall x 2-3 wide (most lowercase 2 wide, some 1px below baseline) (difficult to read)
+#include <Fonts/My3x4_4pt7b.h>
+#include <Fonts/My5x5round_4pt7b.h>
+#include <Fonts/My5x5boxy_4pt7b.h>
+#include <Fonts/Picopixel.h>    // 3-5 tall (lowercase 3-4) x 1-5 wide (most 3 wide, some 1px below baseline)
+#include <Fonts/TomThumb.h>     // 4-5 tall x 3 wide fixed (except lowercase i, some 1px below baseline) (pretty good for small space)
+#include <Fonts/Font4x5Fixed.h> // 4-5 tall x 1-4 wide (most 3 wide)
+#include <Fonts/Org_01.h>       // 4-5 tall x 1-5 wide (most 4 wide, some 1px below baseline) (boxy looking)
 
+/* potentially better fonts: https://github.com/robjen/GFX_fonts
+ first: https://www.pentacom.jp/pentacom/bitfontmaker2/
+ second: https://yal.cc/r/20/pixelfont/frombmf/       import bitfontmaker2 json, copy image into website,
+                                                        tile width: widest character
+                                                        tile height: includes descender
+                                                        offsets/separations: 1
+                                                        baseline x: 0
+                                                        baseline: height without descender
+                                                      figure out ascender/descender proportions,
+                                                      fill out/clear meta info (add _ to end of name)
+ third: convert any truetype font to AdafruitGFX: https://rop.nl/truetype2gfx/        change size to 4pt
+*/
+/*
+Notes:
+Currently, it checks for debounce when the button is pressed down. If the button is held down (initial bounces are ignored),
+then released after more than the debounce period (50ms), any bounces back to the pressed state aren't ignored. Might not be an issue
+unless the update() call happens to happen at the exact time of the bounce?
+Potential fixes:
+-Track each individual press and have a debounce period when it becomes unpressed. This would depend on the update() being called
+frequently enough, because if the button is released and then re-pressed in between updates(), the second press would be ignored.
+-Only accept a new press if it lasts a certain period of time? (~10ms?)
+
+*/
 class Utility
 {
 private:
-    class Inputs
+    class Inputs // ensure the same order of pins/buttons is used everywhere in this file
     {
     private:
         static constexpr uint8_t START_PIN = 27; // need a button!
-        static constexpr uint8_t A_P1_PIN = 36;  // might have an issue with this button (external pull-up)
-        static constexpr uint8_t B_P1_PIN = 27;
+        static constexpr uint8_t A_P1_PIN = 99;  // 36 // might have an issue with this button (external pull-up)
+        static constexpr uint8_t B_P1_PIN = 99;  // 27
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
         static constexpr uint8_t LEFT_P1_PIN = 25;
@@ -30,12 +58,51 @@ private:
         static constexpr uint8_t LEFT_P2_PIN = 2;
         static constexpr uint8_t RIGHT_P2_PIN = 0;
 
-        static constexpr uint8_t num_inputs = 13;
+        struct PINS
+        {
+            enum : uint8_t // probably not necessary
+            {
+                START_PIN = 27, // need a button!
+                A_P1_PIN = 99,  // 36 // has an issue with this button (external pull-up)
+                B_P1_PIN = 99,  // 27
+                UP_P1_PIN = 32,
+                DOWN_P1_PIN = 33,
+                LEFT_P1_PIN = 25,
+                RIGHT_P1_PIN = 26,
+                A_P2_PIN = 3,
+                B_P2_PIN = 21,
+                UP_P2_PIN = 4,
+                DOWN_P2_PIN = 17,
+                LEFT_P2_PIN = 2,
+                RIGHT_P2_PIN = 0
+            };
 
-        uint8_t ALL_PINS[num_inputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
-                                        A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
+            // no way to check the size of a passed array, so I'm adding it as first element
+            uint8_t p1Buttons[3] = {2, A_P1_PIN, B_P1_PIN};
+            uint8_t p1Directions[5] = {4, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN};
+            uint8_t p2Buttons[3] = {2, A_P2_PIN, B_P2_PIN};
+            uint8_t p2Directions[5] = {4, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
+            uint8_t startButton[2] = {1, START_PIN};
+        };
 
-        unsigned long lastPress = 0;
+        static constexpr uint8_t numInputs = 13;
+
+        uint8_t ALL_PINS[numInputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
+                                       A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
+
+        // unsigned long lastPress = 0;
+        unsigned long lastPress[numInputs] = {0};
+
+        bool *inputsNewPress[numInputs] = {&START, &A_P1, &B_P1, &UP_P1, &DOWN_P1, &LEFT_P1, &RIGHT_P1,
+                                           &A_P2, &B_P2, &UP_P2, &DOWN_P2, &LEFT_P2, &RIGHT_P2};
+
+        bool inputsValsPrev[numInputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
+
+        bool *pressed[numInputs] = {&START_pressed, &A_P1_pressed, &B_P1_pressed, &UP_P1_pressed, &DOWN_P1_pressed, &LEFT_P1_pressed, &RIGHT_P1_pressed,
+                                    &A_P2_pressed, &B_P2_pressed, &UP_P2_pressed, &DOWN_P2_pressed, &LEFT_P2_pressed, &RIGHT_P2_pressed};
+
+        bool lastPressed = false;
+        bool inputCurrent = false;
 
     public:
         Inputs()
@@ -50,54 +117,54 @@ private:
             }
         }
 
+        PINS pins; // probably not necessary
+
         // bools are ints, 8 bits in size. To pack them smaller to save space: https://forum.arduino.cc/t/bool-vs-boolean-again/136074/33
 
-        bool START = false, START_active = false;
-        bool A_P1 = false, A_P1_active = false;
-        bool B_P1 = false, B_P1_active = false;
-        bool UP_P1 = false, UP_P1_active = false;
-        bool DOWN_P1 = false, DOWN_P1_active = false;
-        bool LEFT_P1 = false, LEFT_P1_active = false;
-        bool RIGHT_P1 = false, RIGHT_P1_active = false;
-        bool A_P2 = false, A_P2_active = false;
-        bool B_P2 = false, B_P2_active = false;
-        bool UP_P2 = false, UP_P2_active = false;
-        bool DOWN_P2 = false, DOWN_P2_active = false;
-        bool LEFT_P2 = false, LEFT_P2_active = false;
-        bool RIGHT_P2 = false, RIGHT_P2_active = false;
+        bool START = false, START_pressed = false;
+        bool A_P1 = false, A_P1_pressed = false;
+        bool B_P1 = false, B_P1_pressed = false;
+        bool UP_P1 = false, UP_P1_pressed = false;
+        bool DOWN_P1 = false, DOWN_P1_pressed = false;
+        bool LEFT_P1 = false, LEFT_P1_pressed = false;
+        bool RIGHT_P1 = false, RIGHT_P1_pressed = false;
+        bool A_P2 = false, A_P2_pressed = false;
+        bool B_P2 = false, B_P2_pressed = false;
+        bool UP_P2 = false, UP_P2_pressed = false;
+        bool DOWN_P2 = false, DOWN_P2_pressed = false;
+        bool LEFT_P2 = false, LEFT_P2_pressed = false;
+        bool RIGHT_P2 = false, RIGHT_P2_pressed = false;
 
-        bool *inputs_new_press[num_inputs] = {&START, &A_P1, &B_P1, &UP_P1, &DOWN_P1, &LEFT_P1, &RIGHT_P1,
-                                              &A_P2, &B_P2, &UP_P2, &DOWN_P2, &LEFT_P2, &RIGHT_P2};
-
-        bool *inputs_current[num_inputs] = {&START_active, &A_P1_active, &B_P1_active, &UP_P1_active, &DOWN_P1_active, &LEFT_P1_active, &RIGHT_P1_active,
-                                            &A_P2_active, &B_P2_active, &UP_P2_active, &DOWN_P2_active, &LEFT_P2_active, &RIGHT_P2_active};
-
-        bool inputs_vals_prev[num_inputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
-
-        void update() // maybe buffer input, as in when a new input is detected it holds that value until a function call clears it
-        {             // this would help with Snake when it is slow at the beginning
+        void update() // should be able to update only certain inputs, so the "_active" variables are rarely required
+        {             // for instance, checking for pause (START) shouldn't find a new direction press
+                      // maybe pass in variable arguments of some (public) class type that refers to the pin numbers
+                      // this is called variadic arguments https://stackoverflow.com/questions/1657883/variable-number-of-arguments-in-c
+                      //
             String input_prev_string = "";
             String input_current_string = "";
             String input_new_string = "";
-            for (int i = 0; i < num_inputs; i++)
-            {
-                inputs_vals_prev[i] = *inputs_current[i];
-                *inputs_current[i] = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
 
-                if (*inputs_current[i] == true && inputs_vals_prev[i] == false && (millis() - lastPress > 50)) // 50ms debounce
+            for (int i = 0; i < numInputs; i++)
+            {
+                inputCurrent = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
+
+                *inputsNewPress[i] = false; // this should only ever be true for 1 update()
+
+                if (millis() - lastPress[i] > 50) // if debounce period (per input) has not passed don't bother looking for new press
                 {
-                    *inputs_new_press[i] = true;
-                    Serial.println("button pressed");
-                    lastPress = millis(); // TODO: this should be per button, currently 1 press blocks inputs checks for all other
-                                          // buttons for 50ms...maybe 1 for all 4 directions
+                    lastPressed = *pressed[i];
+                    *pressed[i] = inputCurrent ? true : false;
+
+                    if (!lastPressed && *pressed[i])
+                    {
+                        *inputsNewPress[i] = true;
+                        lastPress[i] = millis();
+                    }
+                    else if (lastPressed && !*pressed[i])
+                    {
+                        lastPress[i] = millis();
+                    }
                 }
-                else
-                {
-                    *inputs_new_press[i] = false;
-                }
-                input_prev_string += inputs_vals_prev[i];
-                input_current_string += *inputs_current[i];
-                input_new_string += *inputs_new_press[i];
             }
 
             if (false)
@@ -114,6 +181,51 @@ private:
                 }
             }
         };
+
+        void update2(uint8_t pinsToCheck[]) // allows to only check certain inputs
+        {
+            uint8_t sizeOfArray = pinsToCheck[0];
+
+            uint8_t count = 0;
+
+            for (int i = 0; i < numInputs; i++)
+            {
+                if (count < sizeOfArray)
+                {
+                    for (int j = 1; j <= sizeOfArray; j++)
+                    {
+                        if (ALL_PINS[i] == pinsToCheck[j])
+                        {
+                            inputCurrent = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
+
+                            *inputsNewPress[i] = false; // this should only ever be true for 1 update()
+
+                            if (millis() - lastPress[i] > 50) // if debounce period (per input) has not passed don't bother looking for new press
+                            {
+                                lastPressed = *pressed[i];
+                                *pressed[i] = inputCurrent ? true : false;
+
+                                if (!lastPressed && *pressed[i])
+                                {
+                                    *inputsNewPress[i] = true;
+                                    lastPress[i] = millis();
+                                }
+                                else if (lastPressed && !*pressed[i])
+                                {
+                                    lastPress[i] = millis();
+                                }
+                            }
+                            count++;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+        };
     };
 
     class Fonts
@@ -123,6 +235,10 @@ private:
         const GFXfont *tiny = &Tiny3x3a2pt7b;
         const GFXfont *tom = &TomThumb;
         const GFXfont *org = &Org_01;
+        const GFXfont *f4x5 = &Font4x5Fixed;
+        const GFXfont *my3x4 = &My3x4_4pt7b;
+        const GFXfont *my5x5round = &My5x5round_4pt7b;
+        const GFXfont *my5x5boxy = &My5x5boxy_4pt7b;
     };
 
     class Colors
@@ -169,7 +285,7 @@ public:
         colors.cyan = display.color565(0, 255, 255);
         colors.cyanBlue = display.color565(0, 128, 255);
         colors.blueLight = display.color565(140, 140, 255);
-        colors.blue = display.color565(0, 0, 255);        
+        colors.blue = display.color565(0, 0, 255);
         colors.blueDark = display.color565(0, 0, 180);
         colors.purple = display.color565(128, 0, 255);
         colors.magenta = display.color565(255, 0, 255);
