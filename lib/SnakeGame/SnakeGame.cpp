@@ -148,8 +148,6 @@ void SnakeGame::setPlayers(uint8_t players)
 
 void SnakeGame::updateSnakeDirections()
 {
-    // utility->inputs.update();
-
     for (int i = 0; i < numPlayers; i++)
     {
         Snake *s = snakes[i];
@@ -158,23 +156,6 @@ void SnakeGame::updateSnakeDirections()
         bool _down;
         bool _left;
         bool _right;
-
-        // if (s->player == 1)
-        // {
-        //     utility->inputs.update2(utility->inputs.pins.p1Directions);
-        //     _up = utility->inputs.UP_P1;
-        //     _down = utility->inputs.DOWN_P1;
-        //     _left = utility->inputs.LEFT_P1;
-        //     _right = utility->inputs.RIGHT_P1;
-        // }
-        // else if (s->player == 2)
-        // {
-        //     utility->inputs.update2(utility->inputs.pins.p2Directions);
-        //     _up = utility->inputs.UP_P2;
-        //     _down = utility->inputs.DOWN_P2;
-        //     _left = utility->inputs.LEFT_P2;
-        //     _right = utility->inputs.RIGHT_P2;
-        // }
 
         if (s->player == 1)
         {
@@ -382,14 +363,8 @@ bool SnakeGame::loopGame()
         delay(1000);
         justStarted = false;
     }
-    bool tPaused = paused;
-    checkForPause();
-    if (tPaused != paused)
-    {
-        Serial.print("pause state changed! paused = ");
-        Serial.println(paused);
-    }
 
+    checkForPause();
 
     if (!paused)
     {
@@ -449,8 +424,10 @@ bool SnakeGame::loopGame()
                 gameOver();
                 return false;
             }
-            else
-            {
+            else    // instead of clearing and redrawing, maybe only draw if something changes
+            {       //    when popping a snake segment clear that pixel
+                    //    when adding a segment draw it
+                    //    when new apple is made draw it
                 display.clearDisplay();
                 drawFrame();
                 drawScore();
@@ -463,27 +440,3 @@ bool SnakeGame::loopGame()
     }
     return true;
 }
-
-// instead of clearing and redrawing, maybe only draw if something changes
-//    when popping a snake segment clear that pixel
-//    when adding a segment draw it
-//    when new apple is made draw it
-
-// display.print("SCORE:");
-// display.print(score);
-// display.setFont(utility.fonts.tiny);
-// display.setCursor(1, 12);
-// display.print("SCORE:");
-// display.print(score);
-// display.setFont(utility.fonts.tom); // 2 shorter
-// display.setCursor(1, 20);
-// display.print("SCORE:");
-// display.print(score);
-// display.setFont(utility.fonts.org); // 1
-// display.setCursor(1, 28);
-// display.print("SCORE:");
-// display.print(score);
-// display.setFont(utility.fonts.pico);
-// display.setCursor(1, 35);
-// display.print("SCORE:");
-// display.print(score);

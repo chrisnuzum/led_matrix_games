@@ -15,6 +15,8 @@
 #include <Fonts/Font4x5Fixed.h> // 4-5 tall x 1-4 wide (most 3 wide)
 #include <Fonts/Org_01.h>       // 4-5 tall x 1-5 wide (most 4 wide, some 1px below baseline) (boxy looking)
 
+// probably want mono nums for scoring
+
 /* potentially better fonts: https://github.com/robjen/GFX_fonts
  first: https://www.pentacom.jp/pentacom/bitfontmaker2/
  second: https://yal.cc/r/20/pixelfont/frombmf/       import bitfontmaker2 json, copy image into website,
@@ -86,6 +88,7 @@ private:
         };
 
         static constexpr uint8_t numInputs = 13;
+        static constexpr uint8_t DEBOUNCE_PERIOD = 50;  // uint8_t is max of 255
 
         uint8_t ALL_PINS[numInputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
                                        A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
@@ -150,7 +153,7 @@ private:
 
                 *inputsNewPress[i] = false; // this should only ever be true for 1 update()
 
-                if (millis() - lastPress[i] > 50) // if debounce period (per input) has not passed don't bother looking for new press
+                if (millis() - lastPress[i] > DEBOUNCE_PERIOD) // if debounce period (per input) has not passed don't bother looking for new press
                 {
                     lastPressed = *pressed[i];
                     *pressed[i] = inputCurrent ? true : false;
@@ -184,6 +187,7 @@ private:
 
         void update2(uint8_t pinsToCheck[]) // allows to only check certain inputs
         {
+            //  could say if (pinsToCheck == null) pinsToCheck = ALL_PINS   along with pinsToCheck defaulting to null if not passed
             uint8_t sizeOfArray = pinsToCheck[0];
 
             uint8_t count = 0;
@@ -200,7 +204,7 @@ private:
 
                             *inputsNewPress[i] = false; // this should only ever be true for 1 update()
 
-                            if (millis() - lastPress[i] > 50) // if debounce period (per input) has not passed don't bother looking for new press
+                            if (millis() - lastPress[i] > DEBOUNCE_PERIOD) // if debounce period (per input) has not passed don't bother looking for new press
                             {
                                 lastPressed = *pressed[i];
                                 *pressed[i] = inputCurrent ? true : false;

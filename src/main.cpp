@@ -1,5 +1,5 @@
 
-#define PxMATRIX_double_buffer true
+#define PxMATRIX_double_buffer true // this doesn't do anything, it is all CAPSed in PxMatrix.h
 
 #include <Arduino.h>
 #include <PxMatrix.h> // if issues down the road, PlatformIO Library manager installs latest release,
@@ -28,16 +28,6 @@ uint8_t display_draw_time = 1; // 30-60 is usually fine              brightness 
 uint8_t MATRIX_WIDTH = 64;
 uint8_t MATRIX_HEIGHT = 64;
 PxMATRIX display(MATRIX_WIDTH, MATRIX_HEIGHT, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
-
-uint16_t c_red = display.color565(255, 0, 0);
-uint16_t c_green = display.color565(0, 255, 0);
-uint16_t c_blue = display.color565(0, 0, 255);
-uint16_t c_white = display.color565(255, 255, 255);
-uint16_t c_yellow = display.color565(255, 255, 0);
-uint16_t c_cyan = display.color565(0, 255, 255);
-uint16_t c_magenta = display.color565(255, 0, 255);
-uint16_t c_black = display.color565(0, 0, 0);
-// uint16_t colors[8] = { c_red, c_green, c_blue, c_white, c_yellow, c_cyan, c_magenta, c_black };
 
 uint16_t loops = 0;
 uint16_t fps = 0;
@@ -74,8 +64,8 @@ void display_update_enable(bool is_enable)
     }
 }
 
-const char *game_strings[] = {"SNAKE", "TETRIS", "", ""};
-uint8_t num_games = 4;
+const char *game_strings[] = {"SNAKE", "TETRIS", "", "", "", ""};
+uint8_t num_games = 6;
 const char *player_strings[] = {"1 Player", "2 Players"};
 uint8_t num_player_options = 2;
 // uint8_t selected = 1;
@@ -90,12 +80,12 @@ void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
         display.setCursor(1, (i * 6) + 5);
         if ((i + 1) == selected)
         {
-            display.setTextColor(c_white);
+            display.setTextColor(utility.colors.white);
             display.print(">");
         }
         else
         {
-            display.setTextColor(c_cyan);
+            display.setTextColor(utility.colors.cyan);
             display.print("  ");
         }
         display.print(items[i]);
@@ -144,6 +134,7 @@ void setup()
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
     display.begin(32);
     display.setFastUpdate(true);
+    display.setRotation(0);
 
     display.clearDisplay();
     display_update_enable(true);
@@ -154,7 +145,7 @@ void setup()
 
 void loop()
 {                   // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
-    if (!gameRunning)
+    if (!gameRunning)       // TODO: cleanup/destruct games when switching to one after playing another
     {
         selected_game = selectMenuItem(game_strings, num_games);
         selected_players = selectMenuItem(player_strings, num_player_options);
@@ -171,7 +162,13 @@ void loop()
         }
         else if (selected_game == 2)
         {
-            // set up Tetris
+            if (tetris == nullptr)   // if game has switched, maybe set previous game to nullptr to conserve RAM
+            {
+                tetris = new Tetris(utility, selected_players);
+            }
+            tetris->setPlayers(selected_players);
+            tetris->justStarted = true;
+            gameRunning = true;
         }
     }
     else // game is running
@@ -182,7 +179,7 @@ void loop()
         }
         else if (selected_game == 2)
         {
-            // loop Tetris
+            gameRunning = tetris->loopGame();
         }
     }
 }

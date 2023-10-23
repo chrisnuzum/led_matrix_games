@@ -75,7 +75,7 @@ private:
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
 
-    Snake *snakes[2] = {nullptr};   // probably need a destructor to clear this out when switching games
+    Snake *snakes[2] = {};   // initializes to nullptrs, probably need a destructor to clear this out when switching games
 
     Point applePosition;
 
