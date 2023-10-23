@@ -27,6 +27,9 @@ bool Tetris::TetrisBoard::addCurrentPieceToBoard()
 
     uint8_t count = 0;
 
+    currentPieceTopLeft[0] = currentPiece.spawnYOffset;
+    currentPieceTopLeft[1] = SPAWN_X_OFFSET + currentPiece.spawnXOffset;
+
     for (int row = 0; row < currentPiece.length; row++)
     {
         for (int col = 0; col < currentPiece.length; col++)
@@ -43,8 +46,8 @@ bool Tetris::TetrisBoard::addCurrentPieceToBoard()
                     pieceFits = false;
                 }
                 board[row + currentPiece.spawnYOffset][SPAWN_X_OFFSET + col + currentPiece.spawnXOffset] = currentPiece.color;
-                currentPieceCoords[count][0] = row + currentPiece.spawnYOffset;
-                currentPieceCoords[count][1] = SPAWN_X_OFFSET + col + currentPiece.spawnXOffset;
+                currentPieceCoordinates[count][0] = row + currentPiece.spawnYOffset;
+                currentPieceCoordinates[count][1] = SPAWN_X_OFFSET + col + currentPiece.spawnXOffset;
                 count++;
             }
             if (count == NUM_PIECE_SEGMENTS)
@@ -61,7 +64,7 @@ bool Tetris::TetrisBoard::addCurrentPieceToBoard()
     return pieceFits;
 }
 
-void Tetris::TetrisBoard::checkForLineClear() // this mistakenly assumes line clear will be on the bottom always
+void Tetris::TetrisBoard::checkForLineClear()
 {
     /*
     Starting from bottom > check if line is full
@@ -109,9 +112,6 @@ void Tetris::TetrisBoard::checkForLineClear() // this mistakenly assumes line cl
         }
     }
 
-    Serial.print("linesCleared: ");
-    Serial.println(linesCleared);
-
     if (linesCleared > 0)
     {
         for (int _row = 0; _row < linesCleared; _row++)
@@ -146,6 +146,10 @@ Tetris::TetrisBoard::TetrisBoard(uint8_t player, const TetrisPiece &iPiece, cons
     score = 0;
     nextPieceBagPosition = 0;
     currentOrientation = 0;
+    gameOver = false;
+    softDrop = false;
+    updateFlipper = true;
+    hardDrop = false;
     shuffleBag();
     currentPiece = bag[nextPieceBagPosition];
     addCurrentPieceToBoard();
@@ -174,13 +178,13 @@ bool Tetris::TetrisBoard::tryGetNewPiece()
     return addCurrentPieceToBoard();
 }
 
-bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise)    // return condition used to know if board needs updated
+bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise) // return condition used to know if board needs updated
 {
     if (!currentPiece.rotatable)
     {
         return false;
     }
-    
+
     uint8_t tempOrientation = currentOrientation;
     if (clockwise)
     {
@@ -195,6 +199,9 @@ bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise)    // return condition 
 
     uint8_t count = 0;
 
+    // int8_t shiftHorizontal = 0;
+    // int8_t shiftVertical = 0;
+
     for (int row = 0; row < currentPiece.length; row++)
     {
         for (int col = 0; col < currentPiece.length; col++)
@@ -203,44 +210,77 @@ bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise)    // return condition 
             {
                 /*
                 Need to check if segment was already occupied by this piece. If so, ignore/skip that segment.
-                
-                Check if it is out of bounds. For each separate out of bounds condition, kick the piece in the necessary direction and check again
-                
+
+                Check if it is out of bounds. If so, pieceFits = false and break
+                    //For each separate out of bounds condition, kick the piece in the necessary direction and check again
+
                 If not, check if board space is occupied.
                     If it is, pieceFits = false and break
                 */
                 if (currentPiece.orientations[currentOrientation * currentPiece.length * currentPiece.length + row * currentPiece.length + col])
-                {
+                {            // last orientation had a segment here so we know it is safe
+                    count++; // or make other ifs else ifs
                     continue;
                 }
-                
-                // if (row + currentPiece.spawnYOffset < 0 || SPAWN_X_OFFSET + col + currentPiece.spawnXOffset < 0 ||
-                //     SPAWN_X_OFFSET + col + currentPiece.spawnXOffset >= BOARD_WIDTH)
-                // { // prevents crash if trying to access outside of board array
-                //     return false;
-                // }
-                // if (board[row + currentPiece.spawnYOffset][SPAWN_X_OFFSET + col + currentPiece.spawnXOffset] != 0)
-                // {
-                //     pieceFits = false;
-                // }
-                // board[row + currentPiece.spawnYOffset][SPAWN_X_OFFSET + col + currentPiece.spawnXOffset] = currentPiece.color;
-                // currentPieceCoords[count][0] = row + currentPiece.spawnYOffset;
-                // currentPieceCoords[count][1] = SPAWN_X_OFFSET + col + currentPiece.spawnXOffset;
-                // count++;
+                if (currentPieceTopLeft[0] + row >= BOARD_HEIGHT || currentPieceTopLeft[0] + row < 0 ||
+                    currentPieceTopLeft[1] + col < 0 || currentPieceTopLeft[1] + col >= BOARD_WIDTH)
+                { // segment off board, don't rotate
+                    pieceFits = false;
+                    break;
+                }
+                if (board[currentPieceTopLeft[0] + row][currentPieceTopLeft[1] + col] != 0)
+                {
+                    pieceFits = false;
+                    break;
+                }
+
+                count++;
             }
             if (count == NUM_PIECE_SEGMENTS)
             {
                 break;
             }
         }
-        if (count == NUM_PIECE_SEGMENTS)
+        if (count == NUM_PIECE_SEGMENTS || !pieceFits)
         {
             break;
         }
     }
 
+    if (pieceFits)
+    {
+        for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
+        {
+            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
+        }
+
+        currentOrientation = tempOrientation;
+        count = 0;
+        for (int row = 0; row < currentPiece.length; row++)
+        {
+            for (int col = 0; col < currentPiece.length; col++)
+            {
+                if (currentPiece.orientations[currentOrientation * currentPiece.length * currentPiece.length + row * currentPiece.length + col])
+                {
+                    board[currentPieceTopLeft[0] + row][currentPieceTopLeft[1] + col] = currentPiece.color;
+                    currentPieceCoordinates[count][0] = currentPieceTopLeft[0] + row;
+                    currentPieceCoordinates[count][1] = currentPieceTopLeft[1] + col;
+
+                    count++;
+                }
+                if (count == NUM_PIECE_SEGMENTS)
+                {
+                    break;
+                }
+            }
+            if (count == NUM_PIECE_SEGMENTS)
+            {
+                break;
+            }
+        }
+    }
+
     return pieceFits;
-    return true;
 }
 
 bool Tetris::TetrisBoard::tryMovePiece(bool left)
@@ -257,8 +297,8 @@ bool Tetris::TetrisBoard::tryMovePiece(bool left)
 
     for (int i = 0; i < NUM_PIECE_SEGMENTS; i++) // search from beginning of list if moving left, end of list if moving right
     {
-        _row = currentPieceCoords[left ? NUM_PIECE_SEGMENTS - 1 - i : i][0];
-        _col = currentPieceCoords[left ? NUM_PIECE_SEGMENTS - 1 - i : i][1];
+        _row = currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - i : i][0];
+        _col = currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - i : i][1];
 
         //      T-piece spawn position
         //                      [0][0],[0][1]=0,4
@@ -267,7 +307,7 @@ bool Tetris::TetrisBoard::tryMovePiece(bool left)
         bool foundOtherSegmentInRow = false;
         for (int j = i + 1; j < NUM_PIECE_SEGMENTS; j++) // search the rest for a lefter segment in same row
         {
-            if (currentPieceCoords[left ? NUM_PIECE_SEGMENTS - 1 - j : j][0] == _row) // same row
+            if (currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - j : j][0] == _row) // same row
             {
                 foundOtherSegmentInRow = true; // coords are ordered so a match has to be a righter/lefter column
                 break;                         // just break cuz we'll get to it later
@@ -303,20 +343,13 @@ bool Tetris::TetrisBoard::tryMovePiece(bool left)
     {
         for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
         {
-            board[currentPieceCoords[i][0]][currentPieceCoords[i][1]] = 0;
+            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
         }
+        currentPieceTopLeft[1] += left ? -1 : 1;
         for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
         {
-            if (left)
-            {
-                currentPieceCoords[i][1] -= 1;
-                board[currentPieceCoords[i][0]][currentPieceCoords[i][1]] = currentPiece.color;
-            }
-            else
-            {
-                currentPieceCoords[i][1] += 1;
-                board[currentPieceCoords[i][0]][currentPieceCoords[i][1]] = currentPiece.color;
-            }
+            currentPieceCoordinates[i][1] += left ? -1 : 1;
+            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = currentPiece.color;
         }
     }
 
@@ -337,13 +370,13 @@ bool Tetris::TetrisBoard::tryLowerPiece()
 
     for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
     {
-        _row = currentPieceCoords[i][0];
-        _col = currentPieceCoords[i][1];
+        _row = currentPieceCoordinates[i][0];
+        _col = currentPieceCoordinates[i][1];
 
         bool foundLowerSegment = false;
         for (int j = i + 1; j < NUM_PIECE_SEGMENTS; j++) // search the rest for a lower segment in same column
         {
-            if (currentPieceCoords[j][1] == _col) // same column
+            if (currentPieceCoordinates[j][1] == _col) // same column
             {
                 foundLowerSegment = true; // coords are ordered by row so a match has to be a lower row
                 break;                    // just break cuz we'll get to it later
@@ -368,12 +401,13 @@ bool Tetris::TetrisBoard::tryLowerPiece()
     {
         for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
         {
-            board[currentPieceCoords[i][0]][currentPieceCoords[i][1]] = 0;
+            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
         }
+        currentPieceTopLeft[0] += 1;
         for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
         {
-            currentPieceCoords[i][0] += 1;
-            board[currentPieceCoords[i][0]][currentPieceCoords[i][1]] = currentPiece.color;
+            currentPieceCoordinates[i][0] += 1;
+            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = currentPiece.color;
         }
     }
     else
@@ -388,6 +422,7 @@ bool Tetris::TetrisBoard::tryLowerPiece()
 void Tetris::TetrisBoard::resetBoard()
 {
     score = 0;
+    gameOver = false;
     for (int _row = 0; _row < BOARD_HEIGHT; _row++)
     {
         for (int _col = 0; _col < BOARD_WIDTH; _col++)
@@ -418,9 +453,10 @@ Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility, numPlay
     MIN_DELAY = 10;
     MAX_DELAY = 100; // max value for uint8_t is 255
     SPEED_LOSS = 5;
+    MOVE_DELAY = 150;
     GAME_OVER_DELAY = 10000;
 
-    updateDelay = 255; // MAX_DELAY
+    updateDelay = 150; // MAX_DELAY
 
     msCurrent = 0;
     msPrevious = 0;
@@ -430,7 +466,7 @@ Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility, numPlay
 
     for (int i = 0; i < numPlayers; i++)
     {
-        boards[i] = new TetrisBoard(1, iPiece, jPiece, lPiece, oPiece, sPiece, tPiece, zPiece);
+        boards[i] = new TetrisBoard(i + 1, iPiece, jPiece, lPiece, oPiece, sPiece, tPiece, zPiece);
     }
 }
 
@@ -452,11 +488,12 @@ void Tetris::drawFrame()
     }
 }
 
-void Tetris::drawScore()
+void Tetris::drawScore(uint8_t player)
 {
+    display.setRotation((player - 1) * 2);
     display.fillRect(2, 2, 19, 5, 0);
     display.setCursor(2, 6);
-    display.print(boards[0]->score);
+    display.print(boards[player - 1]->score);
 }
 
 void Tetris::clearNextPiece()
@@ -464,15 +501,16 @@ void Tetris::clearNextPiece()
     display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 8, 4, 0);
 }
 
-void Tetris::clearBoard()
-{
-    display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * 2, BOARD_HEIGHT * 2, 0);
-}
+// void Tetris::clearBoard()
+// {
+//     display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * 2, BOARD_HEIGHT * 2, 0);
+// }
 
-void Tetris::drawNextPiece()
+void Tetris::drawNextPiece(uint8_t player)
 {
+    display.setRotation((player - 1) * 2);
     clearNextPiece();
-    TetrisPiece piece = boards[0]->nextPiece;
+    TetrisPiece piece = boards[player - 1]->nextPiece;
     uint8_t segmentsDrawn = 0;
 
     for (int row = 0; row < piece.length; row++)
@@ -503,22 +541,23 @@ void Tetris::drawNextPiece()
     }
 }
 
-void Tetris::drawBoard()
+void Tetris::drawBoard(uint8_t player)
 {
+    display.setRotation((player - 1) * 2);
     for (int row = 0; row < BOARD_HEIGHT; row++)
     {
         for (int col = 0; col < BOARD_WIDTH; col++)
         {
-            if (tempBoards[0][row][col] != boards[0]->board[row][col])
+            if (tempBoards[player - 1][row][col] != boards[player - 1]->board[row][col])
             {
-                tempBoards[0][row][col] = boards[0]->board[row][col];
+                tempBoards[player - 1][row][col] = boards[player - 1]->board[row][col];
 
                 for (int rowOffset = 0; rowOffset < BOARD_PIXEL_SIZE; rowOffset++)
                 {
                     for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
                     {
                         display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
-                                          BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, boards[0]->board[row][col]);
+                                          BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, boards[player - 1]->board[row][col]);
                     }
                 }
             }
@@ -528,38 +567,86 @@ void Tetris::drawBoard()
 
 void Tetris::checkForInput()
 {
-    utility->inputs.update2(utility->inputs.pins.p1Buttons);
-    utility->inputs.update2(utility->inputs.pins.p1Directions);
-    if (utility->inputs.LEFT_P1)
+    for (int i = 0; i < numPlayers; i++)
     {
-        if (boards[0]->tryMovePiece(true))
+        display.setRotation(i * 2);
+
+        bool _up;
+        bool _down;
+        bool _left;
+        bool _right;
+        bool _a;
+        bool _b;
+
+        if (boards[i]->player == 1)
         {
-            // clearBoard();
-            drawBoard();
+            utility->inputs.update2(utility->inputs.pins.p1Buttons);
+            utility->inputs.update2(utility->inputs.pins.p1Directions);
+            _up = utility->inputs.UP_P1;             // this should trigger repeatedly dropping until can't anymore
+            _down = utility->inputs.DOWN_P1_pressed; // this should just set a bool for soft drop
+            _left = utility->inputs.LEFT_P1_pressed;
+            _right = utility->inputs.RIGHT_P1_pressed;
+            _a = utility->inputs.A_P1;
+            _b = utility->inputs.B_P1;
         }
-    }
-    else if (utility->inputs.RIGHT_P1)
-    {
-        if (boards[0]->tryMovePiece(false))
+        else if (boards[i]->player == 2)
         {
-            // clearBoard();
-            drawBoard();
+            utility->inputs.update2(utility->inputs.pins.p2Buttons);
+            utility->inputs.update2(utility->inputs.pins.p2Directions);
+            _up = utility->inputs.UP_P2;
+            _down = utility->inputs.DOWN_P2_pressed;
+            _left = utility->inputs.LEFT_P2_pressed;
+            _right = utility->inputs.RIGHT_P2_pressed;
+            _a = utility->inputs.A_P2;
+            _b = utility->inputs.B_P2;
         }
-    }
-    if (utility->inputs.A_P1)
-    {
-        if (boards[0]->tryRotatePiece(true))
+
+        if (millis() - boards[i]->lastMove > MOVE_DELAY)
         {
-            // clearBoard();
-            drawBoard();
+            if (_left)
+            {
+                if (boards[i]->tryMovePiece(true))
+                {
+                    boards[i]->lastMove = millis();
+                    drawBoard(boards[i]->player);
+                }
+            }
+            else if (_right)
+            {
+                if (boards[i]->tryMovePiece(false))
+                {
+                    boards[i]->lastMove = millis();
+                    drawBoard(boards[i]->player);
+                }
+            }
         }
-    }
-    else if (utility->inputs.A_P2)
-    {
-        if (boards[0]->tryRotatePiece(false))
+        
+        if (_up)
         {
-            // clearBoard();
-            drawBoard();
+            boards[i]->hardDrop = true;
+        }
+        else if (_down)
+        {
+            boards[i]->softDrop = true;
+        }
+        else
+        {
+            boards[i]->softDrop = false;
+        }
+
+        if (_a)
+        {
+            if (boards[i]->tryRotatePiece(true))
+            {
+                drawBoard(boards[i]->player);
+            }
+        }
+        else if (_b)
+        {
+            if (boards[i]->tryRotatePiece(false))
+            {
+                drawBoard(boards[i]->player);
+            }
         }
     }
 }
@@ -571,9 +658,7 @@ void Tetris::checkForPause()
     if (utility->inputs.START)
     {
         paused = !paused;
-        display.clearDisplay();
         drawFrame();
-        drawNextPiece();
         msPrevious = millis();
     }
 }
@@ -587,7 +672,10 @@ void Tetris::gameOver()
     // display.fillScreen(utility->colors.blueLight);
     // delay(250);
     // display.clearDisplay();
-    boards[0]->resetBoard();
+    for (int i = 0; i < numPlayers; i++)
+    {
+        boards[i]->resetBoard();
+    }
     delay(GAME_OVER_DELAY);
 }
 
@@ -598,14 +686,17 @@ bool Tetris::loopGame()
         display.clearDisplay();
         display.setFont(utility->fonts.my5x5round);
         drawFrame();
-        drawNextPiece();
-        drawBoard();
-        drawScore();
+        for (int i = 0; i < numPlayers; i++)
+        {
+            drawNextPiece(i + 1);
+            drawBoard(i + 1);
+            drawScore(i + 1);
+        }
         delay(1000);
         justStarted = false;
     }
 
-    checkForPause();
+    // checkForPause();
 
     if (!paused)
     {
@@ -633,50 +724,62 @@ bool Tetris::loopGame()
         msCurrent = millis();
         if ((msCurrent - msPrevious) > updateDelay)
         {
-            if (!boards[0]->tryLowerPiece())
+            for (int i = 0; i < numPlayers; i++)
             {
-                drawScore();
-                if (!boards[0]->tryGetNewPiece())
+                if (!boards[i]->gameOver)
                 {
-                    // clearBoard();
-                    drawNextPiece();
-                    drawBoard();
-                    delay(updateDelay);
-                    gameOver();
-                    return false;
-                }
-                else
-                {
-                    drawNextPiece();
+                    bool pieceAtBottom = false;
+                    if (boards[i]->hardDrop)
+                    {
+                        while (!pieceAtBottom)
+                        {
+                            pieceAtBottom = !boards[i]->tryLowerPiece();
+                        }
+                        boards[i]->hardDrop = false;
+                    }
+                    else if (boards[i]->softDrop)
+                    {
+                        pieceAtBottom = !boards[i]->tryLowerPiece();
+                        boards[i]->updateFlipper = true;
+                    } else if (boards[i]->updateFlipper)
+                    {
+                        pieceAtBottom = !boards[i]->tryLowerPiece();
+                    }
+                    boards[i]->updateFlipper = !boards[i]->updateFlipper;
+                    if (pieceAtBottom)
+                    {
+                        drawScore(boards[i]->player);
+                        if (!boards[i]->tryGetNewPiece())
+                        {
+                            drawNextPiece(boards[i]->player);
+
+                            boards[i]->gameOver = true;
+                        }
+                        else
+                        {
+                            drawNextPiece(boards[i]->player);
+                        }
+                    }
+                    drawBoard(boards[i]->player);
                 }
             }
-            // clearBoard();
-            // drawNextPiece();
-            drawBoard();
+            bool allGameOver = true;
+            for (int i = 0; i < numPlayers; i++)
+            {
+                if (boards[i]->gameOver == false)
+                {
+                    allGameOver = false;
+                }
+            }
+            if (allGameOver)
+            {
+                gameOver();
+                return false;
+            }
 
             msPrevious = msCurrent;
         }
     }
 
-    // if (!paused)
-    // {
-    //     utility->inputs.update2(utility->inputs.pins.p2Buttons);
-    //     if (utility->inputs.A_P2)
-    //     {
-    //         clearBoard();
-    //         boards[0]->tryGetNewPiece();
-    //         drawNextPiece();
-    //         drawBoard();
-    //     }
-    //     if (utility->inputs.B_P2)
-    //     {
-    //         clearBoard();
-    //         boards[0]->tryRotatePiece(true);
-    //         drawNextPiece();
-    //         drawBoard();
-    //         // ESP.restart();
-    //         // return false;
-    //     }
-    // }
     return true;
 }

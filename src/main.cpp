@@ -102,7 +102,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
         utility.inputs.update();
         bool _up = utility.inputs.UP_P1 || utility.inputs.UP_P2;
         bool _down = utility.inputs.DOWN_P1 || utility.inputs.DOWN_P2;
-        bool _start = utility.inputs.START;
+        bool _start = utility.inputs.A_P1 || utility.inputs.A_P2;
         if (_start)
         {
             return selected;

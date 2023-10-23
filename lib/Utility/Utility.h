@@ -6,7 +6,7 @@
 
 #include <PxMatrix.h>
 
-#include <Fonts/Tiny3x3a2pt7b.h>        // 2-3 tall x 2-3 wide (most lowercase 2 wide, some 1px below baseline) (difficult to read)
+#include <Fonts/Tiny3x3a2pt7b.h> // 2-3 tall x 2-3 wide (most lowercase 2 wide, some 1px below baseline) (difficult to read)
 #include <Fonts/My3x4_4pt7b.h>
 #include <Fonts/My5x5round_4pt7b.h>
 #include <Fonts/My5x5boxy_4pt7b.h>
@@ -46,9 +46,9 @@ private:
     class Inputs // ensure the same order of pins/buttons is used everywhere in this file
     {
     private:
-        static constexpr uint8_t START_PIN = 27; // need a button!
-        static constexpr uint8_t A_P1_PIN = 99;  // 36 // might have an issue with this button (external pull-up)
-        static constexpr uint8_t B_P1_PIN = 99;  // 27
+        static constexpr uint8_t START_PIN = 99; // need a button!
+        static constexpr uint8_t A_P1_PIN = 36;
+        static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
         static constexpr uint8_t LEFT_P1_PIN = 25;
@@ -64,9 +64,9 @@ private:
         {
             enum : uint8_t // probably not necessary
             {
-                START_PIN = 27, // need a button!
-                A_P1_PIN = 99,  // 36 // has an issue with this button (external pull-up)
-                B_P1_PIN = 99,  // 27
+                START_PIN = 99, // need a button!
+                A_P1_PIN = 36,
+                B_P1_PIN = 27,
                 UP_P1_PIN = 32,
                 DOWN_P1_PIN = 33,
                 LEFT_P1_PIN = 25,
@@ -88,7 +88,7 @@ private:
         };
 
         static constexpr uint8_t numInputs = 13;
-        static constexpr uint8_t DEBOUNCE_PERIOD = 50;  // uint8_t is max of 255
+        static constexpr uint8_t DEBOUNCE_PERIOD = 50; // uint8_t is max of 255
 
         uint8_t ALL_PINS[numInputs] = {START_PIN, A_P1_PIN, B_P1_PIN, UP_P1_PIN, DOWN_P1_PIN, LEFT_P1_PIN, RIGHT_P1_PIN,
                                        A_P2_PIN, B_P2_PIN, UP_P2_PIN, DOWN_P2_PIN, LEFT_P2_PIN, RIGHT_P2_PIN};
@@ -99,7 +99,7 @@ private:
         bool *inputsNewPress[numInputs] = {&START, &A_P1, &B_P1, &UP_P1, &DOWN_P1, &LEFT_P1, &RIGHT_P1,
                                            &A_P2, &B_P2, &UP_P2, &DOWN_P2, &LEFT_P2, &RIGHT_P2};
 
-        bool inputsValsPrev[numInputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
+        // bool inputsValsPrev[numInputs] = {false, false, false, false, false, false, false, false, false, false, false, false, false};
 
         bool *pressed[numInputs] = {&START_pressed, &A_P1_pressed, &B_P1_pressed, &UP_P1_pressed, &DOWN_P1_pressed, &LEFT_P1_pressed, &RIGHT_P1_pressed,
                                     &A_P2_pressed, &B_P2_pressed, &UP_P2_pressed, &DOWN_P2_pressed, &LEFT_P2_pressed, &RIGHT_P2_pressed};
@@ -112,10 +112,11 @@ private:
         {
             for (uint8_t PIN_NUMBER : ALL_PINS)
             {
-                if (PIN_NUMBER == 34 || PIN_NUMBER == 35 || PIN_NUMBER == 36 || PIN_NUMBER == 39 || PIN_NUMBER == 12) // these require external pull-ups, 12 can't be used at all until efuses are burned
-                {
-                    continue;
-                }
+                // if (PIN_NUMBER == 34 || PIN_NUMBER == 35 || PIN_NUMBER == 36 || PIN_NUMBER == 39 || PIN_NUMBER == 12) // these require external pull-ups, 12 can't be used at all until efuses are burned
+                // {
+                //     continue;
+                // }
+                // even with external pullup it needs this run to work for some reason
                 pinMode(PIN_NUMBER, INPUT_PULLUP);
             }
         }
@@ -143,13 +144,13 @@ private:
                       // maybe pass in variable arguments of some (public) class type that refers to the pin numbers
                       // this is called variadic arguments https://stackoverflow.com/questions/1657883/variable-number-of-arguments-in-c
                       //
-            String input_prev_string = "";
             String input_current_string = "";
             String input_new_string = "";
 
             for (int i = 0; i < numInputs; i++)
             {
                 inputCurrent = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
+                input_current_string += inputCurrent;
 
                 *inputsNewPress[i] = false; // this should only ever be true for 1 update()
 
@@ -168,15 +169,14 @@ private:
                         lastPress[i] = millis();
                     }
                 }
+                input_new_string += *inputsNewPress[i] ? "1" : "0";
             }
 
             if (false)
             {
-                if (!input_prev_string.equals("0000000000000") || !input_current_string.equals("0000000000000") || !input_new_string.equals("0000000000000"))
+                if (!input_current_string.equals("0000000000000") || !input_new_string.equals("0000000000000"))
                 {
                     Serial.println("key   SAB^D<>AB^D<>");
-                    input_prev_string = "prev [" + input_prev_string + "]";
-                    Serial.println(input_prev_string);
                     input_current_string = "curr [" + input_current_string + "]";
                     Serial.println(input_current_string);
                     input_new_string = "new  [" + input_new_string + "]";
@@ -187,6 +187,9 @@ private:
 
         void update2(uint8_t pinsToCheck[]) // allows to only check certain inputs
         {
+            String input_current_string = "";
+            String input_new_string = "";
+
             //  could say if (pinsToCheck == null) pinsToCheck = ALL_PINS   along with pinsToCheck defaulting to null if not passed
             uint8_t sizeOfArray = pinsToCheck[0];
 
@@ -201,6 +204,7 @@ private:
                         if (ALL_PINS[i] == pinsToCheck[j])
                         {
                             inputCurrent = !digitalRead(ALL_PINS[i]); // pressed = LOW = 0 = false, so flipping it to mean pressed = true
+                            input_current_string += inputCurrent;
 
                             *inputsNewPress[i] = false; // this should only ever be true for 1 update()
 
@@ -219,6 +223,7 @@ private:
                                     lastPress[i] = millis();
                                 }
                             }
+                            input_new_string += *inputsNewPress[i] ? "1" : "0";
                             count++;
                             break;
                         }
@@ -227,6 +232,18 @@ private:
                 else
                 {
                     break;
+                }
+            }
+            if (true)
+            {
+                if (!(input_current_string.equals("0") || input_current_string.equals("00") || input_current_string.equals("0000")) ||
+                    !(input_new_string.equals("0") || input_new_string.equals("00") || input_new_string.equals("0000")) )
+                {
+                    Serial.println("key   SAB^D<>AB^D<>");
+                    input_current_string = "curr [" + input_current_string + "]";
+                    Serial.println(input_current_string);
+                    input_new_string = "new  [" + input_new_string + "]";
+                    Serial.println(input_new_string);
                 }
             }
         };
