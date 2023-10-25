@@ -283,12 +283,12 @@ bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise) // return condition use
     return pieceFits;
 }
 
-bool Tetris::TetrisBoard::tryMovePiece(bool left)
+bool Tetris::TetrisBoard::tryMovePiece(direction dir)
 {
     /*
-    Find leftmost points
-        For each unique row #, find the lowest column #
-    Check if board is occupied 1 space left each of those points or left of board
+    Find closest piece segments to desired movement direction
+    Check if board is occupied/off the board 1 point beyond those segments
+    Update board and currentPieceCoordinates
     */
     bool canMove = true;
 
@@ -297,41 +297,49 @@ bool Tetris::TetrisBoard::tryMovePiece(bool left)
 
     for (int i = 0; i < NUM_PIECE_SEGMENTS; i++) // search from beginning of list if moving left, end of list if moving right
     {
-        _row = currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - i : i][0];
-        _col = currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - i : i][1];
+        _row = currentPieceCoordinates[dir == LEFT ? NUM_PIECE_SEGMENTS - 1 - i : i][0];
+        _col = currentPieceCoordinates[dir == LEFT ? NUM_PIECE_SEGMENTS - 1 - i : i][1];
 
         //      T-piece spawn position
         //                      [0][0],[0][1]=0,4
         // [1][0],[1][1]=1,3    [2][0],[2][1]=1,4    [3][0],[3][1]=1,5
 
-        bool foundOtherSegmentInRow = false;
+        bool foundBetterSegment = false;
         for (int j = i + 1; j < NUM_PIECE_SEGMENTS; j++) // search the rest for a lefter segment in same row
         {
-            if (currentPieceCoordinates[left ? NUM_PIECE_SEGMENTS - 1 - j : j][0] == _row) // same row
+            if (dir == DOWN)
             {
-                foundOtherSegmentInRow = true; // coords are ordered so a match has to be a righter/lefter column
-                break;                         // just break cuz we'll get to it later
+                if (currentPieceCoordinates[j][1] == _col) // same column
+                {
+                    foundBetterSegment = true; // coords are ordered by row so a match has to be a lower row
+                    break;                     // just break cuz we'll get to it later
+                }
+            }
+            else if (currentPieceCoordinates[dir == LEFT ? NUM_PIECE_SEGMENTS - 1 - j : j][0] == _row) // same row
+            {
+                foundBetterSegment = true; // coords are ordered so a match has to be a righter/lefter column
+                break;                     // just break cuz we'll get to it later
             }
         }
-        if (!foundOtherSegmentInRow)
+        if (!foundBetterSegment)
         {
-            if (left)
+            if (dir == DOWN)
             {
-                if (_col - 1 == -1)
+                if (_row + 1 == BOARD_HEIGHT || board[_row + 1][_col] != 0)
                 {
                     canMove = false;
                     break;
                 }
             }
-            else
+            else if (dir == LEFT)
             {
-                if (_col + 1 == BOARD_WIDTH)
+                if (_col - 1 == -1 || board[_row][_col - 1] != 0)
                 {
                     canMove = false;
                     break;
                 }
             }
-            if (board[_row][left ? _col - 1 : _col + 1] != 0)
+            else if (_col + 1 == BOARD_WIDTH || board[_row][_col + 1] != 0)
             {
                 canMove = false;
                 break;
@@ -345,84 +353,42 @@ bool Tetris::TetrisBoard::tryMovePiece(bool left)
         {
             board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
         }
-        currentPieceTopLeft[1] += left ? -1 : 1;
+        if (dir == DOWN)
+        {
+            currentPieceTopLeft[0] += 1;
+        }
+        else
+        {
+            currentPieceTopLeft[1] += dir == LEFT ? -1 : 1;
+        }
+
         for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
         {
-            currentPieceCoordinates[i][1] += left ? -1 : 1;
+            if (dir == DOWN)
+            {
+                currentPieceCoordinates[i][0] += 1;
+            }
+            else
+            {
+                currentPieceCoordinates[i][1] += dir == LEFT ? -1 : 1;
+            }
             board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = currentPiece.color;
         }
     }
-
-    return canMove;
-}
-
-bool Tetris::TetrisBoard::tryLowerPiece()
-{
-    /*
-    Find lowest points
-        For each unique column #, find the highest row #
-    Check if board is occupied 1 space below each of those points or bottom of board
-    */
-    bool canLower = true;
-
-    uint8_t _col;
-    uint8_t _row;
-
-    for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
-    {
-        _row = currentPieceCoordinates[i][0];
-        _col = currentPieceCoordinates[i][1];
-
-        bool foundLowerSegment = false;
-        for (int j = i + 1; j < NUM_PIECE_SEGMENTS; j++) // search the rest for a lower segment in same column
-        {
-            if (currentPieceCoordinates[j][1] == _col) // same column
-            {
-                foundLowerSegment = true; // coords are ordered by row so a match has to be a lower row
-                break;                    // just break cuz we'll get to it later
-            }
-        }
-        if (!foundLowerSegment)
-        {
-            if (_row + 1 == BOARD_HEIGHT)
-            {
-                canLower = false;
-                break;
-            }
-            else if (board[_row + 1][_col] != 0)
-            {
-                canLower = false;
-                break;
-            }
-        }
-    }
-
-    if (canLower)
-    {
-        for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
-        {
-            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
-        }
-        currentPieceTopLeft[0] += 1;
-        for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
-        {
-            currentPieceCoordinates[i][0] += 1;
-            board[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = currentPiece.color;
-        }
-    }
-    else
+    else if (dir == DOWN)
     {
         score += 1;
         checkForLineClear();
     }
 
-    return canLower;
+    return canMove;
 }
 
 void Tetris::TetrisBoard::resetBoard()
 {
     score = 0;
     gameOver = false;
+    updateFlipper = true;
     for (int _row = 0; _row < BOARD_HEIGHT; _row++)
     {
         for (int _col = 0; _col < BOARD_WIDTH; _col++)
@@ -441,7 +407,7 @@ void Tetris::TetrisBoard::resetBoard()
     nextPiece = bag[nextPieceBagPosition];
 }
 
-Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility, numPlayers},
+Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility},
                                                        iPiece(utility.colors.blueLight, sizeof(iPieceRaw[0]) / sizeof(iPieceRaw[0][0]), &(iPieceRaw[0][0][0]), true, 0, -1),
                                                        jPiece(utility.colors.blueDark, sizeof(jPieceRaw[0]) / sizeof(jPieceRaw[0][0]), &(jPieceRaw[0][0][0]), true, 0, 0),
                                                        lPiece(utility.colors.orange, sizeof(lPieceRaw[0]) / sizeof(lPieceRaw[0][0]), &(lPieceRaw[0][0][0]), true, 0, 0),
@@ -453,38 +419,62 @@ Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility, numPlay
     MIN_DELAY = 10;
     MAX_DELAY = 100; // max value for uint8_t is 255
     SPEED_LOSS = 5;
-    MOVE_DELAY = 150;
+    MOVE_DELAY = 100;
     GAME_OVER_DELAY = 10000;
 
-    updateDelay = 150; // MAX_DELAY
+    updateDelay = 180; // piece moves down at 2 * updateDelay unless soft drop button is held
 
-    msCurrent = 0;
     msPrevious = 0;
 
     paused = false;
     justStarted = true;
 
-    for (int i = 0; i < numPlayers; i++)
-    {
-        boards[i] = new TetrisBoard(i + 1, iPiece, jPiece, lPiece, oPiece, sPiece, tPiece, zPiece);
-    }
+    setPlayers(numPlayers);
 }
 
 void Tetris::setPlayers(uint8_t numPlayers)
 {
     this->numPlayers = numPlayers;
+    for (int i = 0; i < numPlayers; i++)
+    {
+        if (boards[i] == nullptr)
+        {
+            boards[i] = new TetrisBoard(i + 1, iPiece, jPiece, lPiece, oPiece, sPiece, tPiece, zPiece);
+        }
+    }
+    if (numPlayers == 1)
+    {
+        BOARD_PIXEL_SIZE = BOARD_PIXEL_SIZE_1P;
+        BOARD_X_POSITION = BOARD_X_POSITION_1P;
+        BOARD_Y_POSITION = BOARD_Y_POSITION_1P;
+        NEXTPIECE_X_POSITION = NEXTPIECE_X_POSITION_1P;
+        NEXTPIECE_Y_POSITION = NEXTPIECE_Y_POSITION_1P;
+    }
+    else if (numPlayers == 2)
+    {
+        BOARD_PIXEL_SIZE = BOARD_PIXEL_SIZE_2P;
+        BOARD_X_POSITION = BOARD_X_POSITION_2P;
+        BOARD_Y_POSITION = BOARD_Y_POSITION_2P;
+        NEXTPIECE_X_POSITION = NEXTPIECE_X_POSITION_2P;
+        NEXTPIECE_Y_POSITION = NEXTPIECE_Y_POSITION_2P;
+    }
 }
 
 void Tetris::drawFrame()
 {
-    uint8_t width = 22;
-    uint8_t height = 42;
+    uint8_t width = BOARD_WIDTH * BOARD_PIXEL_SIZE + 2 * FRAME_THICKNESS;
+    uint8_t height = BOARD_HEIGHT * BOARD_PIXEL_SIZE + 2 * FRAME_THICKNESS;
+
     for (int i = 0; i < numPlayers; i++)
     {
         display.setRotation(i * 2);
-        display.drawRect(9, 22, width, height, paused ? utility->colors.yellow : utility->colors.red);
         display.setCursor(2, 16);
         display.print("Next:");
+        for (int j = 0; j < FRAME_THICKNESS; j++)
+        {
+            display.drawRect(BOARD_X_POSITION - FRAME_THICKNESS + j, BOARD_Y_POSITION - FRAME_THICKNESS + j,
+                             width - 2 * j, height - 2 * j, paused ? utility->colors.yellow : utility->colors.red);
+        }
     }
 }
 
@@ -498,7 +488,7 @@ void Tetris::drawScore(uint8_t player)
 
 void Tetris::clearNextPiece()
 {
-    display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 8, 4, 0);
+    display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 4 * BOARD_PIXEL_SIZE, 2 * BOARD_PIXEL_SIZE, 0);
 }
 
 // void Tetris::clearBoard()
@@ -523,8 +513,8 @@ void Tetris::drawNextPiece(uint8_t player)
                 {
                     for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
                     {
-                        display.drawPixel(NEXTPIECE_X_POSITION + (BOARD_PIXEL_SIZE * col) + rowOffset,
-                                          NEXTPIECE_Y_POSITION + (BOARD_PIXEL_SIZE * row) + colOffset, piece.color);
+                        display.drawPixel(NEXTPIECE_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
+                                          NEXTPIECE_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, piece.color);
                     }
                 }
                 segmentsDrawn++;
@@ -582,8 +572,8 @@ void Tetris::checkForInput()
         {
             utility->inputs.update2(utility->inputs.pins.p1Buttons);
             utility->inputs.update2(utility->inputs.pins.p1Directions);
-            _up = utility->inputs.UP_P1;             // this should trigger repeatedly dropping until can't anymore
-            _down = utility->inputs.DOWN_P1_pressed; // this should just set a bool for soft drop
+            _up = utility->inputs.UP_P1;
+            _down = utility->inputs.DOWN_P1_pressed;
             _left = utility->inputs.LEFT_P1_pressed;
             _right = utility->inputs.RIGHT_P1_pressed;
             _a = utility->inputs.A_P1;
@@ -605,7 +595,7 @@ void Tetris::checkForInput()
         {
             if (_left)
             {
-                if (boards[i]->tryMovePiece(true))
+                if (boards[i]->tryMovePiece(LEFT))
                 {
                     boards[i]->lastMove = millis();
                     drawBoard(boards[i]->player);
@@ -613,14 +603,14 @@ void Tetris::checkForInput()
             }
             else if (_right)
             {
-                if (boards[i]->tryMovePiece(false))
+                if (boards[i]->tryMovePiece(RIGHT))
                 {
                     boards[i]->lastMove = millis();
                     drawBoard(boards[i]->player);
                 }
             }
         }
-        
+
         if (_up)
         {
             boards[i]->hardDrop = true;
@@ -675,6 +665,13 @@ void Tetris::gameOver()
     for (int i = 0; i < numPlayers; i++)
     {
         boards[i]->resetBoard();
+        for (int _row = 0; _row < BOARD_HEIGHT; _row++)
+        {
+            for (int _col = 0; _col < BOARD_WIDTH; _col++)
+            {
+                tempBoards[i][_row][_col] = 0;
+            }
+        }
     }
     delay(GAME_OVER_DELAY);
 }
@@ -721,9 +718,10 @@ bool Tetris::loopGame()
                         update board, draw new board
         */
         checkForInput();
-        msCurrent = millis();
-        if ((msCurrent - msPrevious) > updateDelay)
+
+        if ((millis() - msPrevious) > updateDelay)
         {
+            msPrevious = millis();
             for (int i = 0; i < numPlayers; i++)
             {
                 if (!boards[i]->gameOver)
@@ -733,17 +731,21 @@ bool Tetris::loopGame()
                     {
                         while (!pieceAtBottom)
                         {
-                            pieceAtBottom = !boards[i]->tryLowerPiece();
+                            // pieceAtBottom = !boards[i]->tryLowerPiece();
+                            pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
                         }
                         boards[i]->hardDrop = false;
                     }
                     else if (boards[i]->softDrop)
                     {
-                        pieceAtBottom = !boards[i]->tryLowerPiece();
+                        // pieceAtBottom = !boards[i]->tryLowerPiece();
+                        pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
                         boards[i]->updateFlipper = true;
-                    } else if (boards[i]->updateFlipper)
+                    }
+                    else if (boards[i]->updateFlipper)
                     {
-                        pieceAtBottom = !boards[i]->tryLowerPiece();
+                        // pieceAtBottom = !boards[i]->tryLowerPiece();
+                        pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
                     }
                     boards[i]->updateFlipper = !boards[i]->updateFlipper;
                     if (pieceAtBottom)
@@ -776,8 +778,6 @@ bool Tetris::loopGame()
                 gameOver();
                 return false;
             }
-
-            msPrevious = msCurrent;
         }
     }
 

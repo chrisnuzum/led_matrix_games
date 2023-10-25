@@ -31,13 +31,7 @@
 */
 /*
 Notes:
-Currently, it checks for debounce when the button is pressed down. If the button is held down (initial bounces are ignored),
-then released after more than the debounce period (50ms), any bounces back to the pressed state aren't ignored. Might not be an issue
-unless the update() call happens to happen at the exact time of the bounce?
-Potential fixes:
--Track each individual press and have a debounce period when it becomes unpressed. This would depend on the update() being called
-frequently enough, because if the button is released and then re-pressed in between updates(), the second press would be ignored.
--Only accept a new press if it lasts a certain period of time? (~10ms?)
+
 
 */
 class Utility

@@ -86,6 +86,7 @@ Multiplayer:
 /*
 Copyrighted parts:
     -apparently the tetromino pieces and the 10x20 field size are copyrighted: https://publicknowledge.org/tetris-copyright-decision-shows-how-complicated-copyright-for-games-can-be/
+    -at least the sum of all of the mechanics of original Tetris can be copyrighted
 
 Ideas to avoid issues:
     -piece spawns in center and player can move it in any direction, essentially having 4 options to make lines
@@ -93,11 +94,15 @@ Ideas to avoid issues:
 
 /*
 TODO:
-combine tryMovePiece() and tryLowerPiece() into 1 function because they are basically the same
-    utilize direction enum as input to combined function
 figure out why TetrisPiece default constructor is getting called (twice)
-    without providing default constructor there is an error
+    -without providing default constructor there is an error
+implement rotation kicks
+when moving side-to-side, wait a longer period of time before moving at the MOVE_DELAY rate
 
+MAYBE:
+ghost pieces to see where piece will land?
+    -could be same color or lighter
+    -instead of showing the whole piece, could just show 1 row of pixels directly on the surface it will hit
 */
 
 class Tetris : public BaseGame
@@ -109,17 +114,29 @@ public:
     bool justStarted;
 
 private:
-    const static uint8_t NUM_PIECES = 7;
-    const static uint8_t NUM_ROTATIONS = 4;
-    const static uint8_t NUM_PIECE_SEGMENTS = 4; // tetronimoes
+    static const uint8_t NUM_PIECES = 7;
+    static const uint8_t NUM_ROTATIONS = 4;
+    static const uint8_t NUM_PIECE_SEGMENTS = 4; // tetronimoes
 
-    const static uint8_t BOARD_X_POSITION = 10;
-    const static uint8_t BOARD_Y_POSITION = 23;
-    const static uint8_t NEXTPIECE_X_POSITION = 22;
-    const static uint8_t NEXTPIECE_Y_POSITION = 13;
-    const static uint8_t BOARD_HEIGHT = 20;
-    const static uint8_t BOARD_WIDTH = 10;
-    const static uint8_t BOARD_PIXEL_SIZE = 2; // 2x2 pixels, should have multiple constants for 1P, 2P, etc.
+    static const uint8_t BOARD_X_POSITION_1P = 28;
+    static const uint8_t BOARD_Y_POSITION_1P = 2;
+    static const uint8_t BOARD_X_POSITION_2P = 8;
+    static const uint8_t BOARD_Y_POSITION_2P = 21;
+    uint8_t BOARD_X_POSITION;
+    uint8_t BOARD_Y_POSITION;
+    static const uint8_t NEXTPIECE_X_POSITION_1P = 5;
+    static const uint8_t NEXTPIECE_Y_POSITION_1P = 18;
+    static const uint8_t NEXTPIECE_X_POSITION_2P = 22;
+    static const uint8_t NEXTPIECE_Y_POSITION_2P = 13;
+    uint8_t NEXTPIECE_X_POSITION;
+    uint8_t NEXTPIECE_Y_POSITION;
+
+    static const uint8_t FRAME_THICKNESS = 2;
+    static const uint8_t BOARD_HEIGHT = 20;
+    static const uint8_t BOARD_WIDTH = 10;
+    static const uint8_t BOARD_PIXEL_SIZE_1P = 3;
+    static const uint8_t BOARD_PIXEL_SIZE_2P = 2;
+    uint8_t BOARD_PIXEL_SIZE;
 
     class TetrisPiece
     {
@@ -239,7 +256,7 @@ private:
         uint8_t currentPieceCoordinates[NUM_PIECE_SEGMENTS][2]; // could use Point struct from SnakeGame for better readability
         int8_t currentPieceTopLeft[2];                          // can be negative
 
-        const static uint8_t SPAWN_X_OFFSET = 3;
+        static const uint8_t SPAWN_X_OFFSET = 3;
 
         bool addCurrentPieceToBoard();
         void checkForLineClear();
@@ -263,8 +280,7 @@ private:
 
         bool tryGetNewPiece();
         bool tryRotatePiece(bool clockwise);
-        bool tryMovePiece(bool left);
-        bool tryLowerPiece();
+        bool tryMovePiece(direction dir);
         void resetBoard();
     };
 
@@ -279,7 +295,6 @@ private:
     void drawFrame();
     void drawScore(uint8_t player);
     void clearNextPiece();
-    // void clearBoard();
     void drawNextPiece(uint8_t player);
     void drawBoard(uint8_t player);
     void checkForInput();

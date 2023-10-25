@@ -12,7 +12,11 @@ Changes:
 
 Ideas:
 -Multiple apples at a time (maybe only in 2-player)
--Maybe allow either player to initiate a 1-player game, with it selecting the proper controls depending on the button pushed?
+-Bigger pixel size
+-getNewApplePosition() can lock up if there are a lot of spaces occupied or unlucky RNG
+
+Power-ups
+    -shoot out a temporary wall that the other player's head can't run into
 -Obstacles?
 -Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
     Would have to check if only the head of the snake got the apple (currently the case)
@@ -49,9 +53,11 @@ private:
         const uint8_t FRAME_X_MAX;
         const uint8_t FRAME_Y_MIN;
         const uint8_t FRAME_Y_MAX;
+        const uint8_t FIELD_WIDTH;
+        const uint8_t FIELD_HEIGHT;
 
     public:
-        Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX, uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX);
+        Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX, uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT);
         const uint8_t player;
         uint8_t score;
         uint16_t color;
@@ -66,6 +72,12 @@ private:
         void setColors(uint16_t color, uint16_t colorPaused);
     };
 
+    static const uint8_t FRAME_THICKNESS = 2; //2 MATRIX_WIDTH - (2 * FRAME_THICKNESS) and
+    static const uint8_t FRAME_Y_OFFSET = 2;  //2 MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)
+    static const uint8_t PIXEL_SIZE = 4;      //2 must be a multiple of PIXEL_SIZE < only matters if using PIXEL_SIZE of 3+
+    const uint8_t FIELD_WIDTH;
+    const uint8_t FIELD_HEIGHT;
+
     const uint8_t FRAME_X_MIN;
     const uint8_t FRAME_X_MAX;
     const uint8_t FRAME_Y_MIN;
@@ -75,7 +87,7 @@ private:
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
 
-    Snake *snakes[2] = {};   // initializes to nullptrs, probably need a destructor to clear this out when switching games
+    Snake *snakes[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
 
     Point applePosition;
 

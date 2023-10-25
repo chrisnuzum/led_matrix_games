@@ -8,17 +8,12 @@
 class BaseGame
 {
 public: // https://www.learncpp.com/cpp-tutorial/constructors-and-initialization-of-derived-classes/
-    BaseGame(Utility &utility, uint8_t numPlayers) : utility(&utility),
+    BaseGame(Utility &utility) : utility(&utility),
                                                      display(utility.display),
                                                      MATRIX_WIDTH(utility.MATRIX_WIDTH),
-                                                     MATRIX_HEIGHT(utility.MATRIX_HEIGHT),
-                                                     numPlayers(numPlayers)
+                                                     MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
     {
     }
-    virtual void setPlayers(uint8_t players)
-    {
-        this->numPlayers = players;
-    };
     virtual bool loopGame() = 0;    // https://www.geeksforgeeks.org/pure-virtual-functions-and-abstract-classes/#
 
 protected:
@@ -29,7 +24,6 @@ protected:
     uint8_t numPlayers;
 
     uint8_t updateDelay;
-    unsigned long msCurrent;
     unsigned long msPrevious;
     uint16_t GAME_OVER_DELAY;
     bool paused;

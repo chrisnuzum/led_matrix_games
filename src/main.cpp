@@ -13,6 +13,13 @@
 // that should allow the commands to burn eFuses to be able to use GPIO (I think) 12
 // also heap tracing: https://github.com/espressif/vscode-esp-idf-extension/blob/HEAD/docs/tutorial/heap_tracing.md
 
+/*
+Ideas: 
+
+-add autoplay/screensavers for each game
+-whichever controller selects the game is the Player 1 and the screen is oriented towards them, so you could use P2 controls during a 1 player game
+*/
+
 // Pins for LED MATRIX
 #define P_LAT 22
 #define P_A 19
@@ -152,7 +159,7 @@ void loop()
 
         if (selected_game == 1)
         {
-            if (snakeGame == nullptr)   // if game has switched, maybe set previous game to nullptr to conserve RAM
+            if (snakeGame == nullptr)   // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
             {
                 snakeGame = new SnakeGame(utility, selected_players);
             }
@@ -162,7 +169,7 @@ void loop()
         }
         else if (selected_game == 2)
         {
-            if (tetris == nullptr)   // if game has switched, maybe set previous game to nullptr to conserve RAM
+            if (tetris == nullptr)   // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
             {
                 tetris = new Tetris(utility, selected_players);
             }

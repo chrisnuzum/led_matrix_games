@@ -2,29 +2,54 @@
 
 Point SnakeGame::Snake::getInitialPosition()
 {
-    return Point(player * 20, 50);
+    // return Point(player * 20, 50);
+    if (player == 1)
+    {
+        return Point(20 / PIXEL_SIZE, 50 / PIXEL_SIZE);
+    }
+    else if (player == 2)
+    {
+        return Point(50 / PIXEL_SIZE, 20 / PIXEL_SIZE);
+    }
+    else
+    {
+        return Point();
+    }
 }
 
-SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX, uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX) : player(player),
-                                                                                                                              FRAME_X_MIN(FRAME_X_MIN),
-                                                                                                                              FRAME_X_MAX(FRAME_X_MAX),
-                                                                                                                              FRAME_Y_MIN(FRAME_Y_MIN),
-                                                                                                                              FRAME_Y_MAX(FRAME_Y_MAX)
+SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX,
+                        uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT) : player(player),
+                                                                                                               FRAME_X_MIN(FRAME_X_MIN),
+                                                                                                               FRAME_X_MAX(FRAME_X_MAX),
+                                                                                                               FRAME_Y_MIN(FRAME_Y_MIN),
+                                                                                                               FRAME_Y_MAX(FRAME_Y_MAX),
+                                                                                                               FIELD_WIDTH(FIELD_WIDTH),
+                                                                                                               FIELD_HEIGHT(FIELD_HEIGHT)
 
 {
     score = 0;
-    lastDirection = UP;
-    currentDirection = UP;
+    // lastDirection = UP;
+    // currentDirection = UP;
+    if (player == 1)
+    {
+        lastDirection = UP;
+        currentDirection = UP;
+    }
+    else if (player == 2)
+    {
+        lastDirection = DOWN;
+        currentDirection = DOWN;
+    }
     segments = LinkedList<Point>();
     Point p = getInitialPosition();
     segments.add(p);
 }
 
-bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)
+bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)    // broken??? maybe don't use references?
 {
     for (int i = 0; i < segments.size() - 1; i++) // ignores tail segment because that will be in a different place
-    {                                             // if adding snake collision this should be changed because when getting apple the
-        if (segments.get(i).isEqual(x, y))        // tail isn't deleted
+    {                                             // if adding 2P snake-snake collision this should be changed because
+        if (segments.get(i).isEqual(x, y))        // when getting apple the tail isn't deleted
         {
             return true;
         }
@@ -36,7 +61,11 @@ bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)
 bool SnakeGame::Snake::isNextPointValid(const Point &p) // TODO: for other game modes, check if hits another player's snake
 {
     // check if within boundary or in the snake
-    if (p.x < FRAME_X_MIN || p.x > FRAME_X_MAX || p.y < FRAME_Y_MIN || p.y > FRAME_Y_MAX || occupiesPoint(p.x, p.y))
+    // if (p.x < FRAME_X_MIN || p.x > FRAME_X_MAX || p.y < FRAME_Y_MIN || p.y > FRAME_Y_MAX || occupiesPoint(p.x, p.y))
+    // {
+    //     return false;
+    // }
+    if (p.x < 0 || p.x > FIELD_WIDTH - 1 || p.y < 0 || p.y > FIELD_HEIGHT - 1 || occupiesPoint(p.x, p.y))
     {
         return false;
     }
@@ -73,29 +102,56 @@ Point SnakeGame::getNewApplePosition()
 {
     int x, y;
     bool insideSnake = false;
-
+    int count = 0;
     do
     {
-        uint8_t width = FRAME_X_MAX - FRAME_X_MIN;
-        uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN;
-        x = random(width) + FRAME_X_MIN;
-        y = random(height) + FRAME_Y_MIN;
+        // uint8_t width = FRAME_X_MAX - FRAME_X_MIN;
+        // uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN;
+        // x = random(width) + FRAME_X_MIN;
+        // y = random(height) + FRAME_Y_MIN;
+        x = random(FIELD_WIDTH); // random(x) returns a number from 0 to x - 1
+        y = random(FIELD_HEIGHT);
         for (int i = 0; i < numPlayers; i++)
         {
             Snake *s = snakes[i];
 
             insideSnake = insideSnake || s->occupiesPoint(x, y);
         }
+        // display.drawPixel(55 - count, 63, utility->colors.redDark);
+        display.setCursor(1, count * 6);
+        display.print(x);
+        display.print(" ");
+        display.print(y);
+        display.print(" ");
+        display.print(insideSnake);
+        if (count == 10)
+        {
+            count = 0;
+            for (int i = 0; i < snakes[0]->segments.size() - 1; i++)
+            {
+                display.setCursor(32, count * 6);
+                display.print(snakes[0]->segments.get(i).x);
+                display.print(" ");
+                display.print(snakes[0]->segments.get(i).y);
+                count++;
+            }
+            count = 0;
+            delay(1000);
+            display.clearDisplay();
+        }
+        count++;
     } while (insideSnake);
 
     return Point(x, y);
 }
 
-SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility, numPlayers},
-                                                              FRAME_X_MIN(1),                        // 1
-                                                              FRAME_X_MAX(utility.MATRIX_WIDTH - 2), // 62
-                                                              FRAME_Y_MIN(3),                        // 3
-                                                              FRAME_Y_MAX(utility.MATRIX_HEIGHT - 4) // 60
+SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
+                                                              FRAME_X_MIN(1),                         // 1
+                                                              FRAME_X_MAX(utility.MATRIX_WIDTH - 2),  // 62
+                                                              FRAME_Y_MIN(3),                         // 3
+                                                              FRAME_Y_MAX(utility.MATRIX_HEIGHT - 4), // 60
+                                                              FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
+                                                              FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
 {
     MIN_DELAY = 10;
     MAX_DELAY = 200; // max value for uint8_t is 255
@@ -104,24 +160,12 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility, 
 
     updateDelay = MAX_DELAY;
 
-    msCurrent = 0;
     msPrevious = 0;
 
     paused = false;
     justStarted = true;
 
-    for (int i = 0; i < numPlayers; i++)
-    {
-        snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX);
-        if (i == 0)
-        {
-            snakes[i]->setColors(utility.colors.orange, utility.colors.red); // why utility. and not utility-> ??
-        }
-        else if (i == 1)
-        {
-            snakes[i]->setColors(utility.colors.purple, utility.colors.pink);
-        }
-    }
+    setPlayers(numPlayers);
 
     applePosition = getNewApplePosition();
 }
@@ -133,7 +177,7 @@ void SnakeGame::setPlayers(uint8_t players)
     {
         if (snakes[i] == nullptr)
         {
-            snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX);
+            snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX, FIELD_WIDTH, FIELD_HEIGHT);
             if (i == 0)
             {
                 snakes[i]->setColors(utility->colors.orange, utility->colors.red);
@@ -198,9 +242,17 @@ void SnakeGame::updateSnakeDirections()
 
 void SnakeGame::drawFrame()
 {
-    uint8_t width = FRAME_X_MAX - FRAME_X_MIN + 3;
-    uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN + 3;
-    display.drawRect(FRAME_X_MIN - 1, FRAME_Y_MIN - 1, width, height, paused ? utility->colors.yellow : utility->colors.red);
+    // uint8_t width = FRAME_X_MAX - FRAME_X_MIN + 3;
+    // uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN + 3;
+    // display.drawRect(FRAME_X_MIN - 1, FRAME_Y_MIN - 1, width, height, paused ? utility->colors.yellow : utility->colors.red);
+
+    uint8_t width = MATRIX_WIDTH;
+    uint8_t height = MATRIX_HEIGHT - 2 * FRAME_Y_OFFSET;
+
+    for (int i = 0; i < FRAME_THICKNESS; i++)
+    {
+        display.drawRect(i, i + FRAME_Y_OFFSET, width - 2 * i, height - 2 * i, paused ? utility->colors.purple : utility->colors.blueDark);
+    }
 }
 
 void SnakeGame::drawScore() // TODO: make this more readable by converting groups of 5 to 1 pixel of a different color?
@@ -227,7 +279,16 @@ void SnakeGame::drawScore() // TODO: make this more readable by converting group
 
 void SnakeGame::drawApple()
 {
-    display.drawPixel(applePosition.x, applePosition.y, paused ? utility->colors.cyan : utility->colors.red);
+    for (int rowOffset = 0; rowOffset < PIXEL_SIZE; rowOffset++)
+    {
+        for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
+        {
+            display.drawPixel(PIXEL_SIZE * applePosition.x + FRAME_THICKNESS + colOffset,
+                              PIXEL_SIZE * applePosition.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                              paused ? utility->colors.cyan : utility->colors.red);
+        }
+    }
+    // display.drawPixel(applePosition.x, applePosition.y, paused ? utility->colors.cyan : utility->colors.red);
 }
 
 void SnakeGame::drawSnakes()
@@ -239,7 +300,16 @@ void SnakeGame::drawSnakes()
         for (int i = 0; i < s->segments.size(); i++)
         {
             Point p = s->segments.get(i);
-            display.drawPixel(p.x, p.y, paused ? s->colorPaused : s->color);
+            // display.drawPixel(p.x, p.y, paused ? s->colorPaused : s->color);
+            for (int rowOffset = 0; rowOffset < PIXEL_SIZE; rowOffset++)
+            {
+                for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
+                {
+                    display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
+                                      PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                                      paused ? s->colorPaused : s->color);
+                }
+            }
         }
     }
 }
@@ -254,9 +324,10 @@ void SnakeGame::increaseSpeed()
 
 void SnakeGame::checkForPause()
 {
-    utility->inputs.update2(utility->inputs.pins.startButton);
+    utility->inputs.update2(utility->inputs.pins.p1Buttons);
+    utility->inputs.update2(utility->inputs.pins.p2Buttons);
 
-    if (utility->inputs.START)
+    if (utility->inputs.A_P1 || utility->inputs.B_P1 || utility->inputs.A_P2 || utility->inputs.B_P2)
     {
         paused = !paused;
         display.clearDisplay();
@@ -279,14 +350,22 @@ void SnakeGame::resetSnakes()
             s->segments.pop();
         }
         s->segments.add(s->getInitialPosition());
-
-        s->currentDirection = UP;
+        if (s->player == 1)
+        {
+            s->currentDirection = UP;
+        }
+        else
+        {
+            s->currentDirection = DOWN;
+        }
         s->score = 0;
     }
 }
 
 void SnakeGame::resetApple()
 {
+    display.clearDisplay();                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    display.setFont(utility->fonts.my5x5round); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     applePosition = getNewApplePosition();
 }
 
@@ -322,7 +401,7 @@ void SnakeGame::gameOver()
         {
             display.print("Player 1 wins!");
         }
-        else if (scores[0] > scores[1])
+        else if (scores[1] > scores[0])
         {
             display.print("Player 2 wins!");
         }
@@ -362,6 +441,10 @@ bool SnakeGame::loopGame()
         drawApple();
         delay(1000);
         justStarted = false;
+        for (int i = 0; i < 50; i++)
+        {
+            Serial.println(random(5));
+        }
     }
 
     checkForPause();
@@ -369,10 +452,10 @@ bool SnakeGame::loopGame()
     if (!paused)
     {
         updateSnakeDirections();
-        msCurrent = millis();
-        if ((msCurrent - msPrevious) > updateDelay)
+        if ((millis() - msPrevious) > updateDelay)
         {
-            // updateSnakeDirections();
+            msPrevious = millis();
+
             bool snakeGotApple = false;  // would it better if these were declared outside of the loop? so it isn't
             bool snakeCollision = false; // allocating new memory every time the loop runs
 
@@ -388,6 +471,8 @@ bool SnakeGame::loopGame()
 
                     if (applePosition.isEqual(nextPoint.x, nextPoint.y)) // check if snake got the apple
                     {
+                        Serial.println("SNAKE GOT APPLE!!!!");
+                        display.drawPixel(63, 63, utility->colors.green);
                         s->score++;
                         snakeGotApple = true;
                     }
@@ -400,9 +485,9 @@ bool SnakeGame::loopGame()
                 {
                     if (numPlayers == 2)
                     {
-                        if (s->score - 3 >= 0)
+                        if (s->score - 1 >= 0)
                         {
-                            s->score -= 3;
+                            s->score -= 1;
                         }
                         else
                         {
@@ -415,27 +500,37 @@ bool SnakeGame::loopGame()
 
             if (snakeGotApple)
             {
+                display.drawPixel(61, 63, utility->colors.green);
                 resetApple();
+                Serial.println("apple reset");
+                display.drawPixel(59, 63, utility->colors.green);
                 increaseSpeed();
+                Serial.println("speed increased");
+                display.drawPixel(57, 63, utility->colors.green);
             }
 
             if (snakeCollision)
             {
+                display.clearDisplay(); // remove all this after only drawing what's necessary, it causes 2nd snake to move once after 1st snake crashes
+                drawFrame();
+                drawScore();
+                drawSnakes();
+                drawApple();
+                delay(3000);
+
                 gameOver();
                 return false;
             }
-            else    // instead of clearing and redrawing, maybe only draw if something changes
-            {       //    when popping a snake segment clear that pixel
-                    //    when adding a segment draw it
-                    //    when new apple is made draw it
+            else // instead of clearing and redrawing, maybe only draw if something changes
+            {    //    when popping a snake segment clear that pixel
+                 //    when adding a segment draw it
+                 //    when new apple is made draw it
                 display.clearDisplay();
                 drawFrame();
                 drawScore();
                 drawSnakes();
                 drawApple();
             }
-
-            msPrevious = msCurrent;
         }
     }
     return true;
