@@ -12,7 +12,7 @@ Changes:
 
 Ideas:
 -Multiple apples at a time (maybe only in 2-player)
--Bigger pixel size
+-Only draw what is necessary, don't clear screen
 -getNewApplePosition() can lock up if there are a lot of spaces occupied or unlucky RNG
 
 Power-ups
@@ -49,15 +49,11 @@ public:
 private:
     class Snake
     {
-        const uint8_t FRAME_X_MIN;
-        const uint8_t FRAME_X_MAX;
-        const uint8_t FRAME_Y_MIN;
-        const uint8_t FRAME_Y_MAX;
         const uint8_t FIELD_WIDTH;
         const uint8_t FIELD_HEIGHT;
 
     public:
-        Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX, uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT);
+        Snake(uint8_t player, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT);
         const uint8_t player;
         uint8_t score;
         uint16_t color;
@@ -77,11 +73,6 @@ private:
     static const uint8_t PIXEL_SIZE = 4;      //2 must be a multiple of PIXEL_SIZE < only matters if using PIXEL_SIZE of 3+
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
-
-    const uint8_t FRAME_X_MIN;
-    const uint8_t FRAME_X_MAX;
-    const uint8_t FRAME_Y_MIN;
-    const uint8_t FRAME_Y_MAX;
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;

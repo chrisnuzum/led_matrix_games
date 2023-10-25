@@ -2,7 +2,6 @@
 
 Point SnakeGame::Snake::getInitialPosition()
 {
-    // return Point(player * 20, 50);
     if (player == 1)
     {
         return Point(20 / PIXEL_SIZE, 50 / PIXEL_SIZE);
@@ -17,19 +16,13 @@ Point SnakeGame::Snake::getInitialPosition()
     }
 }
 
-SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX,
-                        uint8_t FRAME_Y_MIN, uint8_t FRAME_Y_MAX, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT) : player(player),
-                                                                                                               FRAME_X_MIN(FRAME_X_MIN),
-                                                                                                               FRAME_X_MAX(FRAME_X_MAX),
-                                                                                                               FRAME_Y_MIN(FRAME_Y_MIN),
-                                                                                                               FRAME_Y_MAX(FRAME_Y_MAX),
-                                                                                                               FIELD_WIDTH(FIELD_WIDTH),
-                                                                                                               FIELD_HEIGHT(FIELD_HEIGHT)
+SnakeGame::Snake::Snake(uint8_t player, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT) : player(player),
+                                                                                     FIELD_WIDTH(FIELD_WIDTH),
+                                                                                     FIELD_HEIGHT(FIELD_HEIGHT)
 
 {
     score = 0;
-    // lastDirection = UP;
-    // currentDirection = UP;
+
     if (player == 1)
     {
         lastDirection = UP;
@@ -45,7 +38,7 @@ SnakeGame::Snake::Snake(uint8_t player, uint8_t FRAME_X_MIN, uint8_t FRAME_X_MAX
     segments.add(p);
 }
 
-bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)    // broken??? maybe don't use references?
+bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)
 {
     for (int i = 0; i < segments.size() - 1; i++) // ignores tail segment because that will be in a different place
     {                                             // if adding 2P snake-snake collision this should be changed because
@@ -60,16 +53,10 @@ bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)    // broken???
 // make sure the next point for the head of the snake is in a valid position
 bool SnakeGame::Snake::isNextPointValid(const Point &p) // TODO: for other game modes, check if hits another player's snake
 {
-    // check if within boundary or in the snake
-    // if (p.x < FRAME_X_MIN || p.x > FRAME_X_MAX || p.y < FRAME_Y_MIN || p.y > FRAME_Y_MAX || occupiesPoint(p.x, p.y))
-    // {
-    //     return false;
-    // }
     if (p.x < 0 || p.x > FIELD_WIDTH - 1 || p.y < 0 || p.y > FIELD_HEIGHT - 1 || occupiesPoint(p.x, p.y))
     {
         return false;
     }
-
     return true;
 }
 
@@ -102,54 +89,26 @@ Point SnakeGame::getNewApplePosition()
 {
     int x, y;
     bool insideSnake = false;
-    int count = 0;
+    int _count = 0;
     do
     {
-        // uint8_t width = FRAME_X_MAX - FRAME_X_MIN;
-        // uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN;
-        // x = random(width) + FRAME_X_MIN;
-        // y = random(height) + FRAME_Y_MIN;
         x = random(FIELD_WIDTH); // random(x) returns a number from 0 to x - 1
         y = random(FIELD_HEIGHT);
+
         for (int i = 0; i < numPlayers; i++)
         {
             Snake *s = snakes[i];
 
-            insideSnake = insideSnake || s->occupiesPoint(x, y);
+            insideSnake = s->occupiesPoint(x, y);
+            break;
         }
-        // display.drawPixel(55 - count, 63, utility->colors.redDark);
-        display.setCursor(1, count * 6);
-        display.print(x);
-        display.print(" ");
-        display.print(y);
-        display.print(" ");
-        display.print(insideSnake);
-        if (count == 10)
-        {
-            count = 0;
-            for (int i = 0; i < snakes[0]->segments.size() - 1; i++)
-            {
-                display.setCursor(32, count * 6);
-                display.print(snakes[0]->segments.get(i).x);
-                display.print(" ");
-                display.print(snakes[0]->segments.get(i).y);
-                count++;
-            }
-            count = 0;
-            delay(1000);
-            display.clearDisplay();
-        }
-        count++;
+
     } while (insideSnake);
 
     return Point(x, y);
 }
 
 SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
-                                                              FRAME_X_MIN(1),                         // 1
-                                                              FRAME_X_MAX(utility.MATRIX_WIDTH - 2),  // 62
-                                                              FRAME_Y_MIN(3),                         // 3
-                                                              FRAME_Y_MAX(utility.MATRIX_HEIGHT - 4), // 60
                                                               FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
                                                               FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
 {
@@ -177,7 +136,7 @@ void SnakeGame::setPlayers(uint8_t players)
     {
         if (snakes[i] == nullptr)
         {
-            snakes[i] = new Snake(i + 1, FRAME_X_MIN, FRAME_X_MAX, FRAME_Y_MIN, FRAME_Y_MAX, FIELD_WIDTH, FIELD_HEIGHT);
+            snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT);
             if (i == 0)
             {
                 snakes[i]->setColors(utility->colors.orange, utility->colors.red);
@@ -242,10 +201,6 @@ void SnakeGame::updateSnakeDirections()
 
 void SnakeGame::drawFrame()
 {
-    // uint8_t width = FRAME_X_MAX - FRAME_X_MIN + 3;
-    // uint8_t height = FRAME_Y_MAX - FRAME_Y_MIN + 3;
-    // display.drawRect(FRAME_X_MIN - 1, FRAME_Y_MIN - 1, width, height, paused ? utility->colors.yellow : utility->colors.red);
-
     uint8_t width = MATRIX_WIDTH;
     uint8_t height = MATRIX_HEIGHT - 2 * FRAME_Y_OFFSET;
 
@@ -288,7 +243,6 @@ void SnakeGame::drawApple()
                               paused ? utility->colors.cyan : utility->colors.red);
         }
     }
-    // display.drawPixel(applePosition.x, applePosition.y, paused ? utility->colors.cyan : utility->colors.red);
 }
 
 void SnakeGame::drawSnakes()
@@ -300,7 +254,7 @@ void SnakeGame::drawSnakes()
         for (int i = 0; i < s->segments.size(); i++)
         {
             Point p = s->segments.get(i);
-            // display.drawPixel(p.x, p.y, paused ? s->colorPaused : s->color);
+
             for (int rowOffset = 0; rowOffset < PIXEL_SIZE; rowOffset++)
             {
                 for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
@@ -364,8 +318,6 @@ void SnakeGame::resetSnakes()
 
 void SnakeGame::resetApple()
 {
-    display.clearDisplay();                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    display.setFont(utility->fonts.my5x5round); // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     applePosition = getNewApplePosition();
 }
 
@@ -441,10 +393,6 @@ bool SnakeGame::loopGame()
         drawApple();
         delay(1000);
         justStarted = false;
-        for (int i = 0; i < 50; i++)
-        {
-            Serial.println(random(5));
-        }
     }
 
     checkForPause();
@@ -471,7 +419,6 @@ bool SnakeGame::loopGame()
 
                     if (applePosition.isEqual(nextPoint.x, nextPoint.y)) // check if snake got the apple
                     {
-                        Serial.println("SNAKE GOT APPLE!!!!");
                         display.drawPixel(63, 63, utility->colors.green);
                         s->score++;
                         snakeGotApple = true;
@@ -500,13 +447,8 @@ bool SnakeGame::loopGame()
 
             if (snakeGotApple)
             {
-                display.drawPixel(61, 63, utility->colors.green);
                 resetApple();
-                Serial.println("apple reset");
-                display.drawPixel(59, 63, utility->colors.green);
                 increaseSpeed();
-                Serial.println("speed increased");
-                display.drawPixel(57, 63, utility->colors.green);
             }
 
             if (snakeCollision)

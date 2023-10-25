@@ -228,7 +228,7 @@ private:
                     break;
                 }
             }
-            if (true)
+            if (false)
             {
                 if (!(input_current_string.equals("0") || input_current_string.equals("00") || input_current_string.equals("0000")) ||
                     !(input_new_string.equals("0") || input_new_string.equals("00") || input_new_string.equals("0000")) )
