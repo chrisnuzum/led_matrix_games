@@ -116,7 +116,7 @@ public:
 private:
     static const uint8_t NUM_PIECES = 7;
     static const uint8_t NUM_ROTATIONS = 4;
-    static const uint8_t NUM_PIECE_SEGMENTS = 4; // tetronimoes
+    static const uint8_t NUM_PIECE_SEGMENTS = 4; // tetrominos
 
     static const uint8_t BOARD_X_POSITION_1P = 28;
     static const uint8_t BOARD_Y_POSITION_1P = 2;
@@ -147,7 +147,7 @@ private:
         uint8_t length;
         const bool *orientations;
         bool rotatable;
-        int8_t spawnXOffset;
+        int8_t spawnXOffset; // could instead calculate this based on length when the piece is spawned
         int8_t spawnYOffset;
         // everything above is not modified at runtime
     };
@@ -271,7 +271,7 @@ private:
         uint8_t player;
         uint16_t score;
         TetrisPiece nextPiece;
-        uint16_t board[BOARD_HEIGHT][BOARD_WIDTH] = {0};
+        uint16_t board[BOARD_HEIGHT][BOARD_WIDTH] = {0}; // auto initializes each to 0
         unsigned long lastMove;
         bool gameOver;
         bool softDrop;
@@ -284,8 +284,42 @@ private:
         void resetBoard();
     };
 
+    class AutoTetrisBoard
+    {
+        TetrisPiece bag[NUM_PIECES];
+        uint8_t nextPieceBagPosition;
+
+        TetrisPiece currentPiece;
+        uint8_t currentOrientation;                             // could be direction enum?
+        uint8_t currentPieceCoordinates[NUM_PIECE_SEGMENTS][2]; // could use Point struct from SnakeGame for better readability
+        int8_t currentPieceTopLeft[2];                          // can be negative
+
+        static const uint8_t SPAWN_X_OFFSET = 3; // this will be randomized
+
+        bool addCurrentPieceToBoard();
+        void checkForLineClear();
+        void shuffleBag();
+        static int getRandom(int i);
+
+    public:
+        AutoTetrisBoard(const TetrisPiece &iPiece, const TetrisPiece &jPiece, const TetrisPiece &lPiece,
+                        const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece, const TetrisPiece &zPiece);
+
+        TetrisPiece nextPiece;
+        uint16_t aBoard[64][64] = {0}; // auto initializes each to 0
+        bool gameOver;
+
+        bool tryGetNewPiece();
+        // bool tryRotatePiece(bool clockwise);
+        bool tryLowerPiece();
+        void resetBoard();
+    };
+
     TetrisBoard *boards[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
     uint16_t tempBoards[2][BOARD_HEIGHT][BOARD_WIDTH] = {0};
+
+    AutoTetrisBoard *autoBoard = nullptr;
+    uint16_t autoTempBoard[64][64] = {0};
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -301,6 +335,9 @@ private:
     void checkForPause();
 
     void gameOver();
+
+    void autoDrawBoard();
+    bool autoLoopGame();
 };
 
 #endif

@@ -14,7 +14,7 @@
 // also heap tracing: https://github.com/espressif/vscode-esp-idf-extension/blob/HEAD/docs/tutorial/heap_tracing.md
 
 /*
-Ideas: 
+Ideas:
 
 -add autoplay/screensavers for each game
 -whichever controller selects the game is the Player 1 and the screen is oriented towards them, so you could use P2 controls during a 1 player game
@@ -71,10 +71,10 @@ void display_update_enable(bool is_enable)
     }
 }
 
-const char *game_strings[] = {"SNAKE", "TETRIS", "", "", "", ""};
-uint8_t num_games = 6;
-const char *player_strings[] = {"1 Player", "2 Players"};
-uint8_t num_player_options = 2;
+const char *game_strings[] = {"SNAKE", "TETRIS"};
+uint8_t num_games = 2;
+const char *player_strings[] = {"1 Player", "2 Players", "Autoplay"};
+uint8_t num_player_options = 3;
 // uint8_t selected = 1;
 uint8_t selected_game = 1;
 uint8_t selected_players = 1;
@@ -135,7 +135,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 
 void setup()
 {
-    // Serial.begin(115200);    //  Serial being active slows down main loop a lot
+    // Serial.begin(115200); //  Serial being active slows down main loop a lot
     Serial.println("Serial connection started");
 
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
@@ -146,35 +146,41 @@ void setup()
     display.clearDisplay();
     display_update_enable(true);
     delay(2000);
-    utility.setDisplay(display);            // is this necessary? maybe needs re-set after the update_enable?
+    utility.setDisplay(display); // is this necessary? maybe needs re-set after the update_enable?
     display.setFont(utility.fonts.my5x5round);
 }
 
 void loop()
-{                   // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
-    if (!gameRunning)       // TODO: cleanup/destruct games when switching to one after playing another
+{                     // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
+    if (!gameRunning) // TODO: cleanup/destruct games when switching to one after playing another
     {
         selected_game = selectMenuItem(game_strings, num_games);
         selected_players = selectMenuItem(player_strings, num_player_options);
 
         if (selected_game == 1)
         {
-            if (snakeGame == nullptr)   // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
+            if (snakeGame == nullptr) // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
             {
                 snakeGame = new SnakeGame(utility, selected_players);
             }
-            snakeGame->setPlayers(selected_players);
-            snakeGame->justStarted = true;
+            else
+            {
+                snakeGame->setPlayers(selected_players);
+                snakeGame->justStarted = true;
+            }
             gameRunning = true;
         }
         else if (selected_game == 2)
         {
-            if (tetris == nullptr)   // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
+            if (tetris == nullptr) // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
             {
-                tetris = new Tetris(utility, selected_players);
+                tetris = new Tetris(utility, selected_players == 3 ? 0 : selected_players);
             }
-            tetris->setPlayers(selected_players);
-            tetris->justStarted = true;
+            else
+            {
+                tetris->setPlayers(selected_players == 3 ? 0 : selected_players);
+                tetris->justStarted = true;
+            }
             gameRunning = true;
         }
     }

@@ -458,6 +458,15 @@ void Tetris::setPlayers(uint8_t numPlayers)
         NEXTPIECE_X_POSITION = NEXTPIECE_X_POSITION_2P;
         NEXTPIECE_Y_POSITION = NEXTPIECE_Y_POSITION_2P;
     }
+    else if (numPlayers == 0)
+    {
+        if (autoBoard == nullptr)
+        {
+            Serial.println("creating autoboard");
+            autoBoard = new AutoTetrisBoard(iPiece, jPiece, lPiece, oPiece, sPiece, tPiece, zPiece);
+        }
+        updateDelay = 20;
+    }
 }
 
 void Tetris::drawFrame()
@@ -644,7 +653,9 @@ void Tetris::checkForInput()
 void Tetris::checkForPause()
 {
     utility->inputs.update2(utility->inputs.pins.startButton);
+    // utility->inputs.update2(utility->inputs.pins.p1Buttons);
 
+    // if (utility->inputs.A_P1)
     if (utility->inputs.START)
     {
         paused = !paused;
@@ -678,106 +689,416 @@ void Tetris::gameOver()
 
 bool Tetris::loopGame()
 {
+    Serial.print("numPlayers: ");
+    Serial.println(numPlayers);
+    if (numPlayers == 0)
+    {
+        return autoLoopGame();
+    }
+    else
+    {
+        if (justStarted)
+        {
+            display.clearDisplay();
+            display.setFont(utility->fonts.my5x5round);
+            drawFrame();
+            for (int i = 0; i < numPlayers; i++)
+            {
+                drawNextPiece(i + 1);
+                drawBoard(i + 1);
+                drawScore(i + 1);
+            }
+            delay(1000);
+            justStarted = false;
+        }
+
+        // checkForPause();
+
+        if (!paused)
+        {
+            /*
+                get inputs
+                    if inputs are movement or rotation
+                        check if valid >
+                            update board, draw new board
+                    if input is hard drop
+                        do that > jump to checking for line clear
+                    if input is soft drop
+                        speed up updateDelay (could halve it, probably need an extra variable to track the faster speed)
+
+                check if current updateDelay has passed
+                    check if current piece can move down 1
+                        if yes
+                            update board, draw new board
+                        if no
+                            check for line clear
+                            move nextPiece to currentPiece, get new nextPiece
+                            draw nextPiece
+                            update board, draw new board
+            */
+            checkForInput();
+
+            if ((millis() - msPrevious) > updateDelay)
+            {
+                msPrevious = millis();
+                for (int i = 0; i < numPlayers; i++)
+                {
+                    if (!boards[i]->gameOver)
+                    {
+                        bool pieceAtBottom = false;
+                        if (boards[i]->hardDrop)
+                        {
+                            while (!pieceAtBottom)
+                            {
+                                pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
+                            }
+                            boards[i]->hardDrop = false;
+                        }
+                        else if (boards[i]->softDrop)
+                        {
+                            pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
+                            boards[i]->updateFlipper = true;
+                        }
+                        else if (boards[i]->updateFlipper)
+                        {
+                            pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
+                        }
+                        boards[i]->updateFlipper = !boards[i]->updateFlipper;
+                        if (pieceAtBottom)
+                        {
+                            drawScore(boards[i]->player);
+                            if (!boards[i]->tryGetNewPiece())
+                            {
+                                drawNextPiece(boards[i]->player);
+
+                                boards[i]->gameOver = true;
+                            }
+                            else
+                            {
+                                drawNextPiece(boards[i]->player);
+                            }
+                        }
+                        drawBoard(boards[i]->player);
+                    }
+                }
+                bool allGameOver = true;
+                for (int i = 0; i < numPlayers; i++)
+                {
+                    if (boards[i]->gameOver == false)
+                    {
+                        allGameOver = false;
+                    }
+                }
+                if (allGameOver)
+                {
+                    gameOver();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}
+
+bool Tetris::AutoTetrisBoard::addCurrentPieceToBoard()
+{
+    bool pieceFits = true;
+
+    uint8_t count = 0;
+
+    currentPieceTopLeft[0] = 0;
+    currentPieceTopLeft[1] = random(65 - currentPiece.length);
+    if (currentPiece.rotatable)
+    {
+        currentOrientation = random(4);
+    }
+    else
+    {
+        currentOrientation = 0;
+    }
+
+    for (int row = 0; row < currentPiece.length; row++)
+    {
+        for (int col = 0; col < currentPiece.length; col++)
+        {
+            if (currentPiece.orientations[currentOrientation * currentPiece.length * currentPiece.length + row * currentPiece.length + col])
+            {
+                if (row + currentPieceTopLeft[0] < 0 || currentPieceTopLeft[1] + col < 0 ||
+                    currentPieceTopLeft[1] + col >= 64)
+                { // prevents crash if trying to access outside of board array
+                    return false;
+                }
+                if (aBoard[row + currentPieceTopLeft[0]][currentPieceTopLeft[1] + col] != 0)
+                {
+                    pieceFits = false;
+                }
+                aBoard[row + currentPieceTopLeft[0]][currentPieceTopLeft[1] + col] = currentPiece.color;
+                currentPieceCoordinates[count][0] = row + currentPieceTopLeft[0];
+                currentPieceCoordinates[count][1] = currentPieceTopLeft[1] + col;
+                count++;
+            }
+            if (count == NUM_PIECE_SEGMENTS)
+            {
+                break;
+            }
+        }
+        if (count == NUM_PIECE_SEGMENTS)
+        {
+            break;
+        }
+    }
+
+    return pieceFits;
+}
+
+void Tetris::AutoTetrisBoard::checkForLineClear()
+{
+    const uint8_t MAX_POSSIBLE_ROWS_CLEARED = 4;
+
+    uint8_t lowestFullRow = 0;
+    uint8_t linesCleared = 0;
+    bool lineEmpty;
+    bool lineFull;
+
+    for (int _row = 64 - 1; _row > 0 && linesCleared < 4; _row--)
+    {
+        lineEmpty = true;
+        lineFull = true;
+        for (int _col = 0; _col < 64; _col++)
+        {
+            if (aBoard[_row][_col] == 0)
+            {
+                lineFull = false;
+            }
+            else
+            {
+                lineEmpty = false;
+            }
+        }
+        if (lineEmpty)
+        {
+            break;
+        }
+        if (lineFull)
+        {
+            if (_row > lowestFullRow)
+            {
+                lowestFullRow = _row;
+            }
+            linesCleared++;
+        }
+    }
+
+    if (linesCleared > 0)
+    {
+        for (int _row = 0; _row < linesCleared; _row++)
+        {
+            for (int _col = 0; _col < 64; _col++)
+            {
+                aBoard[lowestFullRow - _row][_col] = 0;
+            }
+        }
+        std::rotate(&aBoard[0][0], &aBoard[lowestFullRow + 1 - linesCleared][0], &aBoard[lowestFullRow + 1][0]);
+    }
+}
+
+int Tetris::AutoTetrisBoard::getRandom(int i)
+{
+    return random(i);
+}
+
+void Tetris::AutoTetrisBoard::shuffleBag()
+{
+    std::random_shuffle(std::begin(bag), std::end(bag), Tetris::AutoTetrisBoard::getRandom);
+}
+
+Tetris::AutoTetrisBoard::AutoTetrisBoard(const TetrisPiece &iPiece, const TetrisPiece &jPiece, const TetrisPiece &lPiece,
+                                         const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece,
+                                         const TetrisPiece &zPiece) : bag{iPiece, jPiece, lPiece, oPiece,
+                                                                          sPiece, tPiece, zPiece}
+{
+    nextPieceBagPosition = 0;
+    currentOrientation = 0;
+    gameOver = false;
+    shuffleBag();
+    currentPiece = bag[nextPieceBagPosition];
+    addCurrentPieceToBoard();
+
+    nextPieceBagPosition++;
+    nextPiece = bag[nextPieceBagPosition];
+}
+
+bool Tetris::AutoTetrisBoard::tryGetNewPiece()
+{
+    currentPiece = nextPiece;
+    currentOrientation = 0;
+    nextPieceBagPosition++;
+    if (nextPieceBagPosition == NUM_PIECES)
+    {
+        shuffleBag();
+        nextPieceBagPosition = 0;
+    }
+    nextPiece = bag[nextPieceBagPosition];
+
+    return addCurrentPieceToBoard();
+}
+
+bool Tetris::AutoTetrisBoard::tryLowerPiece()
+{
+    bool canMove = true;
+
+    uint8_t _col;
+    uint8_t _row;
+
+    for (int i = 0; i < NUM_PIECE_SEGMENTS; i++) // search from beginning of list if moving left, end of list if moving right
+    {
+        _row = currentPieceCoordinates[i][0];
+        _col = currentPieceCoordinates[i][1];
+
+        //      T-piece spawn position
+        //                      [0][0],[0][1]=0,4
+        // [1][0],[1][1]=1,3    [2][0],[2][1]=1,4    [3][0],[3][1]=1,5
+
+        bool foundBetterSegment = false;
+        for (int j = i + 1; j < NUM_PIECE_SEGMENTS; j++) // search the rest for a lefter segment in same row
+        {
+            if (currentPieceCoordinates[j][1] == _col) // same column
+            {
+                foundBetterSegment = true; // coords are ordered by row so a match has to be a lower row
+                break;                     // just break cuz we'll get to it later
+            }
+        }
+        if (!foundBetterSegment)
+        {
+            if (_row + 1 == 64 || aBoard[_row + 1][_col] != 0)
+            {
+                canMove = false;
+                break;
+            }
+        }
+    }
+
+    if (canMove)
+    {
+        for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
+        {
+            aBoard[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = 0;
+        }
+        currentPieceTopLeft[0] += 1;
+
+        for (int i = 0; i < NUM_PIECE_SEGMENTS; i++)
+        {
+            currentPieceCoordinates[i][0] += 1;
+            aBoard[currentPieceCoordinates[i][0]][currentPieceCoordinates[i][1]] = currentPiece.color;
+        }
+    }
+    else
+    {
+        checkForLineClear();
+    }
+
+    return canMove;
+}
+
+void Tetris::AutoTetrisBoard::resetBoard()
+{
+    gameOver = false;
+    for (int _row = 0; _row < 64; _row++)
+    {
+        for (int _col = 0; _col < 64; _col++)
+        {
+            aBoard[_row][_col] = 0;
+        }
+    }
+
+    nextPieceBagPosition = 0;
+    currentOrientation = 0;
+    shuffleBag();
+    currentPiece = bag[nextPieceBagPosition];
+    addCurrentPieceToBoard();
+
+    nextPieceBagPosition++;
+    nextPiece = bag[nextPieceBagPosition];
+}
+
+void Tetris::autoDrawBoard()
+{
+    for (int row = 0; row < 64; row++)
+    {
+        for (int col = 0; col < 64; col++)
+        {
+            if (autoTempBoard[row][col] != autoBoard->aBoard[row][col])
+            {
+                autoTempBoard[row][col] = autoBoard->aBoard[row][col];
+
+                for (int rowOffset = 0; rowOffset < BOARD_PIXEL_SIZE; rowOffset++)
+                {
+                    for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
+                    {
+                        display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
+                                          BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, autoBoard->aBoard[row][col]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+bool Tetris::autoLoopGame()
+{
     if (justStarted)
     {
         display.clearDisplay();
-        display.setFont(utility->fonts.my5x5round);
-        drawFrame();
-        for (int i = 0; i < numPlayers; i++)
-        {
-            drawNextPiece(i + 1);
-            drawBoard(i + 1);
-            drawScore(i + 1);
-        }
+        BOARD_PIXEL_SIZE = 1;
+        BOARD_X_POSITION = 0;
+        BOARD_Y_POSITION = 0;
+        autoDrawBoard();
         delay(1000);
         justStarted = false;
     }
 
-    // checkForPause();
+    checkForPause();
 
     if (!paused)
     {
-        /*
-            get inputs
-                if inputs are movement or rotation
-                    check if valid >
-                        update board, draw new board
-                if input is hard drop
-                    do that > jump to checking for line clear
-                if input is soft drop
-                    speed up updateDelay (could halve it, probably need an extra variable to track the faster speed)
-
-            check if current updateDelay has passed
-                check if current piece can move down 1
-                    if yes
-                        update board, draw new board
-                    if no
-                        check for line clear
-                        move nextPiece to currentPiece, get new nextPiece
-                        draw nextPiece
-                        update board, draw new board
-        */
-        checkForInput();
-
-        if ((millis() - msPrevious) > updateDelay)
+        if ((millis() - msPrevious) > updateDelay / 2)
         {
             msPrevious = millis();
-            for (int i = 0; i < numPlayers; i++)
+            if (!autoBoard->gameOver)
             {
-                if (!boards[i]->gameOver)
+                bool pieceAtBottom = false;
+                pieceAtBottom = !autoBoard->tryLowerPiece();
+                if (pieceAtBottom)
                 {
-                    bool pieceAtBottom = false;
-                    if (boards[i]->hardDrop)
+                    if (!autoBoard->tryGetNewPiece())
                     {
-                        while (!pieceAtBottom)
-                        {
-                            // pieceAtBottom = !boards[i]->tryLowerPiece();
-                            pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
-                        }
-                        boards[i]->hardDrop = false;
+                        autoBoard->gameOver = true;
                     }
-                    else if (boards[i]->softDrop)
+                }
+                autoDrawBoard();
+            }
+            else
+            {
+                autoBoard->resetBoard();
+                for (int _row = 0; _row < 64; _row++)
+                {
+                    for (int _col = 0; _col < 64; _col++)
                     {
-                        // pieceAtBottom = !boards[i]->tryLowerPiece();
-                        pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
-                        boards[i]->updateFlipper = true;
+                        autoTempBoard[_row][_col] = 0;
                     }
-                    else if (boards[i]->updateFlipper)
-                    {
-                        // pieceAtBottom = !boards[i]->tryLowerPiece();
-                        pieceAtBottom = !boards[i]->tryMovePiece(DOWN);
-                    }
-                    boards[i]->updateFlipper = !boards[i]->updateFlipper;
-                    if (pieceAtBottom)
-                    {
-                        drawScore(boards[i]->player);
-                        if (!boards[i]->tryGetNewPiece())
-                        {
-                            drawNextPiece(boards[i]->player);
+                }
+                delay(GAME_OVER_DELAY);
+                display.clearDisplay();
+            }
+        }
+    }
+    else
+    {
+        utility->inputs.update2(utility->inputs.pins.p1Buttons);
 
-                            boards[i]->gameOver = true;
-                        }
-                        else
-                        {
-                            drawNextPiece(boards[i]->player);
-                        }
-                    }
-                    drawBoard(boards[i]->player);
-                }
-            }
-            bool allGameOver = true;
-            for (int i = 0; i < numPlayers; i++)
-            {
-                if (boards[i]->gameOver == false)
-                {
-                    allGameOver = false;
-                }
-            }
-            if (allGameOver)
-            {
-                gameOver();
-                return false;
-            }
+        if (utility->inputs.B_P1)   // not working
+        {
+            return false;
         }
     }
 

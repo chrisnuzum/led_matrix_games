@@ -40,7 +40,7 @@ private:
     class Inputs // ensure the same order of pins/buttons is used everywhere in this file
     {
     private:
-        static constexpr uint8_t START_PIN = 99; // need a button!
+        static constexpr uint8_t START_PIN = 36; // need a button!
         static constexpr uint8_t A_P1_PIN = 36;
         static constexpr uint8_t B_P1_PIN = 27;
         static constexpr uint8_t UP_P1_PIN = 32;
@@ -58,7 +58,7 @@ private:
         {
             enum : uint8_t // probably not necessary
             {
-                START_PIN = 99, // need a button!
+                START_PIN = 36, // need a button!
                 A_P1_PIN = 36,
                 B_P1_PIN = 27,
                 UP_P1_PIN = 32,
