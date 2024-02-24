@@ -16,8 +16,60 @@
 /*
 Ideas:
 
--add autoplay/screensavers for each game
--whichever controller selects the game is the Player 1 and the screen is oriented towards them, so you could use P2 controls during a 1 player game
+-default controls and screen orientation based on controller that selects the game
+    -at the main menu both controllers are active
+    -once a game and number of players is selected, only the controller that confirmed the game is active
+    -that player becomes player 1 and the screen is rotated towards them, or there is an option to choose the screen rotation
+    
+
+TO-DO:
+-add autoplay/screensavers for each game with options for speed/size
+    -Snake
+        -basic autoplay added, fails when the snake gets decently long
+        -probably bugs in the current desired implementation
+        -add options for number of apples, size of grid/pixels, and colors
+    -Tetris
+        -basic autoplay added, just fills screen with tiny pieces
+        -placement is random, could add functionality to maybe fill the first half of the screen randomly and then start trying to pick placement and clear lines
+        -add options for pixel size, colors, show/hide score
+-add Back option to menus
+-make more robust menu system with options and a preview of game being played
+*/
+/*
+MENU:
+    -ideally, there would be a gameplay preview immediately showing the selected game
+        -this would be easiest to do at the bottom of the screen but might be hard for Tetris
+
+>Snake    1P 2P
+ Tetris
+
+    -player options only show up for selected game
+    -after selecting a game, a selection arrow appears next to 1P
+
+>Snake   >1P 2P
+ Tetris
+
+    -use left and right arrows to select the number of players
+
+Snake
+
+>Apples  3
+ Start speed  3
+ Max speed  10
+ Back
+
+    -first use up and down arrows to choose an option
+    -upon selecting an option, a selection arrow appears next to the number
+
+Snake
+
+>Apples >3
+ Start speed  3
+ Max speed  10
+ Back
+
+    -use up and down arrows to change number
+    -upon pressing A button, selection arrow disappears next to number (returns to previous view)
 */
 
 // Pins for LED MATRIX
@@ -42,7 +94,7 @@ unsigned long loop_time = 0;
 
 Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 
-SnakeGame *snakeGame = nullptr; // display wouldn't work right if not defining this in setup()
+SnakeGame *snakeGame = nullptr; // display wouldn't work right if not defining this later (in loop())
 Tetris *tetris = nullptr;
 
 bool gameRunning = false;
@@ -75,7 +127,6 @@ const char *game_strings[] = {"SNAKE", "TETRIS"};
 uint8_t num_games = 2;
 const char *player_strings[] = {"1 Player", "2 Players", "Autoplay"};
 uint8_t num_player_options = 3;
-// uint8_t selected = 1;
 uint8_t selected_game = 1;
 uint8_t selected_players = 1;
 
@@ -135,7 +186,7 @@ uint8_t selectMenuItem(const char *items[], uint8_t num_items)
 
 void setup()
 {
-    // Serial.begin(115200); //  Serial being active slows down main loop a lot
+    Serial.begin(115200); //  Serial being active slows down main loop a lot
     Serial.println("Serial connection started");
 
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
@@ -161,11 +212,11 @@ void loop()
         {
             if (snakeGame == nullptr) // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
             {
-                snakeGame = new SnakeGame(utility, selected_players);
+                snakeGame = new SnakeGame(utility, selected_players == 3 ? 0 : selected_players);
             }
             else
             {
-                snakeGame->setPlayers(selected_players);
+                snakeGame->setPlayers(selected_players == 3 ? 0 : selected_players);
                 snakeGame->justStarted = true;
             }
             gameRunning = true;

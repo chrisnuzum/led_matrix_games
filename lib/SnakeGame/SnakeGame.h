@@ -8,21 +8,28 @@
 #include <BaseGame.h>
 /*
 Changes:
+-!!!!apples spawn inside autoSnake!!!!
+-Only draw what is necessary, don't clear screen > DONE but needs added to auto snake
 -Make winner message indicate the position of the player with an arrow.
 
+AI:
+-for auto snake, maybe keep track of min/max X & Y occupied by snake and aim for more open part of screen if snake spans all the way across?
+
 Ideas:
--Multiple apples at a time (maybe only in 2-player)
--Only draw what is necessary, don't clear screen
--getNewApplePosition() can lock up if there are a lot of spaces occupied or unlucky RNG
+-getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
+
+-after 1 player crashes other snake can keep going?
 
 Power-ups
     -shoot out a temporary wall that the other player's head can't run into
+    -speed up/slow down
 -Obstacles?
 -Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
     Would have to check if only the head of the snake got the apple (currently the case)
 -Should snakes collide? If this is added, change occupiesPoint() [see note on that function]
 -Use SPIFFS to store a high score file
-
+-Alternate game mode with snakes colliding with one another, or a Tron-style securing territory
+-Each player can choose their color
 */
 struct Point
 {
@@ -58,8 +65,10 @@ private:
         uint8_t score;
         uint16_t color;
         uint16_t colorPaused;
-        direction lastDirection;
-        direction currentDirection;
+        direction lastDirectionMoved;
+        direction priorToLastDirectionMoved;
+        direction aimedDirection;
+        direction firstAimedDirectionAttempted;
         LinkedList<Point> segments;
         Point getInitialPosition();
         bool occupiesPoint(const int &x, const int &y);
@@ -68,11 +77,13 @@ private:
         void setColors(uint16_t color, uint16_t colorPaused);
     };
 
-    static const uint8_t FRAME_THICKNESS = 2; //2 MATRIX_WIDTH - (2 * FRAME_THICKNESS) and
-    static const uint8_t FRAME_Y_OFFSET = 2;  //2 MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)
-    static const uint8_t PIXEL_SIZE = 4;      //2 must be a multiple of PIXEL_SIZE < only matters if using PIXEL_SIZE of 3+
+    static const uint8_t FRAME_THICKNESS = 0; // 2 MATRIX_WIDTH - (2 * FRAME_THICKNESS) and
+    static const uint8_t FRAME_Y_OFFSET = 0;  // 1 MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)
+    static const uint8_t PIXEL_SIZE = 16;      // 2 must be a multiple of PIXEL_SIZE < only matters if using PIXEL_SIZE of 3+
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
+
+    static const uint8_t NUM_APPLES = 5;
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -80,21 +91,32 @@ private:
 
     Snake *snakes[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
 
-    Point applePosition;
+    Point applePositions[NUM_APPLES]; // TODO: once snake gets long this should be reduced
 
     Point getNewApplePosition();
     void updateSnakeDirections();
 
     void drawFrame();
     void drawScore();
-    void drawApple();
+
+    void drawApple(uint8_t appleNum);
     void drawSnakes();
+    void clearTail(Point p);
+    void drawSnakeHeads();
+
     void increaseSpeed();
     void checkForPause();
     void resetSnakes();
-    void resetApple();
+    void resetApple(uint8_t appleNum);
 
     void gameOver();
+
+    bool autoDirectionSet;
+    bool autoCollision;
+    uint8_t distanceToApple;
+    void autoDrawSnake();
+    void autoDrawScore();
+    bool autoLoopGame();
 };
 
 #endif

@@ -32,6 +32,8 @@
 /*
 Notes:
 
+!!!B_P1 not working!!!
+
 
 */
 class Utility
@@ -42,7 +44,7 @@ private:
     private:
         static constexpr uint8_t START_PIN = 36; // need a button!
         static constexpr uint8_t A_P1_PIN = 36;
-        static constexpr uint8_t B_P1_PIN = 27;
+        static constexpr uint8_t B_P1_PIN = 27; //NOT WORKING??!!
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
         static constexpr uint8_t LEFT_P1_PIN = 25;
@@ -56,22 +58,22 @@ private:
 
         struct PINS
         {
-            enum : uint8_t // probably not necessary
-            {
-                START_PIN = 36, // need a button!
-                A_P1_PIN = 36,
-                B_P1_PIN = 27,
-                UP_P1_PIN = 32,
-                DOWN_P1_PIN = 33,
-                LEFT_P1_PIN = 25,
-                RIGHT_P1_PIN = 26,
-                A_P2_PIN = 3,
-                B_P2_PIN = 21,
-                UP_P2_PIN = 4,
-                DOWN_P2_PIN = 17,
-                LEFT_P2_PIN = 2,
-                RIGHT_P2_PIN = 0
-            };
+            // enum : uint8_t // probably not necessary
+            // {
+            //     START_PIN = 36, // need a button!
+            //     A_P1_PIN = 36,
+            //     B_P1_PIN = 27,
+            //     UP_P1_PIN = 32,
+            //     DOWN_P1_PIN = 33,
+            //     LEFT_P1_PIN = 25,
+            //     RIGHT_P1_PIN = 26,
+            //     A_P2_PIN = 3,
+            //     B_P2_PIN = 21,
+            //     UP_P2_PIN = 4,
+            //     DOWN_P2_PIN = 17,
+            //     LEFT_P2_PIN = 2,
+            //     RIGHT_P2_PIN = 0
+            // };
 
             // no way to check the size of a passed array, so I'm adding it as first element
             uint8_t p1Buttons[3] = {2, A_P1_PIN, B_P1_PIN};
@@ -110,7 +112,7 @@ private:
                 // {
                 //     continue;
                 // }
-                // even with external pullup it needs this run to work for some reason
+                // even with external pullup it still needs this command to be run for some reason
                 pinMode(PIN_NUMBER, INPUT_PULLUP);
             }
         }

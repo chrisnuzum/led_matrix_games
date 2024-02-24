@@ -94,10 +94,9 @@ Ideas to avoid issues:
 
 /*
 TODO:
-figure out why TetrisPiece default constructor is getting called (twice)
-    -without providing default constructor there is an error
 implement rotation kicks
 when moving side-to-side, wait a longer period of time before moving at the MOVE_DELAY rate
+!!!!When going from autoplay to 2 player game hangs!!!!
 
 MAYBE:
 ghost pieces to see where piece will land?
@@ -141,15 +140,14 @@ private:
     class TetrisPiece
     {
     public:
-        TetrisPiece(); // without this it has an error for some reason
         TetrisPiece(uint16_t color, uint8_t length, const bool *orientations, bool rotatable, int8_t spawnXOffset, int8_t spawnYOffset);
         uint16_t color;
         uint8_t length;
         const bool *orientations;
         bool rotatable;
-        int8_t spawnXOffset; // could instead calculate this based on length when the piece is spawned
-        int8_t spawnYOffset;
-        // everything above is not modified at runtime
+        int8_t spawnXOffset; // could calculate this based on length when the piece is spawned
+        int8_t spawnYOffset; // could calculate this based on whether the top tow is empty or not
+        // everything above is not modified at runtime, could probably switch to const if I could remove default constructor
     };
 
     const bool iPieceRaw[4][4][4] =

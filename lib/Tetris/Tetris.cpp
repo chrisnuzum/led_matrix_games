@@ -1,11 +1,6 @@
 #include "Tetris.h"
 #include <algorithm>
 
-Tetris::TetrisPiece::TetrisPiece()
-{
-    Serial.println("!!!!!TetrisPiece default constructor!!!!!");
-}
-
 Tetris::TetrisPiece::TetrisPiece(uint16_t color, uint8_t length, const bool *orientations, bool rotatable,
                                  int8_t spawnXOffset, int8_t spawnYOffset) : color(color),
                                                                              length(length),
@@ -141,7 +136,9 @@ Tetris::TetrisBoard::TetrisBoard(uint8_t player, const TetrisPiece &iPiece, cons
                                  const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece,
                                  const TetrisPiece &zPiece) : player(player),
                                                               bag{iPiece, jPiece, lPiece, oPiece,
-                                                                  sPiece, tPiece, zPiece}
+                                                                  sPiece, tPiece, zPiece},
+                                                              currentPiece(bag[0]),
+                                                              nextPiece(bag[1])
 {
     score = 0;
     nextPieceBagPosition = 0;
@@ -160,7 +157,7 @@ Tetris::TetrisBoard::TetrisBoard(uint8_t player, const TetrisPiece &iPiece, cons
 
 void Tetris::TetrisBoard::shuffleBag()
 {
-    std::random_shuffle(std::begin(bag), std::end(bag), Tetris::TetrisBoard::getRandom);
+    std::random_shuffle(std::begin(bag), std::end(bag), Tetris::TetrisBoard::getRandom); // can I just put contents of getRandom here?
 }
 
 bool Tetris::TetrisBoard::tryGetNewPiece()
@@ -500,9 +497,9 @@ void Tetris::clearNextPiece()
     display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 4 * BOARD_PIXEL_SIZE, 2 * BOARD_PIXEL_SIZE, 0);
 }
 
-// void Tetris::clearBoard()
+// void Tetris::clearBoard()    // could be used in an animation/multiplayer attack where board disappears for a second
 // {
-//     display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * 2, BOARD_HEIGHT * 2, 0);
+//     display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * BOARD_PIXEL_SIZE, BOARD_HEIGHT * BOARD_PIXEL_SIZE, 0);
 // }
 
 void Tetris::drawNextPiece(uint8_t player)
@@ -588,14 +585,14 @@ void Tetris::checkForInput()
             _a = utility->inputs.A_P1;
             _b = utility->inputs.B_P1;
         }
-        else if (boards[i]->player == 2)
+        else if (boards[i]->player == 2) // controls are flipped for P2
         {
             utility->inputs.update2(utility->inputs.pins.p2Buttons);
             utility->inputs.update2(utility->inputs.pins.p2Directions);
-            _up = utility->inputs.UP_P2;
-            _down = utility->inputs.DOWN_P2_pressed;
-            _left = utility->inputs.LEFT_P2_pressed;
-            _right = utility->inputs.RIGHT_P2_pressed;
+            _up = utility->inputs.DOWN_P2_pressed;
+            _down = utility->inputs.UP_P2;
+            _left = utility->inputs.RIGHT_P2_pressed;
+            _right = utility->inputs.LEFT_P2_pressed;
             _a = utility->inputs.A_P2;
             _b = utility->inputs.B_P2;
         }
@@ -689,8 +686,6 @@ void Tetris::gameOver()
 
 bool Tetris::loopGame()
 {
-    Serial.print("numPlayers: ");
-    Serial.println(numPlayers);
     if (numPlayers == 0)
     {
         return autoLoopGame();
@@ -915,7 +910,9 @@ void Tetris::AutoTetrisBoard::shuffleBag()
 Tetris::AutoTetrisBoard::AutoTetrisBoard(const TetrisPiece &iPiece, const TetrisPiece &jPiece, const TetrisPiece &lPiece,
                                          const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece,
                                          const TetrisPiece &zPiece) : bag{iPiece, jPiece, lPiece, oPiece,
-                                                                          sPiece, tPiece, zPiece}
+                                                                          sPiece, tPiece, zPiece},
+                                                                      currentPiece(bag[0]),
+                                                                      nextPiece(bag[1])
 {
     nextPieceBagPosition = 0;
     currentOrientation = 0;
@@ -1094,9 +1091,8 @@ bool Tetris::autoLoopGame()
     }
     else
     {
-        utility->inputs.update2(utility->inputs.pins.p1Buttons);
-
-        if (utility->inputs.B_P1)   // not working
+        utility->inputs.update2(utility->inputs.pins.p2Buttons);
+        if (utility->inputs.B_P2_pressed)
         {
             return false;
         }
