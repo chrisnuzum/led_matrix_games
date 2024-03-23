@@ -1,6 +1,6 @@
 #include "SnakeGame.h"
 
-Point SnakeGame::Snake::getInitialPosition()    // TODO: need to offset something by 1
+Point SnakeGame::Snake::getInitialPosition() // TODO: need to offset something by 1
 {
     if (player == 1 || player == 0)
     {
@@ -86,6 +86,25 @@ void SnakeGame::Snake::setColors(uint16_t color, uint16_t colorPaused)
     this->colorPaused = colorPaused;
 }
 
+// void SnakeGame::setPixelSize(int8_t newValue)
+// {
+//     PIXEL_SIZE = newValue;
+// }
+
+// void SnakeGame::setNumApples(int8_t newValue)
+// {
+// }
+
+void SnakeGame::setStartSpeed(int8_t newValue)
+{
+    MAX_DELAY = 265 - (newValue * 15);
+}
+
+void SnakeGame::setMaxSpeed(int8_t newValue)
+{
+    MIN_DELAY = 60 - (newValue * 5);
+}
+
 Point SnakeGame::getNewApplePosition()
 {
     int x, y;
@@ -116,8 +135,13 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
                                                               FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
                                                               FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
 {
+    // autoplayMode = true;
+    // onePlayerMode = true;
+    // twoPlayerMode = true;
+    // gameDisplayName = "Snake";
+
     MIN_DELAY = 25;  // 10
-    MAX_DELAY = 180; // 200 max value for uint8_t is 255
+    MAX_DELAY = 180; // 200; max value for uint8_t is 255
     SPEED_LOSS = 5;
     GAME_OVER_DELAY = 10000;
 
@@ -277,7 +301,7 @@ void SnakeGame::drawApple(uint8_t appleNum)
     }
 }
 
-void SnakeGame::drawSnakes()        // use only when redrawing whole snakes are required (at start, when changing colors for pause)
+void SnakeGame::drawSnakes() // use only when redrawing whole snakes are required (at start, when changing colors for pause)
 {
     for (int i = 0; i < numPlayers; i++)
     {
@@ -346,7 +370,7 @@ void SnakeGame::checkForPause()
     utility->inputs.update2(utility->inputs.pins.p1Buttons);
     utility->inputs.update2(utility->inputs.pins.p2Buttons);
 
-    if (utility->inputs.A_P1 || utility->inputs.B_P1 || utility->inputs.A_P2 || utility->inputs.B_P2)
+    if (utility->inputs.A_P1 || utility->inputs.A_P2) // || utility->inputs.B_P1 || utility->inputs.B_P2)
     {
         paused = !paused;
         if (numPlayers == 0)
@@ -489,8 +513,8 @@ bool SnakeGame::loopGame()
         {
             msPrevious = millis();
 
-            bool appleEatenByAnySnake = false;   // would it be better if these were declared outside of the loop? so it isn't
-            bool snakeCollision = false;        // allocating new memory every time the loop runs
+            bool appleEatenByAnySnake = false; // would it be better if these were declared outside of the loop? so it isn't
+            bool snakeCollision = false;       // allocating new memory every time the loop runs
 
             for (int i = 0; i < numPlayers; i++)
             {
@@ -702,6 +726,32 @@ void SnakeGame::autoDrawScore()
     }
 }
 
+bool SnakeGame::autoCheckForQuit()
+{
+    if (utility->inputs.B_P1 || utility->inputs.B_P2)
+    {
+        Snake *s = snakes[0];
+
+        while (s->segments.size() > 0)
+        {
+            s->segments.pop();
+        }
+        s->segments.add(s->getInitialPosition());
+        s->score = 0;
+
+        s->aimedDirection = UP;
+        s->lastDirectionMoved = UP;
+        s->priorToLastDirectionMoved = RIGHT;
+
+        for (int i = 0; i < NUM_APPLES; i++)
+        {
+            resetApple(i);
+        }
+        return false;
+    }
+    return true;
+}
+
 bool SnakeGame::autoLoopGame()
 {
     if (justStarted)
@@ -717,6 +767,10 @@ bool SnakeGame::autoLoopGame()
     }
 
     checkForPause();
+    if (!autoCheckForQuit())
+    {
+        return false;
+    }
 
     /*
     Issues:

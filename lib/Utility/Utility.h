@@ -2,7 +2,7 @@
 #define _inputsfonts_
 
 #include <Arduino.h>
-#include <vector>
+// #include <vector>
 
 #include <PxMatrix.h>
 
@@ -14,6 +14,11 @@
 #include <Fonts/TomThumb.h>     // 4-5 tall x 3 wide fixed (except lowercase i, some 1px below baseline) (pretty good for small space)
 #include <Fonts/Font4x5Fixed.h> // 4-5 tall x 1-4 wide (most 3 wide)
 #include <Fonts/Org_01.h>       // 4-5 tall x 1-5 wide (most 4 wide, some 1px below baseline) (boxy looking)
+
+// Desktop/Arduino/Arduino Fonts
+// font viewer: https://github.com/fel88/GFXFontTool
+// color picker: https://barth-dev.de/online/rgb565-color-picker/
+// bitmap to PROGMEM (only monochrome): https://javl.github.io/image2cpp/
 
 // probably want mono nums for scoring
 
@@ -33,6 +38,7 @@
 Notes:
 
 !!!B_P1 not working!!!
+    -only in games, works in menus....
 
 
 */
@@ -44,7 +50,7 @@ private:
     private:
         static constexpr uint8_t START_PIN = 36; // need a button!
         static constexpr uint8_t A_P1_PIN = 36;
-        static constexpr uint8_t B_P1_PIN = 27; //NOT WORKING??!!
+        static constexpr uint8_t B_P1_PIN = 27; // NOT WORKING??!!
         static constexpr uint8_t UP_P1_PIN = 32;
         static constexpr uint8_t DOWN_P1_PIN = 33;
         static constexpr uint8_t LEFT_P1_PIN = 25;
@@ -181,7 +187,8 @@ private:
             }
         };
 
-        void update2(uint8_t pinsToCheck[]) // allows to only check certain inputs
+        // allows to only check certain inputs
+        void update2(uint8_t pinsToCheck[]) // could make this a special class/struct, could also pass by ref and use template to get size
         {
             String input_current_string = "";
             String input_new_string = "";
@@ -233,7 +240,7 @@ private:
             if (false)
             {
                 if (!(input_current_string.equals("0") || input_current_string.equals("00") || input_current_string.equals("0000")) ||
-                    !(input_new_string.equals("0") || input_new_string.equals("00") || input_new_string.equals("0000")) )
+                    !(input_new_string.equals("0") || input_new_string.equals("00") || input_new_string.equals("0000")))
                 {
                     Serial.println("key   SAB^D<>AB^D<>");
                     input_current_string = "curr [" + input_current_string + "]";
@@ -322,6 +329,101 @@ public:
     void setDisplay(PxMATRIX d)
     {
         this->display = d;
+    }
+
+    void inputTest()
+    {
+        display.clearDisplay();
+        display.setFont(fonts.my5x5round);
+        display.setTextColor(colors.white);
+        display.setCursor(7, 11);
+        display.print("P1");
+        display.setCursor(36, 11);
+        display.print("P2");
+
+        // bool lastState[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        bool LAST_START = false;
+        bool LAST_A_P1 = false;
+        bool LAST_B_P1 = false;
+        bool LAST_UP_P1 = false;
+        bool LAST_DOWN_P1 = false;
+        bool LAST_LEFT_P1 = false;
+        bool LAST_RIGHT_P1 = false;
+        bool LAST_A_P2 = false;
+        bool LAST_B_P2 = false;
+        bool LAST_UP_P2 = false;
+        bool LAST_DOWN_P2 = false;
+        bool LAST_LEFT_P2 = false;
+        bool LAST_RIGHT_P2 = false;
+        while (true)
+        {
+            inputs.update();
+            // bool refresh = false;
+            // for (int i = 0; i < 13; i++)
+            // {
+            //     if ()
+            // }
+            if (inputs.START_pressed != LAST_START ||
+                inputs.A_P1_pressed != LAST_A_P1 ||
+                inputs.B_P1_pressed != LAST_B_P1 || 
+                inputs.UP_P1_pressed != LAST_UP_P1 || 
+                inputs.DOWN_P1_pressed != LAST_DOWN_P1 || 
+                inputs.LEFT_P1_pressed != LAST_LEFT_P1 || 
+                inputs.RIGHT_P1_pressed != LAST_RIGHT_P1 || 
+                inputs.A_P2_pressed != LAST_A_P2 || 
+                inputs.B_P2_pressed != LAST_B_P2 || 
+                inputs.UP_P2_pressed != LAST_UP_P2 || 
+                inputs.DOWN_P2_pressed != LAST_DOWN_P2 || 
+                inputs.LEFT_P2_pressed != LAST_LEFT_P2 || 
+                inputs.RIGHT_P2_pressed != LAST_RIGHT_P2)
+            {
+                LAST_START = inputs.START_pressed;
+                LAST_A_P1 = inputs.A_P1_pressed;
+                LAST_B_P1 = inputs.B_P1_pressed;
+                LAST_UP_P1 = inputs.UP_P1_pressed;
+                LAST_DOWN_P1 = inputs.DOWN_P1_pressed;
+                LAST_LEFT_P1 = inputs.LEFT_P1_pressed;
+                LAST_RIGHT_P1 = inputs.RIGHT_P1_pressed;
+                LAST_A_P2 = inputs.A_P2_pressed;
+                LAST_B_P2 = inputs.B_P2_pressed;
+                LAST_UP_P2 = inputs.UP_P2_pressed;
+                LAST_DOWN_P2 = inputs.DOWN_P2_pressed;
+                LAST_LEFT_P2 = inputs.LEFT_P2_pressed;
+                LAST_RIGHT_P2 = inputs.RIGHT_P2_pressed;
+                display.clearDisplay();
+                display.setCursor(20, 5);
+                display.print(inputs.START_pressed ? "START" : "");
+                display.setCursor(7, 11);
+                display.print("P1");
+                display.setCursor(1, 17);
+                display.print(inputs.A_P1_pressed ? "A" : "");
+                display.setCursor(1, 23);
+                display.print(inputs.B_P1_pressed ? "B" : "");
+                display.setCursor(1, 29);
+                display.print(inputs.UP_P1_pressed ? "UP" : "");
+                display.setCursor(1, 35);
+                display.print(inputs.DOWN_P1_pressed ? "DOWN" : "");
+                display.setCursor(1, 41);
+                display.print(inputs.LEFT_P1_pressed ? "LEFT" : "");
+                display.setCursor(1, 47);
+                display.print(inputs.RIGHT_P1_pressed ? "RIGHT" : "");
+
+                display.setCursor(36, 11);
+                display.print("P2");
+                display.setCursor(30, 17);
+                display.print(inputs.A_P2_pressed ? "A" : "");
+                display.setCursor(30, 23);
+                display.print(inputs.B_P2_pressed ? "B" : "");
+                display.setCursor(30, 29);
+                display.print(inputs.UP_P2_pressed ? "UP" : "");
+                display.setCursor(30, 35);
+                display.print(inputs.DOWN_P2_pressed ? "DOWN" : "");
+                display.setCursor(30, 41);
+                display.print(inputs.LEFT_P2_pressed ? "LEFT" : "");
+                display.setCursor(30, 47);
+                display.print(inputs.RIGHT_P2_pressed ? "RIGHT" : "");
+            }
+        }
     }
 };
 

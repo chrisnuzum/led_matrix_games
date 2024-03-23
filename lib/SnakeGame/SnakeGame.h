@@ -9,16 +9,24 @@
 /*
 Changes:
 -!!!!apples spawn inside autoSnake!!!!
+    -I've seen an apple on top of the initial snake position when the game begins in regular mode (not auto)
+        -when that happens, the apple disappears when the snake begins moving but nothing is added to the score and a new apple is not created
+            -the space is probably cleared when the snake leaves it but the apple is still there (just invisible)
 -Only draw what is necessary, don't clear screen > DONE but needs added to auto snake
 -Make winner message indicate the position of the player with an arrow.
+-#99 getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
+    -I found that if there are no open spaces for a new apple the game just hangs
 
 AI:
 -for auto snake, maybe keep track of min/max X & Y occupied by snake and aim for more open part of screen if snake spans all the way across?
 
 Ideas:
--getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
+-add an option to just stay at same speed whole game
+-each player can choose their color
+-Use SPIFFS to store a high score file
 
 -after 1 player crashes other snake can keep going?
+-option for each player to have their own board? maybe initially start off with separate boards and then they combine?
 
 Power-ups
     -shoot out a temporary wall that the other player's head can't run into
@@ -27,10 +35,23 @@ Power-ups
 -Maybe moving apples in straight line (could be diagonal)? (slower than the snake speed?)
     Would have to check if only the head of the snake got the apple (currently the case)
 -Should snakes collide? If this is added, change occupiesPoint() [see note on that function]
--Use SPIFFS to store a high score file
--Alternate game mode with snakes colliding with one another, or a Tron-style securing territory
--Each player can choose their color
+
+-Alternate game mode: Tron-style securing territory
 */
+
+MenuInfo inline getSnakeMenu()
+{
+    MenuInfo snakeMenu("SNAKE");
+    bool autoplayMode = true;
+    bool onePlayerMode = true;
+    bool twoPlayerMode = true;
+    snakeMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
+    // SnakeGame *snakeGamePointer = nullptr;
+    // snakeMenu.gamePointer = snakeGamePointer;
+    
+    return snakeMenu;
+}
+
 struct Point
 {
     uint8_t x{0};
@@ -51,7 +72,7 @@ public:
     SnakeGame(Utility &utility, uint8_t numPlayers);
     void setPlayers(uint8_t players);
     bool loopGame();
-    bool justStarted;
+    // bool justStarted;
 
 private:
     class Snake
@@ -77,13 +98,14 @@ private:
         void setColors(uint16_t color, uint16_t colorPaused);
     };
 
-    static const uint8_t FRAME_THICKNESS = 0; // 2 MATRIX_WIDTH - (2 * FRAME_THICKNESS) and
-    static const uint8_t FRAME_Y_OFFSET = 0;  // 1 MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)
-    static const uint8_t PIXEL_SIZE = 16;      // 2 must be a multiple of PIXEL_SIZE < only matters if using PIXEL_SIZE of 3+
+    static const uint8_t FRAME_THICKNESS = 0; // 2   MATRIX_WIDTH - (2 * FRAME_THICKNESS) and ...
+    static const uint8_t FRAME_Y_OFFSET = 0;  // 1   ... MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET) ...
+    static const uint8_t PIXEL_SIZE = 4;      // 2  ... must be a multiple of PIXEL_SIZE <- only matters if using PIXEL_SIZE of 3+
+    // static uint8_t PIXEL_SIZE;
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
 
-    static const uint8_t NUM_APPLES = 5;
+    static const uint8_t NUM_APPLES = 3;
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -91,8 +113,21 @@ private:
 
     Snake *snakes[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
 
-    Point applePositions[NUM_APPLES]; // TODO: once snake gets long this should be reduced
-
+    Point applePositions[NUM_APPLES]; // TODO: once snake gets long this should be reduced #99
+    
+    // void setPixelSize(int8_t newValue);
+    // void setNumApples(int8_t newValue);
+    void setStartSpeed(int8_t newValue);
+    void setMaxSpeed(int8_t newValue);
+    
+    // void (BaseGame::*myFuncPointer) () = static_cast<void (BaseGame::*)()>(&SnakeGame::setPixelSize);
+    
+        // GameOption = {"name", defaultValue, minValue, maxValue, &setterFunction}
+    // GameOption pixelSizeGameOption = {"Pixel size", 4, 1, 8, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setPixelSize)};
+    // GameOption numberOfApplesGameOption = {"Num apples", 3, 1, 5, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setNumApples)};
+    GameOption startSpeedGameOption = {"Start speed", 5, 1, 10, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setStartSpeed)};  // need to convert a speed value to ms (so inverse): 265 - (speed * 15)
+    GameOption maxSpeedGameOption = {"Max speed", 7, 1, 10, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setMaxSpeed)};  // 60 - (speed * 5)
+    
     Point getNewApplePosition();
     void updateSnakeDirections();
 
@@ -117,6 +152,7 @@ private:
     void autoDrawSnake();
     void autoDrawScore();
     bool autoLoopGame();
+    bool autoCheckForQuit();
 };
 
 #endif

@@ -97,12 +97,31 @@ TODO:
 implement rotation kicks
 when moving side-to-side, wait a longer period of time before moving at the MOVE_DELAY rate
 !!!!When going from autoplay to 2 player game hangs!!!!
+B_P1 not working, but works in menu. Could be some weird pointer/memory bug or something in Utility.h
 
 MAYBE:
 ghost pieces to see where piece will land?
     -could be same color or lighter
     -instead of showing the whole piece, could just show 1 row of pixels directly on the surface it will hit
+    -Implementation:
+        -check each column under each segment for tallest occupied space (can start at top or bottom)
+        -highest piece just gets piece drawn at 1 space above it
+        -this stays unless piece moves left or right or rotates
+    
 */
+
+MenuInfo inline getTetrisMenu()
+{
+    MenuInfo tetrisMenu("TETRIS");
+    bool autoplayMode = true;
+    bool onePlayerMode = false;
+    bool twoPlayerMode = true;
+    tetrisMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
+    // Tetris *tetrisGamePointer = nullptr;
+    // tetrisMenu.gamePointer = tetrisGamePointer;
+    
+    return tetrisMenu;
+}
 
 class Tetris : public BaseGame
 {
@@ -110,7 +129,7 @@ public:
     Tetris(Utility &utility, uint8_t numPlayers);
     void setPlayers(uint8_t players);
     bool loopGame();
-    bool justStarted;
+    // bool justStarted;
 
 private:
     static const uint8_t NUM_PIECES = 7;
@@ -304,7 +323,7 @@ private:
                         const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece, const TetrisPiece &zPiece);
 
         TetrisPiece nextPiece;
-        uint16_t aBoard[64][64] = {0}; // auto initializes each to 0
+        uint16_t aBoard[64][64] = {0}; // initializes first element to 0 and all others default to zero since they were unspecified
         bool gameOver;
 
         bool tryGetNewPiece();

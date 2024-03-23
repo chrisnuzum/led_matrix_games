@@ -208,11 +208,11 @@ bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise) // return condition use
                 /*
                 Need to check if segment was already occupied by this piece. If so, ignore/skip that segment.
 
-                Check if it is out of bounds. If so, pieceFits = false and break
+                Check if it is out of bounds. If so, pieceFits = false and break;
                     //For each separate out of bounds condition, kick the piece in the necessary direction and check again
 
                 If not, check if board space is occupied.
-                    If it is, pieceFits = false and break
+                    If it is, pieceFits = false and break;
                 */
                 if (currentPiece.orientations[currentOrientation * currentPiece.length * currentPiece.length + row * currentPiece.length + col])
                 {            // last orientation had a segment here so we know it is safe
@@ -283,8 +283,10 @@ bool Tetris::TetrisBoard::tryRotatePiece(bool clockwise) // return condition use
 bool Tetris::TetrisBoard::tryMovePiece(direction dir)
 {
     /*
-    Find closest piece segments to desired movement direction
-    Check if board is occupied/off the board 1 point beyond those segments
+    Find piece segments bordering the desired movement direction
+    Check the board spaces 1 point beyond those segments
+        if any of those points are occupied
+        if any of those points are off of the board
     Update board and currentPieceCoordinates
     */
     bool canMove = true;
@@ -413,6 +415,11 @@ Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility},
                                                        tPiece(utility.colors.pink, sizeof(tPieceRaw[0]) / sizeof(tPieceRaw[0][0]), &(tPieceRaw[0][0][0]), true, 0, 0),
                                                        zPiece(utility.colors.red, sizeof(zPieceRaw[0]) / sizeof(zPieceRaw[0][0]), &(zPieceRaw[0][0][0]), true, 0, 0)
 {
+    // autoplayMode = true;
+    // onePlayerMode = true;
+    // twoPlayerMode = true;
+    // gameDisplayName = "Tetris";
+    
     MIN_DELAY = 10;
     MAX_DELAY = 100; // max value for uint8_t is 255
     SPEED_LOSS = 5;
@@ -583,7 +590,16 @@ void Tetris::checkForInput()
             _left = utility->inputs.LEFT_P1_pressed;
             _right = utility->inputs.RIGHT_P1_pressed;
             _a = utility->inputs.A_P1;
-            _b = utility->inputs.B_P1;
+            _b = utility->inputs.B_P1;  // TODO: This is not being detected!
+            
+            if (_a == true)
+            {
+                Serial.println("A WAS PRESSED");
+            }
+            if (_b == true)
+            {
+                Serial.println("B WAS PRESSED");
+            }
         }
         else if (boards[i]->player == 2) // controls are flipped for P2
         {
@@ -632,6 +648,7 @@ void Tetris::checkForInput()
 
         if (_a)
         {
+            Serial.println("rotate piece clockwise");
             if (boards[i]->tryRotatePiece(true))
             {
                 drawBoard(boards[i]->player);
@@ -639,6 +656,7 @@ void Tetris::checkForInput()
         }
         else if (_b)
         {
+            Serial.println("rotate piece COUNTER-clockwise");
             if (boards[i]->tryRotatePiece(false))
             {
                 drawBoard(boards[i]->player);
