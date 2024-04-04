@@ -14,7 +14,7 @@ Changes:
             -the space is probably cleared when the snake leaves it but the apple is still there (just invisible)
 -Only draw what is necessary, don't clear screen > DONE but needs added to auto snake
 -Make winner message indicate the position of the player with an arrow.
--#99 getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
+-#BUG_1 getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
     -I found that if there are no open spaces for a new apple the game just hangs
 
 AI:
@@ -48,7 +48,7 @@ MenuInfo inline getSnakeMenu()
     snakeMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
     // SnakeGame *snakeGamePointer = nullptr;
     // snakeMenu.gamePointer = snakeGamePointer;
-    
+
     return snakeMenu;
 }
 
@@ -105,7 +105,8 @@ private:
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
 
-    static const uint8_t NUM_APPLES = 3;
+    static const uint8_t MAX_NUM_APPLES = 5;
+    uint8_t numApples = 5; // !!!!!!!!!!changed this applePositions now has MAX spots but only the ones set by option should be filled
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
@@ -113,21 +114,21 @@ private:
 
     Snake *snakes[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
 
-    Point applePositions[NUM_APPLES]; // TODO: once snake gets long this should be reduced #99
-    
-    // void setPixelSize(int8_t newValue);
-    // void setNumApples(int8_t newValue);
-    void setStartSpeed(int8_t newValue);
-    void setMaxSpeed(int8_t newValue);
-    
+    Point applePositions[MAX_NUM_APPLES]; // TODO: once snake gets long this should be reduced #BUG_1
+
+    // void setPixelSize(uint8_t newValue);
+    void setNumApples(uint8_t newValue);
+    void setStartSpeed(uint8_t newValue);
+    void setMaxSpeed(uint8_t newValue);
+
     // void (BaseGame::*myFuncPointer) () = static_cast<void (BaseGame::*)()>(&SnakeGame::setPixelSize);
-    
-        // GameOption = {"name", defaultValue, minValue, maxValue, &setterFunction}
-    // GameOption pixelSizeGameOption = {"Pixel size", 4, 1, 8, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setPixelSize)};
-    // GameOption numberOfApplesGameOption = {"Num apples", 3, 1, 5, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setNumApples)};
-    GameOption startSpeedGameOption = {"Start speed", 5, 1, 10, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setStartSpeed)};  // need to convert a speed value to ms (so inverse): 265 - (speed * 15)
-    GameOption maxSpeedGameOption = {"Max speed", 7, 1, 10, static_cast<void (BaseGame::*)(int8_t)>(&SnakeGame::setMaxSpeed)};  // 60 - (speed * 5)
-    
+
+    // GameOption = {"name", defaultValue, minValue, maxValue, &setterFunction}
+    // GameOption pixelSizeGameOption = {"Pixel size", 4, 1, 8, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setPixelSize)};
+    GameOption numberOfApplesGameOption = {"Num apples", 3, 1, 5, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setNumApples)};
+    GameOption startSpeedGameOption = {"Start speed", 5, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setStartSpeed)}; // need to convert a speed value to ms (so inverse): 265 - (speed * 15)
+    GameOption maxSpeedGameOption = {"Max speed", 7, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setMaxSpeed)};       // 60 - (speed * 5)
+
     Point getNewApplePosition();
     void updateSnakeDirections();
 

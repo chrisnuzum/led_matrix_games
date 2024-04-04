@@ -4,9 +4,9 @@
 #include <Arduino.h>
 #include <PxMatrix.h>
 #include <Utility.h>
-#include <BaseGame.h>
+// #include <BaseGame.h>
 
-#include <map>
+// #include <map>
 // #include <functional>
 // #include <string>
 
@@ -82,10 +82,26 @@ Each game needs a display name, supported playerOptions list (Auto, 1P, 2P), and
 To update options, it seems like a container(std::map aka dictionary) of option names as keys and function pointers to setters as values
     -map.insert
 Have the ability to check if options are valid and display an error message/change font color to indicate issue
-    -for instance if max speed is lower than start speed
+    -for instance if max speed is lower than start speed (probably isn't an issue right now)
 Dependent options as in one option isn't available unless another is active
     -example: Snake casual mode which doesn't increase speed, so if casual is active then max speed isn't available
 */
+
+enum ItemType {basicItem, itemWithSubitems, itemWithValue};
+
+struct Item     // all-encompassing item object with type
+{
+    ItemType type = basicItem;
+    const char *itemName;
+    const char **subitems;
+    uint8_t numSubitems;
+    int8_t selectedSubitem;
+
+    bool isSelected;
+    uint8_t value;
+    const uint8_t minValue;
+    const uint8_t maxValue;
+};
 
 struct ItemWithSubitems
 {
@@ -96,7 +112,17 @@ struct ItemWithSubitems
     const char *itemName;
     const char **subitems;
     uint8_t numSubitems;
-    int8_t selectedSubitem; // this needs to be set to the first non-null option because empty strings are allowed
+    int8_t selectedSubitem;
+};
+
+struct ItemWithValue
+{
+    const char *itemName;
+    bool isSelected;
+    uint8_t value;
+    const uint8_t minValue;
+    const uint8_t maxValue;
+    void (*valueSetterFunction)(uint8_t newValue);
 };
 
 class Menu
@@ -110,8 +136,107 @@ private:
     const uint8_t FIRST_X_COORD = 1;
     const uint8_t FIRST_Y_COORD = 5;
     const uint8_t ROW_OFFSET = 6;
+    const uint8_t HORIZONTAL_VALUE_OFFSET = 30;
     const uint16_t SELECTED_COLOR = utility->colors.white;
     const uint16_t UNSELECTED_COLOR = utility->colors.cyan;
+
+    void displayOptionsMenu(ItemWithValue items[], uint8_t numItems, uint8_t focusedItem)
+    {
+        display.clearDisplay();
+        for (int i = 0; i < numItems; i++)
+        {
+            display.setCursor(FIRST_X_COORD, (i * ROW_OFFSET) + FIRST_Y_COORD);
+            if (i == focusedItem)
+            {
+                display.setTextColor(SELECTED_COLOR);
+                display.print(">");
+                display.print(items[i].itemName);
+                if (!items[i].isSelected)
+                {
+                    display.setTextColor(UNSELECTED_COLOR);
+                }
+                display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                display.print(items[i].value);
+            }
+            else
+            {
+                display.setTextColor(UNSELECTED_COLOR);
+                display.print("  "); // number of spaces is based on current font's width of a space and > character
+                display.print(items[i].itemName);
+                display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                display.print(items[i].value);
+            }
+        }
+    }
+
+    int8_t setOptions(ItemWithValue items[], uint8_t numItems)
+    {
+        uint8_t focusedItemIndex = 0;
+        displayOptionsMenu(items, numItems, focusedItemIndex);
+
+        while (true)
+        {
+            utility->inputs.update();
+            bool _up = utility->inputs.UP_P1 || utility->inputs.UP_P2;
+            bool _down = utility->inputs.DOWN_P1 || utility->inputs.DOWN_P2;
+            bool _a = utility->inputs.A_P1 || utility->inputs.A_P2;
+            bool _b = utility->inputs.B_P1 || utility->inputs.B_P2;
+            if (items[focusedItemIndex].isSelected) // need a "Start Game" option that if selected and A is pressed, it returns a certain number
+            {                                       // this function could return bool, true means start the game and false means go back to the previous menu
+                if (_a || _b)
+                {
+                    items[focusedItemIndex].valueSetterFunction(items[focusedItemIndex].value);
+                    items[focusedItemIndex].isSelected = false;
+                    displayOptionsMenu(items, numItems, focusedItemIndex);
+                }
+                else if (_up)
+                {
+                    if (items[focusedItemIndex].value < items[focusedItemIndex].maxValue)
+                    {
+                        items[focusedItemIndex].value += 1;
+                        displayOptionsMenu(items, numItems, focusedItemIndex);
+                    }
+                }
+                else if (_down)
+                {
+                    if (items[focusedItemIndex].value > items[focusedItemIndex].minValue)
+                    {
+                        items[focusedItemIndex].value -= 1;
+                        displayOptionsMenu(items, numItems, focusedItemIndex);
+
+                    }
+                }
+            }
+            else
+            {
+                if (_a)
+                {
+                    items[focusedItemIndex].isSelected = true;
+                    // return focusedItemIndex;
+                }
+                else if (_b)
+                {
+                    return -1;
+                }
+                else if (_up)
+                {
+                    if (focusedItemIndex > 0)
+                    {
+                        focusedItemIndex -= 1;
+                        displayOptionsMenu(items, numItems, focusedItemIndex);
+                    }
+                }
+                else if (_down)
+                {
+                    if (focusedItemIndex < numItems - 1)
+                    {
+                        focusedItemIndex += 1;
+                        displayOptionsMenu(items, numItems, focusedItemIndex);
+                    }
+                }
+            }
+        }
+    }
 
     /*
      Item0
@@ -119,7 +244,6 @@ private:
        Subitem0  Subitem1 >Subitem2  Subitem3
     Item2
     */
-
     void displayMenuWithOptionsBelow(ItemWithSubitems items[], uint8_t numItems, uint8_t selectedItem)
     {
         display.clearDisplay();
@@ -205,9 +329,9 @@ private:
         }
     }
 
-    uint8_t selectSubitem(ItemWithSubitems items[], uint8_t numItems, int8_t selectedItem)
+    int8_t selectSubitem(ItemWithSubitems items[], uint8_t numItems, uint8_t selectedItem)
     {
-        uint8_t focusedSubitemIndex = items[selectedItem].selectedSubitem;
+        int8_t focusedSubitemIndex = items[selectedItem].selectedSubitem;
         displayMenuWithOptionsBelow(items, numItems, selectedItem); // probably not necessary because it should already be displayed
 
         while (true)
@@ -229,7 +353,7 @@ private:
             }
             if (_left)
             {
-                uint8_t tempFocusedSubitemIndex = focusedSubitemIndex;
+                int8_t tempFocusedSubitemIndex = focusedSubitemIndex;
                 while (tempFocusedSubitemIndex > 0)
                 {
                     tempFocusedSubitemIndex -= 1;
@@ -244,7 +368,7 @@ private:
             }
             else if (_right)
             {
-                uint8_t tempFocusedSubitemIndex = focusedSubitemIndex;
+                int8_t tempFocusedSubitemIndex = focusedSubitemIndex;
                 while (tempFocusedSubitemIndex < items[selectedItem].numSubitems - 1)
                 {
                     tempFocusedSubitemIndex += 1;
@@ -267,7 +391,7 @@ public:
                                                       //  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
     {
     }
-    
+
     void setDisplay(PxMATRIX d)
     {
         this->display = d;
@@ -277,21 +401,32 @@ public:
     void doMenu(ItemWithSubitems (&items)[num_items], int8_t &selectedItem, int8_t &selectedSubitem)
     {
         int8_t tempSelectedItem;
-        int8_t tempSelectedSubitem;
-        while (true)
+        int8_t tempSelectedSubitem = -1;
+
+        while (tempSelectedSubitem == -1)
         {
             tempSelectedItem = selectItem(items, num_items);
             tempSelectedSubitem = selectSubitem(items, num_items, tempSelectedItem);
-            if (tempSelectedSubitem != -1)
-            {
-                break;
-            }
         }
+
         selectedItem = tempSelectedItem;
         selectedSubitem = tempSelectedSubitem;
     }
 
+    template <size_t num_items>
+    void doOptionsMenu(ItemWithValue (&items)[num_items], int8_t &selectedItem)
+    {
+        int8_t tempSelectedItem;
+        int8_t tempSelectedSubitem = -1;
 
+        while (tempSelectedSubitem == -1)
+        {
+            tempSelectedItem = selectItem(items, num_items);
+            tempSelectedSubitem = selectSubitem(items, num_items, tempSelectedItem);
+        }
+
+        selectedItem = tempSelectedItem;
+    }
 };
 
 #endif
@@ -413,109 +548,108 @@ public:
 //         }
 //     }
 
+// template <size_t rows, size_t cols>
+// void setUpMainMenuWithSubitems(uint8_t numOptions, const char *options[rows], bool (&suboptions)[rows][cols], uint8_t maxSuboptions, const char *suboptionNames[cols])
+// {
+//     Serial.println("begin setupmainmenu");
+//     Serial.printf("Address is %p\n", (void *)suboptions);
+//     for (int i = 0; i < numOptions; i++)
+//     {
+//         Serial.println("begin i for loop");
+//         uint8_t initialSelectedSuboption = -1;
+//         bool setInitial = false;
+//         const char *subs[cols];
+//         for (int j = 0; j < maxSuboptions; j++)
+//         {
+//             Serial.println("begin j for loop");
+//             Serial.print("i: ");
+//             Serial.print(i);
+//             Serial.print(" j: ");
+//             Serial.print(j);
+//             Serial.print(" suboption: ");
+//             Serial.println(suboptions[i][j]);
+//             if (suboptions[i][j])
+//             {
+//                 Serial.println("found a suboption");
+//                 if (!setInitial)
+//                 {
+//                     initialSelectedSuboption = j;
+//                     setInitial = true;
+//                 }
+//                 subs[j] = suboptionNames[j];
+//             }
+//             else
+//             {
+//                 subs[j] = "";
+//             }
+//         }
+//         Serial.println("Before adding an item to mainMenu object");
+//         if (initialSelectedSuboption == -1)
+//         {
+//             Serial.println("no suboptions");
+//             // ItemWithSubitems item(options[i], suboptions[i], 0, -1);
+//             ItemWithSubitems item(options[i], subs, 0, -1);
+//             Serial.println("After creating item");
+//             mainMenu[i] = &item;
+//             Serial.println("After adding an item to mainMenu object");
+//         }
+//         else
+//         {
+//             Serial.println("has suboptions");
+//             // ItemWithSubitems item(options[i], suboptions[i], maxSuboptions, initialSelectedSuboption);
+//             ItemWithSubitems item(options[i], subs, maxSuboptions, initialSelectedSuboption);
+//             Serial.println("After creating item");
+//             mainMenu[i] = &item;
+//             Serial.println("After adding an item to mainMenu object");
+//         }
+//     }
+// }
 
-    // template <size_t rows, size_t cols>
-    // void setUpMainMenuWithSubitems(uint8_t numOptions, const char *options[rows], bool (&suboptions)[rows][cols], uint8_t maxSuboptions, const char *suboptionNames[cols])
-    // {
-    //     Serial.println("begin setupmainmenu");
-    //     Serial.printf("Address is %p\n", (void *)suboptions);
-    //     for (int i = 0; i < numOptions; i++)
-    //     {
-    //         Serial.println("begin i for loop");
-    //         uint8_t initialSelectedSuboption = -1;
-    //         bool setInitial = false;
-    //         const char *subs[cols];
-    //         for (int j = 0; j < maxSuboptions; j++)
-    //         {
-    //             Serial.println("begin j for loop");
-    //             Serial.print("i: ");
-    //             Serial.print(i);
-    //             Serial.print(" j: ");
-    //             Serial.print(j);
-    //             Serial.print(" suboption: ");
-    //             Serial.println(suboptions[i][j]);
-    //             if (suboptions[i][j])
-    //             {
-    //                 Serial.println("found a suboption");
-    //                 if (!setInitial)
-    //                 {
-    //                     initialSelectedSuboption = j;
-    //                     setInitial = true;
-    //                 }
-    //                 subs[j] = suboptionNames[j];
-    //             }
-    //             else
-    //             {
-    //                 subs[j] = "";
-    //             }
-    //         }
-    //         Serial.println("Before adding an item to mainMenu object");
-    //         if (initialSelectedSuboption == -1)
-    //         {
-    //             Serial.println("no suboptions");
-    //             // ItemWithSubitems item(options[i], suboptions[i], 0, -1);
-    //             ItemWithSubitems item(options[i], subs, 0, -1);
-    //             Serial.println("After creating item");
-    //             mainMenu[i] = &item;
-    //             Serial.println("After adding an item to mainMenu object");
-    //         }
-    //         else
-    //         {
-    //             Serial.println("has suboptions");
-    //             // ItemWithSubitems item(options[i], suboptions[i], maxSuboptions, initialSelectedSuboption);
-    //             ItemWithSubitems item(options[i], subs, maxSuboptions, initialSelectedSuboption);
-    //             Serial.println("After creating item");
-    //             mainMenu[i] = &item;
-    //             Serial.println("After adding an item to mainMenu object");
-    //         }
-    //     }
-    // }
+// void setUpMainMenuWithSubitems(uint8_t numOptions, const char *options[], const char **suboptions[], uint8_t maxSuboptions)
+// {
+//     Serial.println("begin setupmainmenu");
+//     Serial.printf("Address is %p\n", (void *)suboptions);
+//     for (int i = 0; i < numOptions; i++)
+//     {
+//         Serial.println("begin i for loop");
+//         uint8_t initialSelectedSuboption = -1;
+//         for (int j = 0; j < maxSuboptions; j++)
+//         {
+//             Serial.println("begin j for loop");
+//             Serial.print("i: ");
+//             Serial.print(i);
+//             Serial.print(" j: ");
+//             Serial.print(j);
+//             Serial.print(" suboption: ");
+//             Serial.println(suboptions[i][j]);
+//             if (suboptions[i][j] != "")
+//             {
+//                 Serial.println("found a suboption");
+//                 initialSelectedSuboption = j;
+//                 break;
+//             }
+//         }
+//         Serial.println("Before adding an item to mainMenu object");
+//         if (initialSelectedSuboption = -1)
+//         {
+//             Serial.println("no suboptions");
+//             ItemWithSubitems item(options[i], suboptions[i], 0, -1);
+//             Serial.println("After creating item");
+//             mainMenu[i] = &item;
+//             Serial.println("After adding an item to mainMenu object");
+//         }
+//         else
+//         {
+//             Serial.println("has suboptions");
+//             ItemWithSubitems item(options[i], suboptions[i], maxSuboptions, initialSelectedSuboption);
+//             Serial.println("After creating item");
+//             mainMenu[i] = &item;
+//             Serial.println("After adding an item to mainMenu object");
+//         }
+//     }
+// }
 
-    // void setUpMainMenuWithSubitems(uint8_t numOptions, const char *options[], const char **suboptions[], uint8_t maxSuboptions)
-    // {
-    //     Serial.println("begin setupmainmenu");
-    //     Serial.printf("Address is %p\n", (void *)suboptions);
-    //     for (int i = 0; i < numOptions; i++)
-    //     {
-    //         Serial.println("begin i for loop");
-    //         uint8_t initialSelectedSuboption = -1;
-    //         for (int j = 0; j < maxSuboptions; j++)
-    //         {
-    //             Serial.println("begin j for loop");
-    //             Serial.print("i: ");
-    //             Serial.print(i);
-    //             Serial.print(" j: ");
-    //             Serial.print(j);
-    //             Serial.print(" suboption: ");
-    //             Serial.println(suboptions[i][j]);
-    //             if (suboptions[i][j] != "")
-    //             {
-    //                 Serial.println("found a suboption");
-    //                 initialSelectedSuboption = j;
-    //                 break;
-    //             }
-    //         }
-    //         Serial.println("Before adding an item to mainMenu object");
-    //         if (initialSelectedSuboption = -1)
-    //         {
-    //             Serial.println("no suboptions");
-    //             ItemWithSubitems item(options[i], suboptions[i], 0, -1);
-    //             Serial.println("After creating item");
-    //             mainMenu[i] = &item;
-    //             Serial.println("After adding an item to mainMenu object");
-    //         }
-    //         else
-    //         {
-    //             Serial.println("has suboptions");
-    //             ItemWithSubitems item(options[i], suboptions[i], maxSuboptions, initialSelectedSuboption);
-    //             Serial.println("After creating item");
-    //             mainMenu[i] = &item;
-    //             Serial.println("After adding an item to mainMenu object");
-    //         }
-    //     }
-    // }
-
-    // void doMainMenu(uint8_t numOptions, uint8_t &selectedItem, uint8_t &selectedSubitem)
-    // {
-    //     selectItem(mainMenu, numOptions);
-    // }
+// void doMainMenu(uint8_t numOptions, uint8_t &selectedItem, uint8_t &selectedSubitem)
+// {
+//     selectItem(mainMenu, numOptions);
+// }

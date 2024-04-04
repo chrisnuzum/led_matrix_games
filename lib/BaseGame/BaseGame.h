@@ -5,7 +5,7 @@
 #include <PxMatrix.h>
 #include <Utility.h>
 
-const uint8_t NUM_GAME_MODES = 3;
+const uint8_t MAX_NUM_PLAYER_OPTIONS = 3;
 const uint8_t NUM_MAX_OPTIONS = 10;
 
 struct MenuInfo
@@ -13,20 +13,15 @@ struct MenuInfo
     MenuInfo(const char *gameName) : gameDisplayName(gameName)
     {
     }
-    const char *playerOptions[NUM_GAME_MODES];  // the BaseGame object will receive the selected mode's index as number of players
-    // bool playerOptions[NUM_GAME_MODES];  // the BaseGame object will receive the selected mode's index as number of players
+    const char *playerOptions[MAX_NUM_PLAYER_OPTIONS];  // the BaseGame object will receive the selected mode's index as number of players
     const char *gameDisplayName;
     // const BaseGame *gamePointer;
-    // static inline const char *playerOptionNames[NUM_GAME_MODES] = {"Auto", "1P", "2P"}; // is inline proper here?
 
     void setMenuInfo(bool autoplayMode, bool onePlayerMode, bool twoPlayerMode)
     {
         playerOptions[0] = autoplayMode ? "Auto" : "";
         playerOptions[1] = onePlayerMode ? "1P" : "";
         playerOptions[2] = twoPlayerMode ? "2P" : "";
-        // playerOptions[0] = autoplayMode;
-        // playerOptions[1] = onePlayerMode;
-        // playerOptions[2] = twoPlayerMode;
     }
 };
 
@@ -51,10 +46,10 @@ protected:
     struct GameOption
     {
         const char *displayName;
-        int8_t defaultValue;
-        int8_t minValue;
-        int8_t maxValue;
-        void (BaseGame::*valueSetterFunction)(int8_t newValue);
+        uint8_t defaultValue;
+        uint8_t minValue;
+        uint8_t maxValue;
+        void (BaseGame::*valueSetterFunction)(uint8_t newValue);
 
         // GameOption *parentCondition = nullptr;
     };
@@ -99,6 +94,8 @@ protected:
         LEFT,
         RIGHT
     };
+
+    
 };
 
 #endif

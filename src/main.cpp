@@ -8,6 +8,7 @@
                       //    only the latest version works, maybe consider manually adding library to project
                       // Definitely need to add my own because I made edits on line 766+
                       // Should probably fork PxMatrix, push new commit, then use that
+                      // !!! DO THIS SOON
 #include <Utility.h>
 #include <Menu.h>
 #include <SnakeGame.h>
@@ -58,11 +59,9 @@ uint8_t MATRIX_WIDTH = 64;
 uint8_t MATRIX_HEIGHT = 64;
 PxMATRIX display(MATRIX_WIDTH, MATRIX_HEIGHT, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
 
-uint16_t loops = 0;
-uint16_t fps = 0;
-unsigned long loop_time = 0;
-
-// Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
+// uint16_t loops = 0;
+// uint16_t fps = 0;
+// unsigned long loop_time = 0;
 
 bool gameRunning = false;
 
@@ -102,12 +101,22 @@ BaseGame *game = nullptr;
 MenuInfo menus[] = {getSnakeMenu(), getTetrisMenu()};
 ItemWithSubitems items[NUMBER_OF_GAMES];
 
+/*  change menu to be simpler, build here (no GameOption struct in games, just setter functions that a loop will call here)
+    individual games can have player option modes as booleans and name of game in BaseGame (consts?) -this would only work if they are static
+    This function will grab these values and build the appropriate Menu objects.
+    Any options will need to be manually configured here. The option name, value, min, and max can be passed to Menu.h
+    and then the user will select an option and change the value. The I can return the Item object that was modified back to here (should work?)
+    and use a switch statement to identify which option it was, and call the relevant setter function and pass the new value.
+    Another option of "Start Game" needs to be added to the end of the list in order to actually start the game after the options are set
+
+*/
 void setUpMainMenu()
 {
+
     for (int i = 0; i < NUMBER_OF_GAMES; i++)
     {
         bool foundSuboption = false;
-        for (int j = 0; j < NUM_GAME_MODES; j++)
+        for (int j = 0; j < MAX_NUM_PLAYER_OPTIONS; j++)
         {
             if (menus[i].playerOptions[j])
             {
@@ -115,9 +124,13 @@ void setUpMainMenu()
                 break;
             }
         }
-        ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, foundSuboption ? NUM_GAME_MODES : 0, -1);
+        ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, foundSuboption ? MAX_NUM_PLAYER_OPTIONS : 0, -1);
         items[i] = item;
     }
+
+    const char *snakePlayerOptions[MAX_NUM_PLAYER_OPTIONS];
+    const char *tetrisPlayerOptions[MAX_NUM_PLAYER_OPTIONS];
+    
 }
 
 void setup()

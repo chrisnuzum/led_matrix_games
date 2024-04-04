@@ -86,21 +86,22 @@ void SnakeGame::Snake::setColors(uint16_t color, uint16_t colorPaused)
     this->colorPaused = colorPaused;
 }
 
-// void SnakeGame::setPixelSize(int8_t newValue)
+// void SnakeGame::setPixelSize(uint8_t newValue)
 // {
 //     PIXEL_SIZE = newValue;
 // }
 
-// void SnakeGame::setNumApples(int8_t newValue)
-// {
-// }
+void SnakeGame::setNumApples(uint8_t newValue)
+{
+    numApples = newValue;
+}
 
-void SnakeGame::setStartSpeed(int8_t newValue)
+void SnakeGame::setStartSpeed(uint8_t newValue)
 {
     MAX_DELAY = 265 - (newValue * 15);
 }
 
-void SnakeGame::setMaxSpeed(int8_t newValue)
+void SnakeGame::setMaxSpeed(uint8_t newValue)
 {
     MIN_DELAY = 60 - (newValue * 5);
 }
@@ -122,7 +123,7 @@ Point SnakeGame::getNewApplePosition()
 
             newPositionInvalid = newPositionInvalid || s->occupiesPoint(x, y);
         }
-        for (int i = 0; i < NUM_APPLES; i++)
+        for (int i = 0; i < numApples; i++)
         {
             newPositionInvalid = newPositionInvalid || applePositions[i].isEqual(x, y);
         }
@@ -135,11 +136,6 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
                                                               FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
                                                               FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
 {
-    // autoplayMode = true;
-    // onePlayerMode = true;
-    // twoPlayerMode = true;
-    // gameDisplayName = "Snake";
-
     MIN_DELAY = 25;  // 10
     MAX_DELAY = 180; // 200; max value for uint8_t is 255
     SPEED_LOSS = 5;
@@ -154,7 +150,7 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
 
     setPlayers(numPlayers);
 
-    for (int i = 0; i < NUM_APPLES; i++)
+    for (int i = 0; i < numApples; i++)
     {
         applePositions[i] = getNewApplePosition();
     }
@@ -382,7 +378,7 @@ void SnakeGame::checkForPause()
             drawFrame();
             drawSnakes();
         }
-        for (int i = 0; i < NUM_APPLES; i++)
+        for (int i = 0; i < numApples; i++)
         {
             drawApple(i);
         }
@@ -475,7 +471,7 @@ void SnakeGame::gameOver()
 
     resetSnakes();
 
-    for (int i = 0; i < NUM_APPLES; i++)
+    for (int i = 0; i < numApples; i++)
     {
         resetApple(i);
     }
@@ -496,7 +492,7 @@ bool SnakeGame::loopGame()
         display.clearDisplay();
         drawFrame();
         drawSnakes();
-        for (int i = 0; i < NUM_APPLES; i++)
+        for (int i = 0; i < numApples; i++)
         {
             drawApple(i);
         }
@@ -527,7 +523,7 @@ bool SnakeGame::loopGame()
                     s->lastDirectionMoved = s->aimedDirection;
                     bool gotApple = false;
 
-                    for (int i = 0; i < NUM_APPLES; i++)
+                    for (int i = 0; i < numApples; i++)
                     {
                         if (applePositions[i].isEqual(nextPoint.x, nextPoint.y)) // check if snake got the apple
                         {
@@ -743,7 +739,7 @@ bool SnakeGame::autoCheckForQuit()
         s->lastDirectionMoved = UP;
         s->priorToLastDirectionMoved = RIGHT;
 
-        for (int i = 0; i < NUM_APPLES; i++)
+        for (int i = 0; i < numApples; i++)
         {
             resetApple(i);
         }
@@ -758,7 +754,7 @@ bool SnakeGame::autoLoopGame()
     {
         display.clearDisplay();
         autoDrawSnake();
-        for (int i = 0; i < NUM_APPLES; i++)
+        for (int i = 0; i < numApples; i++)
         {
             drawApple(i);
         }
@@ -791,7 +787,7 @@ bool SnakeGame::autoLoopGame()
                 autoCollision = false;
 
                 Point snakeHead = snakes[0]->segments.get(0);
-                for (int i = 0; i < NUM_APPLES; i++)
+                for (int i = 0; i < numApples; i++)
                 {
                     if (s->lastDirectionMoved == LEFT || s->lastDirectionMoved == RIGHT)
                     {
@@ -944,7 +940,7 @@ bool SnakeGame::autoLoopGame()
 
                 s->lastDirectionMoved = s->aimedDirection;
 
-                for (int i = 0; i < NUM_APPLES; i++)
+                for (int i = 0; i < numApples; i++)
                 {
                     if (applePositions[i].isEqual(nextPoint.x, nextPoint.y)) // check if snake got the apple
                     {
@@ -960,7 +956,7 @@ bool SnakeGame::autoLoopGame()
                 }
                 display.clearDisplay();
                 autoDrawSnake();
-                for (int i = 0; i < NUM_APPLES; i++)
+                for (int i = 0; i < numApples; i++)
                 {
                     drawApple(i);
                 }
@@ -970,7 +966,7 @@ bool SnakeGame::autoLoopGame()
             {
                 display.clearDisplay(); // remove all this after only drawing what's necessary, it causes 2nd snake to move once after 1st snake crashes
                 autoDrawSnake();
-                for (int i = 0; i < NUM_APPLES; i++)
+                for (int i = 0; i < numApples; i++)
                 {
                     drawApple(i);
                 }
@@ -989,7 +985,7 @@ bool SnakeGame::autoLoopGame()
                 s->lastDirectionMoved = UP;
                 s->priorToLastDirectionMoved = RIGHT;
 
-                for (int i = 0; i < NUM_APPLES; i++)
+                for (int i = 0; i < numApples; i++)
                 {
                     resetApple(i);
                 }

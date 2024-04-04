@@ -39,6 +39,7 @@ Notes:
 
 !!!B_P1 not working!!!
     -only in games, works in menus....
+Add all of my fonts to the project directory
 
 
 */
