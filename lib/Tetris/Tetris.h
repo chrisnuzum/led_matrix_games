@@ -110,18 +110,18 @@ ghost pieces to see where piece will land?
     
 */
 
-MenuInfo inline getTetrisMenu()
-{
-    MenuInfo tetrisMenu("TETRIS");
-    bool autoplayMode = true;
-    bool onePlayerMode = false;
-    bool twoPlayerMode = true;
-    tetrisMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
-    // Tetris *tetrisGamePointer = nullptr;
-    // tetrisMenu.gamePointer = tetrisGamePointer;
+// MenuInfo inline getTetrisMenu()
+// {
+//     MenuInfo tetrisMenu("TETRIS");
+//     bool autoplayMode = true;
+//     bool onePlayerMode = false;
+//     bool twoPlayerMode = true;
+//     tetrisMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
+//     // Tetris *tetrisGamePointer = nullptr;
+//     // tetrisMenu.gamePointer = tetrisGamePointer;
     
-    return tetrisMenu;
-}
+//     return tetrisMenu;
+// }
 
 class Tetris : public BaseGame
 {

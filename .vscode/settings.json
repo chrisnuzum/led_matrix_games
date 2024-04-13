@@ -51,5 +51,6 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp"
     },
-    "cmake.sourceDirectory": "C:/Users/Christopher/Documents/PlatformIO/Projects/snake_test/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO"
+    "cmake.sourceDirectory": "C:/Users/Christopher/Documents/PlatformIO/Projects/snake_test/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
+    "cmake.configureOnOpen": false
 }

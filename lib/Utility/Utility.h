@@ -332,7 +332,7 @@ public:
         this->display = d;
     }
 
-    void inputTest()
+    void inputTest() // P1's A+B+DOWN ends the test
     {
         display.clearDisplay();
         display.setFont(fonts.my5x5round);
@@ -366,16 +366,16 @@ public:
             // }
             if (inputs.START_pressed != LAST_START ||
                 inputs.A_P1_pressed != LAST_A_P1 ||
-                inputs.B_P1_pressed != LAST_B_P1 || 
-                inputs.UP_P1_pressed != LAST_UP_P1 || 
-                inputs.DOWN_P1_pressed != LAST_DOWN_P1 || 
-                inputs.LEFT_P1_pressed != LAST_LEFT_P1 || 
-                inputs.RIGHT_P1_pressed != LAST_RIGHT_P1 || 
-                inputs.A_P2_pressed != LAST_A_P2 || 
-                inputs.B_P2_pressed != LAST_B_P2 || 
-                inputs.UP_P2_pressed != LAST_UP_P2 || 
-                inputs.DOWN_P2_pressed != LAST_DOWN_P2 || 
-                inputs.LEFT_P2_pressed != LAST_LEFT_P2 || 
+                inputs.B_P1_pressed != LAST_B_P1 ||
+                inputs.UP_P1_pressed != LAST_UP_P1 ||
+                inputs.DOWN_P1_pressed != LAST_DOWN_P1 ||
+                inputs.LEFT_P1_pressed != LAST_LEFT_P1 ||
+                inputs.RIGHT_P1_pressed != LAST_RIGHT_P1 ||
+                inputs.A_P2_pressed != LAST_A_P2 ||
+                inputs.B_P2_pressed != LAST_B_P2 ||
+                inputs.UP_P2_pressed != LAST_UP_P2 ||
+                inputs.DOWN_P2_pressed != LAST_DOWN_P2 ||
+                inputs.LEFT_P2_pressed != LAST_LEFT_P2 ||
                 inputs.RIGHT_P2_pressed != LAST_RIGHT_P2)
             {
                 LAST_START = inputs.START_pressed;
@@ -423,6 +423,14 @@ public:
                 display.print(inputs.LEFT_P2_pressed ? "LEFT" : "");
                 display.setCursor(30, 47);
                 display.print(inputs.RIGHT_P2_pressed ? "RIGHT" : "");
+            }
+
+            if (inputs.A_P1_pressed && inputs.B_P1_pressed && inputs.DOWN_P1_pressed)
+            {
+                display.setCursor(7, 11);
+                display.print("ENDING TEST");
+                delay(3000);
+                break;
             }
         }
     }

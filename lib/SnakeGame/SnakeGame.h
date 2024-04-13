@@ -39,18 +39,18 @@ Power-ups
 -Alternate game mode: Tron-style securing territory
 */
 
-MenuInfo inline getSnakeMenu()
-{
-    MenuInfo snakeMenu("SNAKE");
-    bool autoplayMode = true;
-    bool onePlayerMode = true;
-    bool twoPlayerMode = true;
-    snakeMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
-    // SnakeGame *snakeGamePointer = nullptr;
-    // snakeMenu.gamePointer = snakeGamePointer;
+// MenuInfo inline getSnakeMenu()
+// {
+//     MenuInfo snakeMenu("SNAKE");
+//     bool autoplayMode = true;
+//     bool onePlayerMode = true;
+//     bool twoPlayerMode = true;
+//     snakeMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
+//     // SnakeGame *snakeGamePointer = nullptr;
+//     // snakeMenu.gamePointer = snakeGamePointer;
 
-    return snakeMenu;
-}
+//     return snakeMenu;
+// }
 
 struct Point
 {
@@ -70,9 +70,14 @@ class SnakeGame : public BaseGame
 {
 public:
     SnakeGame(Utility &utility, uint8_t numPlayers);
+    ~SnakeGame();
     void setPlayers(uint8_t players);
     bool loopGame();
     // bool justStarted;
+    // void setPixelSize(uint8_t newValue);
+    void setNumApples(uint8_t newValue);
+    void setStartSpeed(uint8_t newValue);
+    void setMaxSpeed(uint8_t newValue);
 
 private:
     class Snake
@@ -90,7 +95,7 @@ private:
         direction priorToLastDirectionMoved;
         direction aimedDirection;
         direction firstAimedDirectionAttempted;
-        LinkedList<Point> segments;
+        LinkedList<Point> segments; // this could probably be a pointer to or array of Point objects if Point had a "(struct?) Point *next;" member and the Snake stored the head (tail would point to NULL)
         Point getInitialPosition();
         bool occupiesPoint(const int &x, const int &y);
         bool isNextPointValid(const Point &p);
@@ -116,18 +121,13 @@ private:
 
     Point applePositions[MAX_NUM_APPLES]; // TODO: once snake gets long this should be reduced #BUG_1
 
-    // void setPixelSize(uint8_t newValue);
-    void setNumApples(uint8_t newValue);
-    void setStartSpeed(uint8_t newValue);
-    void setMaxSpeed(uint8_t newValue);
-
     // void (BaseGame::*myFuncPointer) () = static_cast<void (BaseGame::*)()>(&SnakeGame::setPixelSize);
 
     // GameOption = {"name", defaultValue, minValue, maxValue, &setterFunction}
     // GameOption pixelSizeGameOption = {"Pixel size", 4, 1, 8, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setPixelSize)};
-    GameOption numberOfApplesGameOption = {"Num apples", 3, 1, 5, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setNumApples)};
-    GameOption startSpeedGameOption = {"Start speed", 5, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setStartSpeed)}; // need to convert a speed value to ms (so inverse): 265 - (speed * 15)
-    GameOption maxSpeedGameOption = {"Max speed", 7, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setMaxSpeed)};       // 60 - (speed * 5)
+    // GameOption numberOfApplesGameOption = {"Num apples", 3, 1, 5, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setNumApples)};
+    // GameOption startSpeedGameOption = {"Start speed", 5, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setStartSpeed)}; // need to convert a speed value to ms (so inverse): 265 - (speed * 15)
+    // GameOption maxSpeedGameOption = {"Max speed", 7, 1, 10, static_cast<void (BaseGame::*)(uint8_t)>(&SnakeGame::setMaxSpeed)};       // 60 - (speed * 5)
 
     Point getNewApplePosition();
     void updateSnakeDirections();

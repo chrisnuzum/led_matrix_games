@@ -156,6 +156,18 @@ SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
     }
 }
 
+SnakeGame::~SnakeGame()
+{
+    delete snakes[0];
+    if (numPlayers > 1)
+    {
+        for (int i = 1; i < numPlayers; i++)
+        {
+            delete snakes[i];
+        }
+    }
+}
+
 void SnakeGame::setPlayers(uint8_t players)
 {
     numPlayers = players;
@@ -166,7 +178,7 @@ void SnakeGame::setPlayers(uint8_t players)
         snakes[0]->setColors(utility->colors.orange, utility->colors.red);
         autoDirectionSet = false;
         distanceToApple = 100;
-        updateDelay = 10;
+        updateDelay = 100; // 10
     }
     else
     {
@@ -174,7 +186,8 @@ void SnakeGame::setPlayers(uint8_t players)
         {
             if (snakes[i] == nullptr)
             {
-                snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT);
+                Serial.println("snakes[i] == nullptr");
+                snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT);    // TODO: need to rerun this if FIELD changes size from user option
                 if (i == 0)
                 {
                     snakes[i]->setColors(utility->colors.orange, utility->colors.red);
@@ -589,8 +602,11 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
     uint8_t _g = colorMin;
     uint8_t _b = colorMax;
 
-    uint8_t whichMoving = 1;
-    bool movingUp = true;
+    uint8_t whichMoving = 1; // indicates if r g or b is currently changing
+    bool movingUp = true;    // indicates if whichMoving is increasing or decreasing
+    uint8_t _rtest = 0;
+    uint8_t _gtest = 0;
+    uint8_t _btest = 200;
 
     for (int i = 0; i < s->segments.size(); i++)
     {
@@ -603,6 +619,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_r < colorMax)
                 {
                     _r += colorIncrement;
+                    Serial.print("_r: ");
+                    Serial.println(_r);
                 }
                 else
                 {
@@ -615,6 +633,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_r > colorMin)
                 {
                     _r -= colorIncrement;
+                    Serial.print("_r: ");
+                    Serial.println(_r);
                 }
                 else
                 {
@@ -630,6 +650,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_g < colorMax)
                 {
                     _g += colorIncrement;
+                    Serial.print("_g: ");
+                    Serial.println(_g);
                 }
                 else
                 {
@@ -642,6 +664,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_g > colorMin)
                 {
                     _g -= colorIncrement;
+                    Serial.print("_g: ");
+                    Serial.println(_g);
                 }
                 else
                 {
@@ -657,6 +681,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_b < colorMax)
                 {
                     _b += colorIncrement;
+                    Serial.print("_b: ");
+                    Serial.println(_b);
                 }
                 else
                 {
@@ -669,6 +695,8 @@ void SnakeGame::autoDrawSnake() // rainbow not working right
                 if (_b > colorMin)
                 {
                     _b -= colorIncrement;
+                    Serial.print("_b: ");
+                    Serial.println(_b);
                 }
                 else
                 {

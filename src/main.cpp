@@ -6,7 +6,7 @@
 #include <PxMatrix.h> // if issues down the road, PlatformIO Library manager installs latest release,
                       //    but ArduinoIDE installs the lastest version of the master branch
                       //    only the latest version works, maybe consider manually adding library to project
-                      // Definitely need to add my own because I made edits on line 766+
+                      // Definitely need to add my own because I made edits on line 766+ and 13
                       // Should probably fork PxMatrix, push new commit, then use that
                       // !!! DO THIS SOON
 #include <Utility.h>
@@ -41,6 +41,19 @@ TO-DO:
 -make more robust menu system with options and a preview of game being played
 -have B button exit autoplays
 -add game options
+
+ISSUES:
+-The way PxMatrix does color seems odd.
+  -Color depth by default is set to 4.
+  -Colors passed to fillMatrixBuffer are uint_8t r, g, b values (so max of 255)
+  -But, each value is bitwise right-shifted by (8 - colorDepth)
+        -This means <15 becomes 0, 60 becomes 3, 120 becomes 7, 255 becomes 15
+  -figure out what the interlacing does (1001 - 1016)
+    -starting with rightmost bit of each color value (least significant bit) just checks if that bit is 1 and then adds it to the buffer
+  -check lines 1022-1024
+    -
+-Figure out what drawPixelRGB565 does to get individual RGB values from a uint16_t color (line 1022)
+    -this still would have the same shift done
 */
 
 // Pins for LED MATRIX
@@ -96,10 +109,17 @@ Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
 Menu menu(utility);
 int8_t selectedGame = -1;         // passed by ref
 int8_t selectedPlayerOption = -1; // passed by ref
+int8_t lastPlayedGame = -1;
 BaseGame *games[NUMBER_OF_GAMES] = {snakeGame, tetris};
 BaseGame *game = nullptr;
-MenuInfo menus[] = {getSnakeMenu(), getTetrisMenu()};
-ItemWithSubitems items[NUMBER_OF_GAMES];
+
+bool gameExists[2] = {false, false};
+
+MenuItem gameMenuItems[NUMBER_OF_GAMES];
+MenuItem snakeMenuItem("SNAKE");
+MenuItem tetrisMenuItem("TETRIS");
+const char *snakePlayerOptions[MAX_NUM_PLAYER_OPTIONS] = {"Auto", "1P", "2P"};
+const char *tetrisPlayerOptions[MAX_NUM_PLAYER_OPTIONS] = {"Auto", "1P", "2P"};
 
 /*  change menu to be simpler, build here (no GameOption struct in games, just setter functions that a loop will call here)
     individual games can have player option modes as booleans and name of game in BaseGame (consts?) -this would only work if they are static
@@ -112,25 +132,26 @@ ItemWithSubitems items[NUMBER_OF_GAMES];
 */
 void setUpMainMenu()
 {
+    // for (int i = 0; i < NUMBER_OF_GAMES; i++)
+    // {
+    //     bool foundSuboption = false;
+    //     for (int j = 0; j < MAX_NUM_PLAYER_OPTIONS; j++)
+    //     {
+    //         if (menus[i].playerOptions[j])
+    //         {
+    //             foundSuboption = true;
+    //             break;
+    //         }
+    //     }
+    //     ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, foundSuboption ? MAX_NUM_PLAYER_OPTIONS : 0, -1);
+    //     items[i] = item;
+    // }
 
-    for (int i = 0; i < NUMBER_OF_GAMES; i++)
-    {
-        bool foundSuboption = false;
-        for (int j = 0; j < MAX_NUM_PLAYER_OPTIONS; j++)
-        {
-            if (menus[i].playerOptions[j])
-            {
-                foundSuboption = true;
-                break;
-            }
-        }
-        ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, foundSuboption ? MAX_NUM_PLAYER_OPTIONS : 0, -1);
-        items[i] = item;
-    }
+    snakeMenuItem.makeItemWithSubitems(snakePlayerOptions, MAX_NUM_PLAYER_OPTIONS, -1);
+    tetrisMenuItem.makeItemWithSubitems(tetrisPlayerOptions, MAX_NUM_PLAYER_OPTIONS, -1);
 
-    const char *snakePlayerOptions[MAX_NUM_PLAYER_OPTIONS];
-    const char *tetrisPlayerOptions[MAX_NUM_PLAYER_OPTIONS];
-    
+    gameMenuItems[0] = snakeMenuItem;
+    gameMenuItems[1] = tetrisMenuItem;
 }
 
 void setup()
@@ -141,6 +162,7 @@ void setup()
     // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
     display.begin(32);
     display.setFastUpdate(true);
+
     display.setRotation(0);
 
     display.clearDisplay();
@@ -148,7 +170,6 @@ void setup()
     // delay(2000);
     display.setFont(utility.fonts.my5x5round);
     utility.setDisplay(display); // why is this necessary? needs re-set after the update_enable. Also setting font after this line won't register
-
     setUpMainMenu();
     menu.setDisplay(display); // this is also necessary like line 136 unless Menu object is defined in same block...
 }
@@ -157,32 +178,107 @@ void loop()
 {                     // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
     if (!gameRunning) // TODO: cleanup/destruct games when switching to one after playing another
     {
-        menu.doMenu(items, selectedGame, selectedPlayerOption);
-
+        menu.doMenu(gameMenuItems, selectedGame, selectedPlayerOption);
+        Serial.print("Game index: ");
+        Serial.println(selectedGame);
+        Serial.print("Player option index: ");
+        Serial.println(selectedPlayerOption);
         if (selectedGame == 0)
         {
-            if (snakeGame == nullptr)
+            if (lastPlayedGame != 0) // if game has switched, delete previous game to conserve RAM
+            {
+                delete game;
+                gameExists[lastPlayedGame] = false;
+                lastPlayedGame = 0;
+            }
+
+            if (!gameExists[selectedGame])
             {
                 snakeGame = new SnakeGame(utility, selectedPlayerOption);
+                game = snakeGame;
+                gameExists[selectedGame] = true;
             }
-            game = snakeGame; // if game has switched, maybe delete/set previous game to nullptr to conserve RAM
+            else
+            {
+                snakeGame->setPlayers(selectedPlayerOption);
+                snakeGame->justStarted = true;
+            }
+            // do options menu
+            MenuItem numberOfApples("Num apples");
+            numberOfApples.makeItemWithValue(3, 1, 5);
+            MenuItem startSpeed("Start speed");
+            startSpeed.makeItemWithValue(5, 1, 10);
+            MenuItem maxSpeed("Max speed");
+            maxSpeed.makeItemWithValue(7, 1, 10);
+            MenuItem startGame("Start game");
+
+            MenuItem options[4] = {numberOfApples, startSpeed, maxSpeed, startGame};
+            int8_t chosenOption = -1;
+
+            while (true)
+            {
+                if (!menu.doOptionsMenu(options, chosenOption)) // This means user wants to back out to previous menu
+                {
+                    break;
+                }
+                switch (chosenOption)
+                {
+                case 0:
+                    snakeGame->setNumApples(options[0].getValue());
+                    break;
+                case 1:
+                    snakeGame->setStartSpeed(options[0].getValue());
+                    break;
+                case 2:
+                    snakeGame->setMaxSpeed(options[0].getValue());
+                    break;
+                case 3:
+                    gameRunning = true;
+                    break;
+                }
+                if (chosenOption == 3)
+                {
+                    break;
+                }
+            }
         }
         else if (selectedGame == 1)
         {
-            if (tetris == nullptr)
+            if (lastPlayedGame != 1) // if game has switched, delete previous game to conserve RAM
+            {
+                delete game;
+                gameExists[lastPlayedGame] = false;
+                lastPlayedGame = 1;
+            }
+
+            if (!gameExists[selectedGame])
             {
                 tetris = new Tetris(utility, selectedPlayerOption);
+                game = tetris;
+                gameExists[selectedGame] = true;
             }
-            game = tetris;
+            else
+            {
+                tetris->setPlayers(selectedPlayerOption);
+                tetris->justStarted = true;
+            }
+            gameRunning = true;
         }
 
-        game->setPlayers(selectedPlayerOption);
-        game->justStarted = true;
-        gameRunning = true;
+        // game->setPlayers(selectedPlayerOption);
+        // game->justStarted = true;
     }
     else // game is running
     {
-        gameRunning = game->loopGame();
+        if (selectedGame == 0)
+        {
+            gameRunning = snakeGame->loopGame();
+        }
+        else if (selectedGame == 1)
+        {
+            gameRunning = tetris->loopGame();
+        }
+        // gameRunning = game->loopGame();  // crashes
     }
 }
 
@@ -309,26 +405,26 @@ void loop()
 //     gameRunning = games[selectedGame]->loopGame();
 // }
 
-        // int8_t initialSelectedSuboption = -1;
-        // for (int j = 0; j < NUM_GAME_MODES; j++)
-        // {
-        //     if (menus[i].playerOptions[j])
-        //     {
-        //         initialSelectedSuboption = j;
-        //         break;
-        //     }
-        // }
-        // if (initialSelectedSuboption == -1)
-        // {
-        //     Serial.println("no suboptions");
-        //     ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, 0, -1); // could get rid of if/else by changing end to: , initialSelectedSuboption == -1 ? 0 : NUM_GAME_MODES, initialSelectedSuboption);
-        //     items[i] = item;
-        // }
-        // else
-        // {
-        //     Serial.println("has suboptions");
-        //     ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, NUM_GAME_MODES, initialSelectedSuboption);
-        //     Serial.println("made item");
-        //     items[i] = item;
-        //     Serial.println("added item to items");
-        // }
+// int8_t initialSelectedSuboption = -1;
+// for (int j = 0; j < NUM_GAME_MODES; j++)
+// {
+//     if (menus[i].playerOptions[j])
+//     {
+//         initialSelectedSuboption = j;
+//         break;
+//     }
+// }
+// if (initialSelectedSuboption == -1)
+// {
+//     Serial.println("no suboptions");
+//     ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, 0, -1); // could get rid of if/else by changing end to: , initialSelectedSuboption == -1 ? 0 : NUM_GAME_MODES, initialSelectedSuboption);
+//     items[i] = item;
+// }
+// else
+// {
+//     Serial.println("has suboptions");
+//     ItemWithSubitems item(menus[i].gameDisplayName, menus[i].playerOptions, NUM_GAME_MODES, initialSelectedSuboption);
+//     Serial.println("made item");
+//     items[i] = item;
+//     Serial.println("added item to items");
+// }

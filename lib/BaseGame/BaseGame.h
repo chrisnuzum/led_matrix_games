@@ -8,22 +8,22 @@
 const uint8_t MAX_NUM_PLAYER_OPTIONS = 3;
 const uint8_t NUM_MAX_OPTIONS = 10;
 
-struct MenuInfo
-{
-    MenuInfo(const char *gameName) : gameDisplayName(gameName)
-    {
-    }
-    const char *playerOptions[MAX_NUM_PLAYER_OPTIONS];  // the BaseGame object will receive the selected mode's index as number of players
-    const char *gameDisplayName;
-    // const BaseGame *gamePointer;
+// struct MenuInfo
+// {
+//     MenuInfo(const char *gameName) : gameDisplayName(gameName)
+//     {
+//     }
+//     const char *playerOptions[MAX_NUM_PLAYER_OPTIONS];  // the BaseGame object will receive the selected mode's index as number of players
+//     const char *gameDisplayName;
+//     // const BaseGame *gamePointer;
 
-    void setMenuInfo(bool autoplayMode, bool onePlayerMode, bool twoPlayerMode)
-    {
-        playerOptions[0] = autoplayMode ? "Auto" : "";
-        playerOptions[1] = onePlayerMode ? "1P" : "";
-        playerOptions[2] = twoPlayerMode ? "2P" : "";
-    }
-};
+//     void setMenuInfo(bool autoplayMode, bool onePlayerMode, bool twoPlayerMode)
+//     {
+//         playerOptions[0] = autoplayMode ? "Auto" : "";
+//         playerOptions[1] = onePlayerMode ? "1P" : "";
+//         playerOptions[2] = twoPlayerMode ? "2P" : "";
+//     }
+// };
 
 class BaseGame
 {
@@ -34,48 +34,12 @@ public: // https://www.learncpp.com/cpp-tutorial/constructors-and-initialization
                                  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
     {
     }
+    virtual ~BaseGame() {};        // this allows child objects stored in BaseGame* to have their own destructors called
     virtual void setPlayers(uint8_t) = 0;
     virtual bool loopGame() = 0; // https://www.geeksforgeeks.org/pure-virtual-functions-and-abstract-classes/#
     bool justStarted = false;
 
 protected:
-    bool autoplayMode = false;
-    bool onePlayerMode = false;
-    bool twoPlayerMode = false;
-
-    struct GameOption
-    {
-        const char *displayName;
-        uint8_t defaultValue;
-        uint8_t minValue;
-        uint8_t maxValue;
-        void (BaseGame::*valueSetterFunction)(uint8_t newValue);
-
-        // GameOption *parentCondition = nullptr;
-    };
-
-    /*
-    Might want to have another struct for game options with dependencies that would store a reference to another game option
-    and maybe a condition.
-    GameOption
-    NumericalGameOption : GameOption
-    BooleanGameOption : GameOption
-    */
-
-    // With an array the number of elements needs to be defined ahead of time and they need to be inserted by index.
-    // This is not necessary for map or vector.
-    GameOption gameOptions[NUM_MAX_OPTIONS];
-
-    // for (int i = 0; i < NUM_MAX_OPTIONS; i++)
-    // {
-    //     gameOptions[i] = NULL;
-    // }
-    /*
-    If they are all initialized to NULL, I can check each index for NULL and insert a new option at the first NULL I find.
-    Or just increment the index (manually or with a variable).
-    Could use vector or list
-    */
-
     Utility *utility; // this has to be a pointer or inputs are unreliable, even when it is passed here as reference. not sure why
     PxMATRIX display;
     const uint8_t MATRIX_WIDTH;

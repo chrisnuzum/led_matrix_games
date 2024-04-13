@@ -87,42 +87,62 @@ Dependent options as in one option isn't available unless another is active
     -example: Snake casual mode which doesn't increase speed, so if casual is active then max speed isn't available
 */
 
-enum ItemType {basicItem, itemWithSubitems, itemWithValue};
-
-struct Item     // all-encompassing item object with type
+enum ItemType
 {
-    ItemType type = basicItem;
+    basicItem,
+    itemWithSubitems,
+    itemWithValue
+};
+
+class MenuItem  // all-encompassing item object with type
+{               // might also want a boolean type, as well as certain options that depend on the state of another option to
+private:        //   determine if they are enabled or not
+    ItemType type = ItemType::basicItem;
     const char *itemName;
+
     const char **subitems;
     uint8_t numSubitems;
     int8_t selectedSubitem;
 
     bool isSelected;
     uint8_t value;
-    const uint8_t minValue;
-    const uint8_t maxValue;
-};
+    uint8_t minValue; // const?
+    uint8_t maxValue; // const?
 
-struct ItemWithSubitems
-{
-    ItemWithSubitems() = default;
-    ItemWithSubitems(const char *name, const char **subs, const uint8_t numSubs, int8_t selectedSub) : itemName(name), subitems(subs), numSubitems(numSubs), selectedSubitem(selectedSub)
+public:
+    MenuItem() = default;
+    MenuItem(const char *name) : itemName(name)
     {
     }
-    const char *itemName;
-    const char **subitems;
-    uint8_t numSubitems;
-    int8_t selectedSubitem;
-};
 
-struct ItemWithValue
-{
-    const char *itemName;
-    bool isSelected;
-    uint8_t value;
-    const uint8_t minValue;
-    const uint8_t maxValue;
-    void (*valueSetterFunction)(uint8_t newValue);
+    void makeItemWithSubitems(const char **subs, const uint8_t numSubs, int8_t selectedSub)
+    {
+        type = ItemType::itemWithSubitems;
+        subitems = subs;
+        numSubitems = numSubs;
+        selectedSubitem = selectedSub;
+    }
+
+    void makeItemWithValue(uint8_t val, uint8_t minVal, uint8_t maxVal) // could be special constructor
+    {
+        type = ItemType::itemWithValue;
+        isSelected = false;
+        value = val;
+        minValue = minVal;
+        maxValue = maxVal;
+    }
+
+    const char *getName()
+    {
+        return itemName;
+    }
+
+    uint8_t getValue()
+    {
+        return value;
+    }
+
+    friend class Menu;
 };
 
 class Menu
@@ -136,11 +156,11 @@ private:
     const uint8_t FIRST_X_COORD = 1;
     const uint8_t FIRST_Y_COORD = 5;
     const uint8_t ROW_OFFSET = 6;
-    const uint8_t HORIZONTAL_VALUE_OFFSET = 30;
+    const uint8_t HORIZONTAL_VALUE_OFFSET = 52;
     const uint16_t SELECTED_COLOR = utility->colors.white;
     const uint16_t UNSELECTED_COLOR = utility->colors.cyan;
 
-    void displayOptionsMenu(ItemWithValue items[], uint8_t numItems, uint8_t focusedItem)
+    void displayOptionsMenu(MenuItem items[], uint8_t numItems, uint8_t focusedItem)
     {
         display.clearDisplay();
         for (int i = 0; i < numItems; i++)
@@ -151,27 +171,33 @@ private:
                 display.setTextColor(SELECTED_COLOR);
                 display.print(">");
                 display.print(items[i].itemName);
-                if (!items[i].isSelected)
+                if (items[i].type != ItemType::basicItem)
                 {
-                    display.setTextColor(UNSELECTED_COLOR);
+                    if (!items[i].isSelected)
+                    {
+                        display.setTextColor(UNSELECTED_COLOR);
+                    }
+                    display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                    display.print(items[i].value);
                 }
-                display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
-                display.print(items[i].value);
             }
             else
             {
                 display.setTextColor(UNSELECTED_COLOR);
                 display.print("  "); // number of spaces is based on current font's width of a space and > character
                 display.print(items[i].itemName);
-                display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
-                display.print(items[i].value);
+                if (items[i].type != ItemType::basicItem)
+                {
+                    display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                    display.print(items[i].value);
+                }
             }
         }
     }
 
-    int8_t setOptions(ItemWithValue items[], uint8_t numItems)
+    int8_t setOptions(MenuItem items[], uint8_t numItems, int8_t previousFocusedItemIndex)
     {
-        uint8_t focusedItemIndex = 0;
+        uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
         displayOptionsMenu(items, numItems, focusedItemIndex);
 
         while (true)
@@ -181,13 +207,13 @@ private:
             bool _down = utility->inputs.DOWN_P1 || utility->inputs.DOWN_P2;
             bool _a = utility->inputs.A_P1 || utility->inputs.A_P2;
             bool _b = utility->inputs.B_P1 || utility->inputs.B_P2;
-            if (items[focusedItemIndex].isSelected) // need a "Start Game" option that if selected and A is pressed, it returns a certain number
-            {                                       // this function could return bool, true means start the game and false means go back to the previous menu
+            if (items[focusedItemIndex].isSelected)
+            {
                 if (_a || _b)
                 {
-                    items[focusedItemIndex].valueSetterFunction(items[focusedItemIndex].value);
                     items[focusedItemIndex].isSelected = false;
                     displayOptionsMenu(items, numItems, focusedItemIndex);
+                    return focusedItemIndex;
                 }
                 else if (_up)
                 {
@@ -203,7 +229,6 @@ private:
                     {
                         items[focusedItemIndex].value -= 1;
                         displayOptionsMenu(items, numItems, focusedItemIndex);
-
                     }
                 }
             }
@@ -211,8 +236,15 @@ private:
             {
                 if (_a)
                 {
-                    items[focusedItemIndex].isSelected = true;
-                    // return focusedItemIndex;
+                    if (items[focusedItemIndex].type == ItemType::basicItem)
+                    {
+                        return focusedItemIndex;
+                    }
+                    else
+                    {
+                        items[focusedItemIndex].isSelected = true;
+                        displayOptionsMenu(items, numItems, focusedItemIndex);
+                    }
                 }
                 else if (_b)
                 {
@@ -244,7 +276,7 @@ private:
        Subitem0  Subitem1 >Subitem2  Subitem3
     Item2
     */
-    void displayMenuWithOptionsBelow(ItemWithSubitems items[], uint8_t numItems, uint8_t selectedItem)
+    void displayMenuWithOptionsBelow(MenuItem items[], uint8_t numItems, uint8_t selectedItem)
     {
         display.clearDisplay();
         bool drewSelected = false;
@@ -293,7 +325,7 @@ private:
         }
     }
 
-    uint8_t selectItem(ItemWithSubitems items[], uint8_t numItems)
+    uint8_t selectItem(MenuItem items[], uint8_t numItems)
     {
         uint8_t focusedItemIndex = 0;
         displayMenuWithOptionsBelow(items, numItems, focusedItemIndex);
@@ -329,7 +361,7 @@ private:
         }
     }
 
-    int8_t selectSubitem(ItemWithSubitems items[], uint8_t numItems, uint8_t selectedItem)
+    int8_t selectSubitem(MenuItem items[], uint8_t numItems, uint8_t selectedItem)
     {
         int8_t focusedSubitemIndex = items[selectedItem].selectedSubitem;
         displayMenuWithOptionsBelow(items, numItems, selectedItem); // probably not necessary because it should already be displayed
@@ -397,9 +429,11 @@ public:
         this->display = d;
     }
 
-    template <size_t num_items>
-    void doMenu(ItemWithSubitems (&items)[num_items], int8_t &selectedItem, int8_t &selectedSubitem)
+    template <size_t num_items>                                                              // could add this same template to the private functions
+    void doMenu(MenuItem (&items)[num_items], int8_t &selectedItem, int8_t &selectedSubitem) // = NULL)
     {
+        // if (selectedSubitem != NULL)
+        // {
         int8_t tempSelectedItem;
         int8_t tempSelectedSubitem = -1;
 
@@ -411,25 +445,70 @@ public:
 
         selectedItem = tempSelectedItem;
         selectedSubitem = tempSelectedSubitem;
+        // }
+        // else
+        // {
+        // }
     }
 
     template <size_t num_items>
-    void doOptionsMenu(ItemWithValue (&items)[num_items], int8_t &selectedItem)
+    bool doOptionsMenu(MenuItem (&items)[num_items], int8_t &changedItem)
     {
-        int8_t tempSelectedItem;
-        int8_t tempSelectedSubitem = -1;
 
-        while (tempSelectedSubitem == -1)
+        // I was going to just use this function for all menus...I probably could make it return a boolean
+        // and if it returns true during the options menu it starts the game, otherwise returns false...
+        // Never mind, the whole point of this is to return an option that changed value to main.cpp so that
+        // main can control calling the relevant setter functions in the games (leaving this blurb here for future self)
+
+        int8_t tempChangedOption;
+        tempChangedOption = setOptions(items, num_items, changedItem);
+        if (tempChangedOption == -1)    // This means B was pressed and user wants to go to previous menu
         {
-            tempSelectedItem = selectItem(items, num_items);
-            tempSelectedSubitem = selectSubitem(items, num_items, tempSelectedItem);
+            return false;
         }
+        else
+        {
+            changedItem = tempChangedOption;
+            return true;
+        }
+        // ^this needs to receive the focused option. Each option (MenuItem) itself tracks whether it is selected or not
+        // and handles changing the value. Only after an option's value is changed and then A or B is pressed should that
+        // function return the index of the option that was changed, all the way back to main. main will then call the
+        // relevant setter function and give it the value of the MenuItem.
 
-        selectedItem = tempSelectedItem;
+        // When an option is selected:
+        //    if it has a value:
+        //        allow editing value and check for change
+        //        if it changes, return the index
+        //    if it is basic:
+        //        return the index
+        //    could also just have the suboptions in as well? but that needs the other variable which wouldn't be passed
     }
 };
 
 #endif
+
+// struct ItemWithSubitems
+// {
+//     ItemWithSubitems() = default;
+//     ItemWithSubitems(const char *name, const char **subs, const uint8_t numSubs, int8_t selectedSub) : itemName(name), subitems(subs), numSubitems(numSubs), selectedSubitem(selectedSub)
+//     {
+//     }
+//     const char *itemName;
+//     const char **subitems;
+//     uint8_t numSubitems;
+//     int8_t selectedSubitem;
+// };
+
+// struct ItemWithValue
+// {
+//     const char *itemName;
+//     bool isSelected;
+//     uint8_t value;
+//     const uint8_t minValue;
+//     const uint8_t maxValue;
+//     void (*valueSetterFunction)(uint8_t newValue);
+// };
 
 // void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
 // {
