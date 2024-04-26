@@ -75,7 +75,7 @@ Point SnakeGame::Snake::getNextPosition()
         return Point(head.x - 1, head.y);
     case RIGHT:
         return Point(head.x + 1, head.y);
-    default: // NOT VALID current_direction
+    default: // NOT VALID aimedDirection
         return Point();
     }
 }
@@ -178,7 +178,7 @@ void SnakeGame::setPlayers(uint8_t players)
         snakes[0]->setColors(utility->colors.orange, utility->colors.red);
         autoDirectionSet = false;
         distanceToApple = 100;
-        updateDelay = 100; // 10
+        updateDelay = 1; // 10
     }
     else
     {
@@ -187,7 +187,7 @@ void SnakeGame::setPlayers(uint8_t players)
             if (snakes[i] == nullptr)
             {
                 Serial.println("snakes[i] == nullptr");
-                snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT);    // TODO: need to rerun this if FIELD changes size from user option
+                snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT); // TODO: need to rerun this if FIELD changes size from user option
                 if (i == 0)
                 {
                     snakes[i]->setColors(utility->colors.orange, utility->colors.red);
@@ -592,116 +592,116 @@ bool SnakeGame::loopGame()
     return true;
 }
 
-void SnakeGame::autoDrawSnake() // rainbow not working right
+void SnakeGame::autoDrawSnake()
 {
     Snake *s = snakes[0];
-    uint8_t colorMax = 170;
-    uint8_t colorMin = 0;
-    uint8_t colorIncrement = 5;
+    uint8_t colorIncrement = 256 / (PxMATRIX_COLOR_DEPTH + 1); // 30
+    uint8_t colorMax = colorIncrement * PxMATRIX_COLOR_DEPTH;  // 240
+    uint8_t colorMin = colorIncrement / 2;                     // 0
     uint8_t _r = colorMin;
     uint8_t _g = colorMin;
     uint8_t _b = colorMax;
 
     uint8_t whichMoving = 1; // indicates if r g or b is currently changing
     bool movingUp = true;    // indicates if whichMoving is increasing or decreasing
-    uint8_t _rtest = 0;
-    uint8_t _gtest = 0;
-    uint8_t _btest = 200;
 
     for (int i = 0; i < s->segments.size(); i++)
     {
         Point p = s->segments.get(i);
 
-        if (whichMoving == 1)
+        if (i != 0)     // first one is always white
         {
-            if (movingUp)
+            if (whichMoving == 1)
             {
-                if (_r < colorMax)
+                if (movingUp)
                 {
-                    _r += colorIncrement;
-                    Serial.print("_r: ");
-                    Serial.println(_r);
+                    if (_r < colorMax)
+                    {
+                        _r += colorIncrement;
+                        Serial.print("_r: ");
+                        Serial.println(_r);
+                    }
+                    else
+                    {
+                        whichMoving = 3;
+                        movingUp = false;
+                    }
                 }
                 else
                 {
-                    whichMoving = 3;
-                    movingUp = false;
+                    if (_r > colorMin)
+                    {
+                        _r -= colorIncrement;
+                        Serial.print("_r: ");
+                        Serial.println(_r);
+                    }
+                    else
+                    {
+                        whichMoving = 3;
+                        movingUp = true;
+                    }
+                }
+            }
+            else if (whichMoving == 2)
+            {
+                if (movingUp)
+                {
+                    if (_g < colorMax)
+                    {
+                        _g += colorIncrement;
+                        Serial.print("_g: ");
+                        Serial.println(_g);
+                    }
+                    else
+                    {
+                        whichMoving = 1;
+                        movingUp = false;
+                    }
+                }
+                else
+                {
+                    if (_g > colorMin)
+                    {
+                        _g -= colorIncrement;
+                        Serial.print("_g: ");
+                        Serial.println(_g);
+                    }
+                    else
+                    {
+                        whichMoving = 1;
+                        movingUp = true;
+                    }
                 }
             }
             else
             {
-                if (_r > colorMin)
+                if (movingUp)
                 {
-                    _r -= colorIncrement;
-                    Serial.print("_r: ");
-                    Serial.println(_r);
+                    if (_b < colorMax)
+                    {
+                        _b += colorIncrement;
+                        Serial.print("_b: ");
+                        Serial.println(_b);
+                    }
+                    else
+                    {
+                        whichMoving = 2;
+                        movingUp = false;
+                    }
                 }
                 else
                 {
-                    whichMoving = 3;
-                    movingUp = true;
-                }
-            }
-        }
-        else if (whichMoving == 2)
-        {
-            if (movingUp)
-            {
-                if (_g < colorMax)
-                {
-                    _g += colorIncrement;
-                    Serial.print("_g: ");
-                    Serial.println(_g);
-                }
-                else
-                {
-                    whichMoving = 1;
-                    movingUp = false;
-                }
-            }
-            else
-            {
-                if (_g > colorMin)
-                {
-                    _g -= colorIncrement;
-                    Serial.print("_g: ");
-                    Serial.println(_g);
-                }
-                else
-                {
-                    whichMoving = 1;
-                    movingUp = true;
-                }
-            }
-        }
-        else
-        {
-            if (movingUp)
-            {
-                if (_b < colorMax)
-                {
-                    _b += colorIncrement;
-                    Serial.print("_b: ");
-                    Serial.println(_b);
-                }
-                else
-                {
-                    whichMoving = 2;
-                    movingUp = false;
-                }
-            }
-            else
-            {
-                if (_b > colorMin)
-                {
-                    _b -= colorIncrement;
-                    Serial.print("_b: ");
-                    Serial.println(_b);
-                }
-                else
-                {
-                    whichMoving = 2;
-                    movingUp = true;
+                    if (_b > colorMin)
+                    {
+                        _b -= colorIncrement;
+                        Serial.print("_b: ");
+                        Serial.println(_b);
+                    }
+                    else
+                    {
+                        whichMoving = 2;
+                        movingUp = true;
+                    }
                 }
             }
         }
@@ -988,7 +988,7 @@ bool SnakeGame::autoLoopGame()
                 {
                     drawApple(i);
                 }
-                autoDrawScore();
+                // autoDrawScore();
             }
             else // snake has hit something
             {

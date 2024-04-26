@@ -427,10 +427,114 @@ public:
 
             if (inputs.A_P1_pressed && inputs.B_P1_pressed && inputs.DOWN_P1_pressed)
             {
+                display.clearDisplay();
                 display.setCursor(7, 11);
                 display.print("ENDING TEST");
                 delay(3000);
                 break;
+            }
+        }
+    }
+
+    /*
+    New plan:
+    Each section's background is only that individual color, so Red ignores Green and Blue.
+    Right side sections show the full RGB color.
+    ~ sections are equivalent to 255-###
+
+    R: ###      RGB         R: is x=0-31, y=0-10        RGB is x=32-63, y=0-31
+    G: ###      RGB         G: is x=0-31, y=11-21
+    B: ###      RGB         B: is x=0-31, y=22-31
+    ~R: ###     ~RGB        ~R: is x=0-31, y=32-42      ~RGB is x=32-63, y=32-63
+    ~G: ###     ~RGB        ~G: is x=0-31, y=43-53
+    ~B: ###     ~RGB        ~B: is x=0-31, y=54-63
+
+    */
+    void colorTest()
+    {
+        uint8_t red = 0;
+        uint8_t lastRed = 1;
+        uint8_t green = 0;
+        uint8_t lastGreen = 1;
+        uint8_t blue = 0;
+        uint8_t lastBlue = 1;
+        display.fillScreen(display.color565(red, green, blue));
+        unsigned long msPrevious = 0;
+
+        while (true)
+        {
+            inputs.update();
+            if (inputs.B_P1)
+            {
+                break;
+            }
+            if (millis() - msPrevious > 100)
+            {
+                if (inputs.UP_P1_pressed)
+                {
+                    red += inputs.A_P1_pressed ? -1 : 1;
+                }
+                if (inputs.LEFT_P1_pressed)
+                {
+                    green += inputs.A_P1_pressed ? -1 : 1;
+                }
+                if (inputs.RIGHT_P1_pressed)
+                {
+                    blue += inputs.A_P1_pressed ? -1 : 1;
+                }
+            }
+            if (red != lastRed || green != lastGreen || blue != lastBlue)
+            {
+                display.setFont(fonts.my5x5round);
+                lastRed = red;
+                lastGreen = green;
+                lastBlue = blue;
+                msPrevious = millis();
+                //display.fillScreen(display.color565(red, green, blue));
+
+                display.fillRect(24, 0, 13, 64, colors.black);  // to clear the number section
+
+                display.fillRect(0, 0, 23, 11, display.color565(red, 0, 0));
+                display.drawRect(23, 0, 15, 11, display.color565(red, 0, 0));
+                display.fillRect(0, 11, 23, 11, display.color565(0, green, 0));
+                display.drawRect(23, 11, 15, 11, display.color565(0, green, 0));
+                display.fillRect(0, 22, 23, 10, display.color565(0, 0, blue));
+                display.drawRect(23, 22, 15, 10, display.color565(0, 0, blue));
+                display.fillRect(38, 0, 26, 32, display.color565(red, green, blue));
+
+                // display.setTextColor(display.color565(255 - red, 255 - green, 255 - blue));
+
+                display.fillRect(0, 32, 23, 11, display.color565(255 - red, 0, 0));
+                display.drawRect(23, 32, 15, 11, display.color565(255 - red, 0, 0));
+                display.fillRect(0, 43, 23, 11, display.color565(0, 255 - green, 0));
+                display.drawRect(23, 43, 15, 11, display.color565(0, 255 - green, 0));
+                display.fillRect(0, 54, 23, 10, display.color565(0, 0, 255 - blue));
+                display.drawRect(23, 54, 15, 10, display.color565(0, 0, 255 - blue));
+                display.fillRect(38, 32, 26, 32, display.color565(255 - red, 255 - green, 255 - blue));
+
+
+
+                display.setTextColor(colors.white);
+                display.setCursor(1, 7);
+                display.print("red:     ");
+                display.print(red);
+                display.setCursor(1, 18);
+                display.print("green: ");
+                display.print(green);
+                display.setCursor(1, 28);
+                display.print("blue:    ");
+                display.print(blue);
+
+                display.setCursor(1, 39);
+                display.print("red:     ");
+                display.print(255 - red);
+                display.setCursor(1, 50);
+                display.print("green: ");
+                display.print(255 - green);
+                display.setCursor(1, 60);
+                display.print("blue:    ");
+                display.print(255 - blue);
+
             }
         }
     }

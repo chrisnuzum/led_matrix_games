@@ -115,7 +115,7 @@ public:
     {
     }
 
-    void makeItemWithSubitems(const char **subs, const uint8_t numSubs, int8_t selectedSub)
+    void makeItemWithSubitems(const char **subs, const uint8_t numSubs, int8_t selectedSub) //can probably get rid of passing selectedSub and just set it to -1
     {
         type = ItemType::itemWithSubitems;
         subitems = subs;

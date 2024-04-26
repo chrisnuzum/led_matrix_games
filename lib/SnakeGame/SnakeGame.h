@@ -105,19 +105,19 @@ private:
 
     static const uint8_t FRAME_THICKNESS = 0; // 2   MATRIX_WIDTH - (2 * FRAME_THICKNESS) and ...
     static const uint8_t FRAME_Y_OFFSET = 0;  // 1   ... MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET) ...
-    static const uint8_t PIXEL_SIZE = 4;      // 2  ... must be a multiple of PIXEL_SIZE <- only matters if using PIXEL_SIZE of 3+
+    static const uint8_t PIXEL_SIZE = 1;      // 2  ... must be a multiple of PIXEL_SIZE <- only matters if using PIXEL_SIZE of 3+
     // static uint8_t PIXEL_SIZE;
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
 
     static const uint8_t MAX_NUM_APPLES = 5;
-    uint8_t numApples = 5; // !!!!!!!!!!changed this applePositions now has MAX spots but only the ones set by option should be filled
+    uint8_t numApples = 3; // !!!!!!!!!!changed this applePositions now has MAX spots but only the ones set by option should be filled
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
 
-    Snake *snakes[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
+    Snake *snakes[2] = {}; // initializes to nullptrs, each snake is deleted in destructor
 
     Point applePositions[MAX_NUM_APPLES]; // TODO: once snake gets long this should be reduced #BUG_1
 
