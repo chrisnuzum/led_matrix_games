@@ -52,5 +52,13 @@
         "typeinfo": "cpp"
     },
     "cmake.sourceDirectory": "C:/Users/Christopher/Documents/PlatformIO/Projects/snake_test/.pio/libdeps/esp32doit-devkit-v1/Adafruit BusIO",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "ShortcutMenuBar.compareWithSaved": true,
+    "ShortcutMenuBar.findReplace": true,
+    "ShortcutMenuBar.goToDefinition": true,
+    "ShortcutMenuBar.navigateBack": false,
+    "ShortcutMenuBar.navigateForward": false,
+    "ShortcutMenuBar.openFilesList": false,
+    "ShortcutMenuBar.saveAll": true,
+    "ShortcutMenuBar.toggleTerminal": false
 }

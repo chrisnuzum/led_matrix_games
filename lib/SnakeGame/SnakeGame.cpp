@@ -592,8 +592,8 @@ bool SnakeGame::loopGame()
     return true;
 }
 
-void SnakeGame::autoDrawSnake()
-{
+void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't need recalculated every time it is drawn
+{                                   // could store colors after they are calculated and then just calculate if a new segment was added
     Snake *s = snakes[0];
     uint8_t colorIncrement = 256 / (PxMATRIX_COLOR_DEPTH + 1); // 30
     uint8_t colorMax = colorIncrement * PxMATRIX_COLOR_DEPTH;  // 240
