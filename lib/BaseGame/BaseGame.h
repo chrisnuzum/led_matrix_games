@@ -1,8 +1,8 @@
 #ifndef _basegame_
 #define _basegame_
 
-#include "Arduino.h"
-#include <PxMatrix.h>
+#include <Arduino.h>
+// #include <PxMatrix.h>
 #include <Utility.h>
 
 const uint8_t MAX_NUM_PLAYER_OPTIONS = 3;
@@ -29,19 +29,19 @@ class BaseGame
 {
 public: // https://www.learncpp.com/cpp-tutorial/constructors-and-initialization-of-derived-classes/
     BaseGame(Utility &utility) : utility(&utility),
-                                 display(utility.display),
+                                 //  display(utility.display),
                                  MATRIX_WIDTH(utility.MATRIX_WIDTH),
                                  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
     {
     }
-    virtual ~BaseGame() {};        // this allows child objects stored in BaseGame* to have their own destructors called
+    virtual ~BaseGame(){}; // this allows child objects stored in BaseGame* to have their own destructors called
     virtual void setPlayers(uint8_t) = 0;
     virtual bool loopGame() = 0; // https://www.geeksforgeeks.org/pure-virtual-functions-and-abstract-classes/#
     bool justStarted = false;
 
 protected:
     Utility *utility; // this has to be a pointer or inputs are unreliable, even when it is passed here as reference. not sure why
-    PxMATRIX display;
+    // PxMATRIX display;
     const uint8_t MATRIX_WIDTH;
     const uint8_t MATRIX_HEIGHT;
     uint8_t numPlayers;
@@ -58,8 +58,6 @@ protected:
         LEFT,
         RIGHT
     };
-
-    
 };
 
 #endif

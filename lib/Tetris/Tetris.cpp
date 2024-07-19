@@ -78,7 +78,7 @@ void Tetris::TetrisBoard::checkForLineClear()
     bool lineEmpty;
     bool lineFull;
 
-    for (int _row = BOARD_HEIGHT - 1; _row > 0 && linesCleared < 4; _row--)
+    for (int _row = BOARD_HEIGHT - 1; _row > 0 && linesCleared < MAX_POSSIBLE_ROWS_CLEARED; _row--)
     {
         lineEmpty = true;
         lineFull = true;
@@ -121,7 +121,7 @@ void Tetris::TetrisBoard::checkForLineClear()
     }
 }
 
-void Tetris::TetrisBoard::addLineClearScore(u_int8_t linesCleared)
+void Tetris::TetrisBoard::addLineClearScore(uint8_t linesCleared)
 {
     //     1 point for each block in a cleared line, unless multiple lines are cleared at the same time
     // Multiplier: lines x mult x blocks = score
@@ -137,8 +137,8 @@ Tetris::TetrisBoard::TetrisBoard(uint8_t player, const TetrisPiece &iPiece, cons
                                  const TetrisPiece &zPiece) : player(player),
                                                               bag{iPiece, jPiece, lPiece, oPiece,
                                                                   sPiece, tPiece, zPiece},
-                                                              currentPiece(bag[0]),
-                                                              nextPiece(bag[1])
+                                                              currentPiece(bag[0]), // seems unnecessary
+                                                              nextPiece(bag[1])     // seems unnecessary
 {
     score = 0;
     nextPieceBagPosition = 0;
@@ -419,7 +419,7 @@ Tetris::Tetris(Utility &utility, uint8_t numPlayers) : BaseGame{utility},
     // onePlayerMode = true;
     // twoPlayerMode = true;
     // gameDisplayName = "Tetris";
-    
+
     MIN_DELAY = 10;
     MAX_DELAY = 100; // max value for uint8_t is 255
     SPEED_LOSS = 5;
@@ -477,41 +477,45 @@ void Tetris::drawFrame()
 {
     uint8_t width = BOARD_WIDTH * BOARD_PIXEL_SIZE + 2 * FRAME_THICKNESS;
     uint8_t height = BOARD_HEIGHT * BOARD_PIXEL_SIZE + 2 * FRAME_THICKNESS;
-
     for (int i = 0; i < numPlayers; i++)
     {
-        display.setRotation(i * 2);
-        display.setCursor(2, 16);
-        display.print("Next:");
+        utility->display.setRotation(i * 2);
+        utility->display.setCursor(2, 16);
+        utility->display.print("Next:");
         for (int j = 0; j < FRAME_THICKNESS; j++)
         {
-            display.drawRect(BOARD_X_POSITION - FRAME_THICKNESS + j, BOARD_Y_POSITION - FRAME_THICKNESS + j,
-                             width - 2 * j, height - 2 * j, paused ? utility->colors.yellow : utility->colors.red);
+            if (i == 1)
+            {
+                utility->display.drawRect(BOARD_X_POSITION - FRAME_THICKNESS + j, BOARD_Y_POSITION - FRAME_THICKNESS + j,
+                                          width - 2 * j, height - 2 * j, paused ? utility->colors.pink : utility->colors.green);
+            }
+            utility->display.drawRect(BOARD_X_POSITION - FRAME_THICKNESS + j, BOARD_Y_POSITION - FRAME_THICKNESS + j,
+                                      width - 2 * j, height - 2 * j, paused ? utility->colors.yellow : utility->colors.red);
         }
     }
 }
 
 void Tetris::drawScore(uint8_t player)
 {
-    display.setRotation((player - 1) * 2);
-    display.fillRect(2, 2, 19, 5, 0);
-    display.setCursor(2, 6);
-    display.print(boards[player - 1]->score);
+    utility->display.setRotation((player - 1) * 2);
+    utility->display.fillRect(2, 2, 19, 5, 0);
+    utility->display.setCursor(2, 6);
+    utility->display.print(boards[player - 1]->score);
 }
 
 void Tetris::clearNextPiece()
 {
-    display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 4 * BOARD_PIXEL_SIZE, 2 * BOARD_PIXEL_SIZE, 0);
+    utility->display.fillRect(NEXTPIECE_X_POSITION, NEXTPIECE_Y_POSITION, 4 * BOARD_PIXEL_SIZE, 2 * BOARD_PIXEL_SIZE, 0);
 }
 
 // void Tetris::clearBoard()    // could be used in an animation/multiplayer attack where board disappears for a second
 // {
-//     display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * BOARD_PIXEL_SIZE, BOARD_HEIGHT * BOARD_PIXEL_SIZE, 0);
+//     utility->display.fillRect(BOARD_X_POSITION, BOARD_Y_POSITION, BOARD_WIDTH * BOARD_PIXEL_SIZE, BOARD_HEIGHT * BOARD_PIXEL_SIZE, 0);
 // }
 
 void Tetris::drawNextPiece(uint8_t player)
 {
-    display.setRotation((player - 1) * 2);
+    utility->display.setRotation((player - 1) * 2);
     clearNextPiece();
     TetrisPiece piece = boards[player - 1]->nextPiece;
     uint8_t segmentsDrawn = 0;
@@ -526,8 +530,8 @@ void Tetris::drawNextPiece(uint8_t player)
                 {
                     for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
                     {
-                        display.drawPixel(NEXTPIECE_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
-                                          NEXTPIECE_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, piece.color);
+                        utility->display.drawPixel(NEXTPIECE_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
+                                                   NEXTPIECE_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, piece.color);
                     }
                 }
                 segmentsDrawn++;
@@ -546,7 +550,7 @@ void Tetris::drawNextPiece(uint8_t player)
 
 void Tetris::drawBoard(uint8_t player)
 {
-    display.setRotation((player - 1) * 2);
+    utility->display.setRotation((player - 1) * 2);
     for (int row = 0; row < BOARD_HEIGHT; row++)
     {
         for (int col = 0; col < BOARD_WIDTH; col++)
@@ -559,8 +563,8 @@ void Tetris::drawBoard(uint8_t player)
                 {
                     for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
                     {
-                        display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
-                                          BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, boards[player - 1]->board[row][col]);
+                        utility->display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
+                                                   BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, boards[player - 1]->board[row][col]);
                     }
                 }
             }
@@ -572,7 +576,7 @@ void Tetris::checkForInput()
 {
     for (int i = 0; i < numPlayers; i++)
     {
-        display.setRotation(i * 2);
+        utility->display.setRotation(i * 2);
 
         bool _up;
         bool _down;
@@ -590,8 +594,8 @@ void Tetris::checkForInput()
             _left = utility->inputs.LEFT_P1_pressed;
             _right = utility->inputs.RIGHT_P1_pressed;
             _a = utility->inputs.A_P1;
-            _b = utility->inputs.B_P1;  // TODO: This is not being detected!
-            
+            _b = utility->inputs.B_P1; // TODO: This is not being detected!
+
             if (_a == true)
             {
                 Serial.println("A WAS PRESSED");
@@ -605,8 +609,8 @@ void Tetris::checkForInput()
         {
             utility->inputs.update2(utility->inputs.pins.p2Buttons);
             utility->inputs.update2(utility->inputs.pins.p2Directions);
-            _up = utility->inputs.DOWN_P2_pressed;
-            _down = utility->inputs.UP_P2;
+            _up = utility->inputs.DOWN_P2;
+            _down = utility->inputs.UP_P2_pressed;
             _left = utility->inputs.RIGHT_P2_pressed;
             _right = utility->inputs.LEFT_P2_pressed;
             _a = utility->inputs.A_P2;
@@ -681,13 +685,13 @@ void Tetris::checkForPause()
 
 void Tetris::gameOver()
 {
-    // display.fillScreen(utility->colors.greenCyan);
+    // utility->display.fillScreen(utility->colors.greenCyan);
     // delay(250);
-    // display.clearDisplay();
+    // utility->display.clearDisplay();
     // delay(250);
-    // display.fillScreen(utility->colors.blueLight);
+    // utility->display.fillScreen(utility->colors.blueLight);
     // delay(250);
-    // display.clearDisplay();
+    // utility->display.clearDisplay();
     for (int i = 0; i < numPlayers; i++)
     {
         boards[i]->resetBoard();
@@ -712,8 +716,8 @@ bool Tetris::loopGame()
     {
         if (justStarted)
         {
-            display.clearDisplay();
-            display.setFont(utility->fonts.my5x5round);
+            utility->display.clearDisplay();
+            utility->display.setFont(utility->fonts.my5x5round);
             drawFrame();
             for (int i = 0; i < numPlayers; i++)
             {
@@ -873,7 +877,7 @@ void Tetris::AutoTetrisBoard::checkForLineClear()
     bool lineEmpty;
     bool lineFull;
 
-    for (int _row = 64 - 1; _row > 0 && linesCleared < 4; _row--)
+    for (int _row = 64 - 1; _row > 0 && linesCleared < MAX_POSSIBLE_ROWS_CLEARED; _row--)
     {
         lineEmpty = true;
         lineFull = true;
@@ -1050,8 +1054,8 @@ void Tetris::autoDrawBoard()
                 {
                     for (int colOffset = 0; colOffset < BOARD_PIXEL_SIZE; colOffset++)
                     {
-                        display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
-                                          BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, autoBoard->aBoard[row][col]);
+                        utility->display.drawPixel(BOARD_X_POSITION + (BOARD_PIXEL_SIZE * col) + colOffset,
+                                                   BOARD_Y_POSITION + (BOARD_PIXEL_SIZE * row) + rowOffset, autoBoard->aBoard[row][col]);
                     }
                 }
             }
@@ -1063,7 +1067,7 @@ bool Tetris::autoLoopGame()
 {
     if (justStarted)
     {
-        display.clearDisplay();
+        utility->display.clearDisplay();
         BOARD_PIXEL_SIZE = 1;
         BOARD_X_POSITION = 0;
         BOARD_Y_POSITION = 0;
@@ -1103,7 +1107,7 @@ bool Tetris::autoLoopGame()
                     }
                 }
                 delay(GAME_OVER_DELAY);
-                display.clearDisplay();
+                utility->display.clearDisplay();
             }
         }
     }

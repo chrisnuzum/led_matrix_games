@@ -1,10 +1,10 @@
 #ifndef _snake_
 #define _snake_
 
-#include "Arduino.h"
+// #include "Arduino.h"
 #include <LinkedList.h> // https://www.etlcpp.com/home.html     std::list? std::vector?
-#include <PxMatrix.h>
-#include <Utility.h>
+// #include <PxMatrix.h>
+// #include <Utility.h>
 #include <BaseGame.h>
 /*
 Changes:
@@ -16,6 +16,7 @@ Changes:
 -Make winner message indicate the position of the player with an arrow.
 -#BUG_1 getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
     -I found that if there are no open spaces for a new apple the game just hangs
+-Sometimes setting apples to 5 only makes 4 appear?
 
 AI:
 -for auto snake, maybe keep track of min/max X & Y occupied by snake and aim for more open part of screen if snake spans all the way across?
@@ -82,9 +83,6 @@ public:
 private:
     class Snake
     {
-        const uint8_t FIELD_WIDTH;
-        const uint8_t FIELD_HEIGHT;
-
     public:
         Snake(uint8_t player, uint8_t FIELD_WIDTH, uint8_t FIELD_HEIGHT);
         const uint8_t player;
@@ -101,25 +99,28 @@ private:
         bool isNextPointValid(const Point &p);
         Point getNextPosition();
         void setColors(uint16_t color, uint16_t colorPaused);
+
+    private:
+        const uint8_t FIELD_WIDTH;
+        const uint8_t FIELD_HEIGHT;
     };
 
     static const uint8_t FRAME_THICKNESS = 0; // 2   MATRIX_WIDTH - (2 * FRAME_THICKNESS) and ...
     static const uint8_t FRAME_Y_OFFSET = 0;  // 1   ... MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET) ...
-    static const uint8_t PIXEL_SIZE = 1;      // 2  ... must be a multiple of PIXEL_SIZE <- only matters if using PIXEL_SIZE of 3+
+    static const uint8_t PIXEL_SIZE = 2;      // 2  ... must be a multiple of PIXEL_SIZE <- only matters if using PIXEL_SIZE of 3+
     // static uint8_t PIXEL_SIZE;
     const uint8_t FIELD_WIDTH;
     const uint8_t FIELD_HEIGHT;
 
     static const uint8_t MAX_NUM_APPLES = 5;
-    uint8_t numApples = 3; // !!!!!!!!!!changed this applePositions now has MAX spots but only the ones set by option should be filled
+    uint8_t numApples = 3;                // !!!!!!!!!!changed this applePositions now has MAX spots but only the ones set by option should be filled
+    Point applePositions[MAX_NUM_APPLES]; // TODO: once snake gets long this should be reduced #BUG_1
 
     uint8_t MIN_DELAY;
     uint8_t MAX_DELAY;
     uint8_t SPEED_LOSS;
 
     Snake *snakes[2] = {}; // initializes to nullptrs, each snake is deleted in destructor
-
-    Point applePositions[MAX_NUM_APPLES]; // TODO: once snake gets long this should be reduced #BUG_1
 
     // void (BaseGame::*myFuncPointer) () = static_cast<void (BaseGame::*)()>(&SnakeGame::setPixelSize);
 

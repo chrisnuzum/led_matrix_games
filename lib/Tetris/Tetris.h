@@ -1,9 +1,9 @@
 #ifndef _tetris_
 #define _tetris_
 
-#include "Arduino.h"
-#include <PxMatrix.h>
-#include <Utility.h>
+// #include "Arduino.h"
+// #include <PxMatrix.h>
+// #include <Utility.h>
 #include <BaseGame.h>
 /*
     int lengthOfLine = sizeof(iPiece) / sizeof(iPiece[0]);
@@ -107,7 +107,7 @@ ghost pieces to see where piece will land?
         -check each column under each segment for tallest occupied space (can start at top or bottom)
         -highest piece just gets piece drawn at 1 space above it
         -this stays unless piece moves left or right or rotates
-    
+
 */
 
 // MenuInfo inline getTetrisMenu()
@@ -119,7 +119,7 @@ ghost pieces to see where piece will land?
 //     tetrisMenu.setMenuInfo(autoplayMode, onePlayerMode, twoPlayerMode);
 //     // Tetris *tetrisGamePointer = nullptr;
 //     // tetrisMenu.gamePointer = tetrisGamePointer;
-    
+
 //     return tetrisMenu;
 // }
 
@@ -265,22 +265,6 @@ private:
 
     class TetrisBoard
     {
-        TetrisPiece bag[NUM_PIECES];
-        uint8_t nextPieceBagPosition;
-
-        TetrisPiece currentPiece;
-        uint8_t currentOrientation;                             // could be direction enum?
-        uint8_t currentPieceCoordinates[NUM_PIECE_SEGMENTS][2]; // could use Point struct from SnakeGame for better readability
-        int8_t currentPieceTopLeft[2];                          // can be negative
-
-        static const uint8_t SPAWN_X_OFFSET = 3;
-
-        bool addCurrentPieceToBoard();
-        void checkForLineClear();
-        void addLineClearScore(u_int8_t linesCleared);
-        void shuffleBag();
-        static int getRandom(int i);
-
     public:
         TetrisBoard(uint8_t player, const TetrisPiece &iPiece, const TetrisPiece &jPiece, const TetrisPiece &lPiece,
                     const TetrisPiece &oPiece, const TetrisPiece &sPiece, const TetrisPiece &tPiece, const TetrisPiece &zPiece);
@@ -299,6 +283,23 @@ private:
         bool tryRotatePiece(bool clockwise);
         bool tryMovePiece(direction dir);
         void resetBoard();
+
+    private:
+        TetrisPiece bag[NUM_PIECES];
+        uint8_t nextPieceBagPosition;
+
+        TetrisPiece currentPiece;
+        uint8_t currentOrientation;                             // could be direction enum?
+        uint8_t currentPieceCoordinates[NUM_PIECE_SEGMENTS][2]; // could use Point struct from SnakeGame for better readability
+        int8_t currentPieceTopLeft[2];                          // can be negative
+
+        static const uint8_t SPAWN_X_OFFSET = 3;
+
+        bool addCurrentPieceToBoard();
+        void checkForLineClear();
+        void addLineClearScore(uint8_t linesCleared);
+        void shuffleBag();
+        static int getRandom(int i);
     };
 
     class AutoTetrisBoard

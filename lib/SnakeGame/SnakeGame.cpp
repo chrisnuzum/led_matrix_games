@@ -54,7 +54,7 @@ bool SnakeGame::Snake::occupiesPoint(const int &x, const int &y)
 // make sure the next point for the head of the snake is in a valid position
 bool SnakeGame::Snake::isNextPointValid(const Point &p) // TODO: for other game modes, check if hits another player's snake
 {
-    if (p.x < 0 || p.x > FIELD_WIDTH - 1 || p.y < 0 || p.y > FIELD_HEIGHT - 1 || occupiesPoint(p.x, p.y))
+    if (p.x > FIELD_WIDTH - 1 || p.y > FIELD_HEIGHT - 1 || occupiesPoint(p.x, p.y)) // p.x < 0 and p.y < 0 pointless because variables are unsigned
     {
         return false;
     }
@@ -93,24 +93,35 @@ void SnakeGame::Snake::setColors(uint16_t color, uint16_t colorPaused)
 
 void SnakeGame::setNumApples(uint8_t newValue)
 {
+    Serial.print("Setting numApples to: ");
+    Serial.println(newValue, 10);
     numApples = newValue;
 }
 
 void SnakeGame::setStartSpeed(uint8_t newValue)
 {
+    Serial.print("Setting MAX_DELAY to: ");
+    Serial.print(newValue, 10);
     MAX_DELAY = 265 - (newValue * 15);
+    updateDelay = MAX_DELAY;
+    Serial.print(" > ");
+    Serial.println(MAX_DELAY, 10);
 }
 
 void SnakeGame::setMaxSpeed(uint8_t newValue)
 {
+    Serial.print("Setting MIN_DELAY to: ");
+    Serial.print(newValue, 10);
     MIN_DELAY = 60 - (newValue * 5);
+    Serial.print(" > ");
+    Serial.println(MIN_DELAY, 10);
 }
 
 Point SnakeGame::getNewApplePosition()
 {
     int x, y;
     bool newPositionInvalid = false;
-    int _count = 0;
+    // int _count = 0;
     do
     {
         newPositionInvalid = false;
@@ -132,9 +143,9 @@ Point SnakeGame::getNewApplePosition()
     return Point(x, y);
 }
 
-SnakeGame::SnakeGame(Utility &utility, u_int8_t numPlayers) : BaseGame{utility},
-                                                              FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
-                                                              FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
+SnakeGame::SnakeGame(Utility &utility, uint8_t numPlayers) : BaseGame{utility},
+                                                             FIELD_WIDTH((utility.MATRIX_WIDTH - 2 * FRAME_THICKNESS) / PIXEL_SIZE),
+                                                             FIELD_HEIGHT((utility.MATRIX_HEIGHT - (2 * FRAME_THICKNESS + 2 * FRAME_Y_OFFSET)) / PIXEL_SIZE)
 {
     MIN_DELAY = 25;  // 10
     MAX_DELAY = 180; // 200; max value for uint8_t is 255
@@ -186,7 +197,7 @@ void SnakeGame::setPlayers(uint8_t players)
         {
             if (snakes[i] == nullptr)
             {
-                Serial.println("snakes[i] == nullptr");
+                // Serial.println("snakes[i] == nullptr");
                 snakes[i] = new Snake(i + 1, FIELD_WIDTH, FIELD_HEIGHT); // TODO: need to rerun this if FIELD changes size from user option
                 if (i == 0)
                 {
@@ -262,7 +273,7 @@ void SnakeGame::drawFrame()
 
     for (int i = 0; i < FRAME_THICKNESS; i++)
     {
-        display.drawRect(i, i + FRAME_Y_OFFSET, width - 2 * i, height - 2 * i, paused ? utility->colors.purple : utility->colors.blueDark);
+        utility->display.drawRect(i, i + FRAME_Y_OFFSET, width - 2 * i, height - 2 * i, paused ? utility->colors.purple : utility->colors.blueDark);
     }
 }
 
@@ -275,14 +286,14 @@ void SnakeGame::drawScore() // Idea: make this more readable by converting group
         {
             for (int i = 0; i < s->score; i++)
             {
-                display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
+                utility->display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
             }
         }
         else if (s->player == 2)
         {
             for (int i = 0; i < s->score; i++)
             {
-                display.drawPixel(MATRIX_WIDTH - 1 - i, 0, utility->colors.magenta);
+                utility->display.drawPixel(MATRIX_WIDTH - 1 - i, 0, utility->colors.magenta);
             }
         }
     }
@@ -296,15 +307,15 @@ void SnakeGame::drawApple(uint8_t appleNum)
         {
             if (numPlayers == 0)
             {
-                display.drawPixel(PIXEL_SIZE * applePositions[appleNum].x + colOffset,
-                                  PIXEL_SIZE * applePositions[appleNum].y + rowOffset,
-                                  paused ? utility->colors.cyan : utility->colors.red);
+                utility->display.drawPixel(PIXEL_SIZE * applePositions[appleNum].x + colOffset,
+                                           PIXEL_SIZE * applePositions[appleNum].y + rowOffset,
+                                           paused ? utility->colors.cyan : utility->colors.red);
             }
             else
             {
-                display.drawPixel(PIXEL_SIZE * applePositions[appleNum].x + FRAME_THICKNESS + colOffset,
-                                  PIXEL_SIZE * applePositions[appleNum].y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
-                                  paused ? utility->colors.cyan : utility->colors.red);
+                utility->display.drawPixel(PIXEL_SIZE * applePositions[appleNum].x + FRAME_THICKNESS + colOffset,
+                                           PIXEL_SIZE * applePositions[appleNum].y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                                           paused ? utility->colors.cyan : utility->colors.red);
             }
         }
     }
@@ -324,9 +335,9 @@ void SnakeGame::drawSnakes() // use only when redrawing whole snakes are require
             {
                 for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
                 {
-                    display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
-                                      PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
-                                      paused ? s->colorPaused : s->color);
+                    utility->display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
+                                               PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                                               paused ? s->colorPaused : s->color);
                 }
             }
         }
@@ -339,9 +350,9 @@ void SnakeGame::clearTail(Point p)
     {
         for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
         {
-            display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
-                              PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
-                              0);
+            utility->display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
+                                       PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                                       0);
         }
     }
 }
@@ -358,9 +369,9 @@ void SnakeGame::drawSnakeHeads()
         {
             for (int colOffset = 0; colOffset < PIXEL_SIZE; colOffset++)
             {
-                display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
-                                  PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
-                                  paused ? s->colorPaused : s->color);
+                utility->display.drawPixel(PIXEL_SIZE * p.x + FRAME_THICKNESS + colOffset,
+                                           PIXEL_SIZE * p.y + FRAME_THICKNESS + FRAME_Y_OFFSET + rowOffset,
+                                           paused ? s->colorPaused : s->color);
             }
         }
     }
@@ -429,25 +440,25 @@ void SnakeGame::resetApple(uint8_t appleNum)
 
 void SnakeGame::gameOver()
 {
-    // display.fillScreen(utility->colors.red);
+    // utility->display.fillScreen(utility->colors.red);
     // delay(250);
-    // display.clearDisplay();
+    // utility->display.clearDisplay();
     // delay(250);
-    // display.fillScreen(utility->colors.yellow);
+    // utility->display.fillScreen(utility->colors.yellow);
     // delay(250);
-    // display.clearDisplay();
+    // utility->display.clearDisplay();
     // delay(250);
-    // display.fillScreen(utility->colors.red);
+    // utility->display.fillScreen(utility->colors.red);
     // delay(250);
-    display.clearDisplay();
+    utility->display.clearDisplay();
 
-    display.setTextColor(utility->colors.cyan);
-    display.setFont();
-    display.setCursor(1, 1);
+    utility->display.setTextColor(utility->colors.cyan);
+    utility->display.setFont();
+    utility->display.setCursor(1, 1);
 
     if (numPlayers == 2)
     {
-        display.setFont(utility->fonts.my5x5boxy);
+        utility->display.setFont(utility->fonts.my5x5boxy);
         uint8_t scores[2];
 
         for (int i = 0; i < numPlayers; i++)
@@ -457,29 +468,29 @@ void SnakeGame::gameOver()
         }
         if (scores[0] > scores[1])
         {
-            display.print("Player 1 wins!");
+            utility->display.print("Player 1 wins!");
         }
         else if (scores[1] > scores[0])
         {
-            display.print("Player 2 wins!");
+            utility->display.print("Player 2 wins!");
         }
         else
         {
-            display.print("It's a draw!");
+            utility->display.print("It's a draw!");
         }
     }
 
-    display.setFont();
+    utility->display.setFont();
 
     for (int i = 0; i < numPlayers; i++)
     {
         Snake *s = snakes[i];
 
-        display.setCursor(1, (s->player) * 8 + 1);
-        display.print("P");
-        display.print(s->player);
-        display.print(": ");
-        display.print(s->score);
+        utility->display.setCursor(1, (s->player) * 8 + 1);
+        utility->display.print("P");
+        utility->display.print(s->player);
+        utility->display.print(": ");
+        utility->display.print(s->score);
     }
 
     resetSnakes();
@@ -502,7 +513,7 @@ bool SnakeGame::loopGame()
     }
     if (justStarted)
     {
-        display.clearDisplay();
+        utility->display.clearDisplay();
         drawFrame();
         drawSnakes();
         for (int i = 0; i < numApples; i++)
@@ -592,8 +603,8 @@ bool SnakeGame::loopGame()
     return true;
 }
 
-void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't need recalculated every time it is drawn
-{                                   // could store colors after they are calculated and then just calculate if a new segment was added
+void SnakeGame::autoDrawSnake() // snake never gets shorter, so colors don't need recalculated every time it is drawn
+{                               // could store colors after they are calculated and then just calculate if a new segment was added
     Snake *s = snakes[0];
     uint8_t colorIncrement = 256 / (PxMATRIX_COLOR_DEPTH + 1); // 30
     uint8_t colorMax = colorIncrement * PxMATRIX_COLOR_DEPTH;  // 240
@@ -609,7 +620,7 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
     {
         Point p = s->segments.get(i);
 
-        if (i != 0)     // first one is always white
+        if (i != 0) // first one is always white
         {
             if (whichMoving == 1)
             {
@@ -618,8 +629,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_r < colorMax)
                     {
                         _r += colorIncrement;
-                        Serial.print("_r: ");
-                        Serial.println(_r);
+                        // Serial.print("_r: ");
+                        // Serial.println(_r);
                     }
                     else
                     {
@@ -632,8 +643,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_r > colorMin)
                     {
                         _r -= colorIncrement;
-                        Serial.print("_r: ");
-                        Serial.println(_r);
+                        // Serial.print("_r: ");
+                        // Serial.println(_r);
                     }
                     else
                     {
@@ -649,8 +660,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_g < colorMax)
                     {
                         _g += colorIncrement;
-                        Serial.print("_g: ");
-                        Serial.println(_g);
+                        // Serial.print("_g: ");
+                        // Serial.println(_g);
                     }
                     else
                     {
@@ -663,8 +674,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_g > colorMin)
                     {
                         _g -= colorIncrement;
-                        Serial.print("_g: ");
-                        Serial.println(_g);
+                        // Serial.print("_g: ");
+                        // Serial.println(_g);
                     }
                     else
                     {
@@ -680,8 +691,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_b < colorMax)
                     {
                         _b += colorIncrement;
-                        Serial.print("_b: ");
-                        Serial.println(_b);
+                        // Serial.print("_b: ");
+                        // Serial.println(_b);
                     }
                     else
                     {
@@ -694,8 +705,8 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
                     if (_b > colorMin)
                     {
                         _b -= colorIncrement;
-                        Serial.print("_b: ");
-                        Serial.println(_b);
+                        // Serial.print("_b: ");
+                        // Serial.println(_b);
                     }
                     else
                     {
@@ -712,15 +723,15 @@ void SnakeGame::autoDrawSnake()     // snake never gets shorter, so colors don't
             {
                 if (i == 0)
                 {
-                    display.drawPixelRGB888(PIXEL_SIZE * p.x + colOffset,
-                                            PIXEL_SIZE * p.y + rowOffset,
-                                            255, 255, 255);
+                    utility->display.drawPixelRGB888(PIXEL_SIZE * p.x + colOffset,
+                                                     PIXEL_SIZE * p.y + rowOffset,
+                                                     255, 255, 255);
                 }
                 else
                 {
-                    display.drawPixelRGB888(PIXEL_SIZE * p.x + colOffset,
-                                            PIXEL_SIZE * p.y + rowOffset,
-                                            _r, _g, _b);
+                    utility->display.drawPixelRGB888(PIXEL_SIZE * p.x + colOffset,
+                                                     PIXEL_SIZE * p.y + rowOffset,
+                                                     _r, _g, _b);
                 }
             }
         }
@@ -734,18 +745,18 @@ void SnakeGame::autoDrawScore()
     {
         for (int i = 0; i < s->score; i++)
         {
-            display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
+            utility->display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
         }
     }
     else if (s->score <= MATRIX_WIDTH + MATRIX_HEIGHT - 1)
     {
         for (int i = 0; i < MATRIX_WIDTH; i++)
         {
-            display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
+            utility->display.drawPixel(i, MATRIX_HEIGHT - 1, utility->colors.magenta);
         }
         for (int i = 0; i < s->score - MATRIX_WIDTH; i++)
         {
-            display.drawPixel(MATRIX_WIDTH - 1, MATRIX_HEIGHT - 1 - i, utility->colors.magenta);
+            utility->display.drawPixel(MATRIX_WIDTH - 1, MATRIX_HEIGHT - 1 - i, utility->colors.magenta);
         }
     }
 }
@@ -780,7 +791,7 @@ bool SnakeGame::autoLoopGame()
 {
     if (justStarted)
     {
-        display.clearDisplay();
+        utility->display.clearDisplay();
         autoDrawSnake();
         for (int i = 0; i < numApples; i++)
         {
@@ -982,7 +993,7 @@ bool SnakeGame::autoLoopGame()
                 {
                     s->segments.pop();
                 }
-                display.clearDisplay();
+                utility->display.clearDisplay();
                 autoDrawSnake();
                 for (int i = 0; i < numApples; i++)
                 {
@@ -992,7 +1003,7 @@ bool SnakeGame::autoLoopGame()
             }
             else // snake has hit something
             {
-                display.clearDisplay(); // remove all this after only drawing what's necessary, it causes 2nd snake to move once after 1st snake crashes
+                utility->display.clearDisplay(); // remove all this after only drawing what's necessary, it causes 2nd snake to move once after 1st snake crashes
                 autoDrawSnake();
                 for (int i = 0; i < numApples; i++)
                 {
@@ -1018,7 +1029,7 @@ bool SnakeGame::autoLoopGame()
                     resetApple(i);
                 }
                 delay(GAME_OVER_DELAY);
-                display.clearDisplay();
+                utility->display.clearDisplay();
                 // gameOver();
                 // return false;
             }

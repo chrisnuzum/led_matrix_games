@@ -2,7 +2,7 @@
 #define _mymenu_
 
 #include <Arduino.h>
-#include <PxMatrix.h>
+// #include <PxMatrix.h>
 #include <Utility.h>
 // #include <BaseGame.h>
 
@@ -39,7 +39,7 @@ MENU:
     -each game would define its own options within its .h file
     -these would be read once the game is selected
     -using 5x5 font, 64 width should fit at least 12 characters across, but most characters are 3 wide, 5 tall, so 20ish should fit across
-    -display.getTextBounds() to get coordinates and size of space that a string will fill
+    -utility->display.getTextBounds() to get coordinates and size of space that a string will fill
         -could use this to see if a string will fit on a line
         -last 4 parameters are 2 int16_t for x & y and 2 uint16_t for w & h, these are passed by reference so will update the passed vars
 
@@ -94,9 +94,9 @@ enum ItemType
     itemWithValue
 };
 
-class MenuItem  // all-encompassing item object with type
-{               // might also want a boolean type, as well as certain options that depend on the state of another option to
-private:        //   determine if they are enabled or not
+class MenuItem // all-encompassing item object with type
+{              // might also want a boolean type, as well as certain options that depend on the state of another option to
+private:       //   determine if they are enabled or not
     ItemType type = ItemType::basicItem;
     const char *itemName;
 
@@ -115,7 +115,7 @@ public:
     {
     }
 
-    void makeItemWithSubitems(const char **subs, const uint8_t numSubs, int8_t selectedSub) //can probably get rid of passing selectedSub and just set it to -1
+    void makeItemWithSubitems(const char **subs, const uint8_t numSubs, int8_t selectedSub) // can probably get rid of passing selectedSub and just set it to -1
     {
         type = ItemType::itemWithSubitems;
         subitems = subs;
@@ -149,7 +149,7 @@ class Menu
 {
 private:
     Utility *utility;
-    PxMATRIX display;
+    // PxMATRIX display;
     // const uint8_t MATRIX_WIDTH;
     // const uint8_t MATRIX_HEIGHT;
 
@@ -162,34 +162,34 @@ private:
 
     void displayOptionsMenu(MenuItem items[], uint8_t numItems, uint8_t focusedItem)
     {
-        display.clearDisplay();
+        utility->display.clearDisplay();
         for (int i = 0; i < numItems; i++)
         {
-            display.setCursor(FIRST_X_COORD, (i * ROW_OFFSET) + FIRST_Y_COORD);
+            utility->display.setCursor(FIRST_X_COORD, (i * ROW_OFFSET) + FIRST_Y_COORD);
             if (i == focusedItem)
             {
-                display.setTextColor(SELECTED_COLOR);
-                display.print(">");
-                display.print(items[i].itemName);
+                utility->display.setTextColor(SELECTED_COLOR);
+                utility->display.print(">");
+                utility->display.print(items[i].itemName);
                 if (items[i].type != ItemType::basicItem)
                 {
                     if (!items[i].isSelected)
                     {
-                        display.setTextColor(UNSELECTED_COLOR);
+                        utility->display.setTextColor(UNSELECTED_COLOR);
                     }
-                    display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
-                    display.print(items[i].value);
+                    utility->display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                    utility->display.print(items[i].value);
                 }
             }
             else
             {
-                display.setTextColor(UNSELECTED_COLOR);
-                display.print("  "); // number of spaces is based on current font's width of a space and > character
-                display.print(items[i].itemName);
+                utility->display.setTextColor(UNSELECTED_COLOR);
+                utility->display.print("  "); // number of spaces is based on current font's width of a space and > character
+                utility->display.print(items[i].itemName);
                 if (items[i].type != ItemType::basicItem)
                 {
-                    display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
-                    display.print(items[i].value);
+                    utility->display.setCursor(FIRST_X_COORD + HORIZONTAL_VALUE_OFFSET, (i * ROW_OFFSET) + FIRST_Y_COORD);
+                    utility->display.print(items[i].value);
                 }
             }
         }
@@ -199,7 +199,6 @@ private:
     {
         uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
         displayOptionsMenu(items, numItems, focusedItemIndex);
-
         while (true)
         {
             utility->inputs.update();
@@ -278,39 +277,39 @@ private:
     */
     void displayMenuWithOptionsBelow(MenuItem items[], uint8_t numItems, uint8_t selectedItem)
     {
-        display.clearDisplay();
+        utility->display.clearDisplay();
         bool drewSelected = false;
         for (int i = 0; i < numItems; i++)
         {
-            display.setCursor(FIRST_X_COORD, ((i + drewSelected) * ROW_OFFSET) + FIRST_Y_COORD);
+            utility->display.setCursor(FIRST_X_COORD, ((i + drewSelected) * ROW_OFFSET) + FIRST_Y_COORD);
             if (i == selectedItem)
             {
-                display.setTextColor(SELECTED_COLOR);
-                display.print(">");
-                display.print(items[i].itemName);
+                utility->display.setTextColor(SELECTED_COLOR);
+                utility->display.print(">");
+                utility->display.print(items[i].itemName);
                 if (items[i].numSubitems > 0)
                 {
-                    display.setCursor(FIRST_X_COORD, ((i + 1) * ROW_OFFSET) + FIRST_Y_COORD);
-                    display.print("    ");
+                    utility->display.setCursor(FIRST_X_COORD, ((i + 1) * ROW_OFFSET) + FIRST_Y_COORD);
+                    utility->display.print("    ");
                     for (int j = 0; j < items[i].numSubitems; j++)
                     {
                         if (items[i].subitems[j] != "")
                         {
                             if (j > 0)
                             {
-                                display.print("  ");
+                                utility->display.print("  ");
                             }
                             if (items[i].selectedSubitem == j)
                             {
-                                display.setTextColor(SELECTED_COLOR);
-                                display.print(">");
+                                utility->display.setTextColor(SELECTED_COLOR);
+                                utility->display.print(">");
                             }
                             else
                             {
-                                display.setTextColor(UNSELECTED_COLOR);
-                                display.print("  ");
+                                utility->display.setTextColor(UNSELECTED_COLOR);
+                                utility->display.print("  ");
                             }
-                            display.print(items[i].subitems[j]);
+                            utility->display.print(items[i].subitems[j]);
                         }
                     }
                     drewSelected = true;
@@ -318,9 +317,9 @@ private:
             }
             else
             {
-                display.setTextColor(UNSELECTED_COLOR);
-                display.print("  "); // number of spaces is based on current font's width of a space and > character
-                display.print(items[i].itemName);
+                utility->display.setTextColor(UNSELECTED_COLOR);
+                utility->display.print("  "); // number of spaces is based on current font's width of a space and > character
+                utility->display.print(items[i].itemName);
             }
         }
     }
@@ -329,7 +328,6 @@ private:
     {
         uint8_t focusedItemIndex = 0;
         displayMenuWithOptionsBelow(items, numItems, focusedItemIndex);
-
         while (true)
         {
             utility->inputs.update();
@@ -417,17 +415,17 @@ private:
     }
 
 public:
-    Menu(Utility &utility) : utility(&utility),
-                             display(utility.display) //,
-                                                      //  MATRIX_WIDTH(utility.MATRIX_WIDTH),
-                                                      //  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
+    Menu(Utility &utility) : utility(&utility) //,
+                                               //  display(utility.display) //,
+                                               //  MATRIX_WIDTH(utility.MATRIX_WIDTH),
+                                               //  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
     {
     }
 
-    void setDisplay(PxMATRIX d)
-    {
-        this->display = d;
-    }
+    // void setDisplay(PxMATRIX d)
+    // {
+    //     this->display = d;
+    // }
 
     template <size_t num_items>                                                              // could add this same template to the private functions
     void doMenu(MenuItem (&items)[num_items], int8_t &selectedItem, int8_t &selectedSubitem) // = NULL)
@@ -454,7 +452,6 @@ public:
     template <size_t num_items>
     bool doOptionsMenu(MenuItem (&items)[num_items], int8_t &changedItem)
     {
-
         // I was going to just use this function for all menus...I probably could make it return a boolean
         // and if it returns true during the options menu it starts the game, otherwise returns false...
         // Never mind, the whole point of this is to return an option that changed value to main.cpp so that
@@ -462,7 +459,7 @@ public:
 
         int8_t tempChangedOption;
         tempChangedOption = setOptions(items, num_items, changedItem);
-        if (tempChangedOption == -1)    // This means B was pressed and user wants to go to previous menu
+        if (tempChangedOption == -1) // This means B was pressed and user wants to go to previous menu
         {
             return false;
         }
@@ -512,21 +509,21 @@ public:
 
 // void displaySelectMenu(const char *items[], uint8_t num_items, uint8_t selected)
 // {
-//     display.clearDisplay();
+//     utility->display.clearDisplay();
 //     for (int i = 0; i < num_items; i++)
 //     {
-//         display.setCursor(1, (i * 6) + 5);
+//         utility->display.setCursor(1, (i * 6) + 5);
 //         if ((i + 1) == selected)
 //         {
-//             display.setTextColor(utility->colors.white);
-//             display.print(">");
+//             utility->display.setTextColor(utility->colors.white);
+//             utility->display.print(">");
 //         }
 //         else
 //         {
-//             display.setTextColor(utility->colors.cyan);
-//             display.print("  ");
+//             utility->display.setTextColor(utility->colors.cyan);
+//             utility->display.print("  ");
 //         }
-//         display.print(items[i]);
+//         utility->display.print(items[i]);
 //     }
 // }
 
@@ -585,43 +582,43 @@ public:
 //         std::map<const char *, const char **> myMap;
 //         myMap.insert(std::make_pair("game", player_strings));
 //         const char **wordd = myMap["game"];
-//         display.print(wordd[2]);
+//         utility->display.print(wordd[2]);
 
 //         OptionWithSuboptions testoptions;
 //         testoptions.insert(std::make_pair("blah", player_strings));
 //         const char **blahh = testoptions["blah"];
-//         display.print(blahh[2]);
+//         utility->display.print(blahh[2]);
 //     }
 
 //     void displayMenuWithOptionsBelowMap(OptionWithSuboptions options, uint8_t numSuboptions, uint8_t selected)
 //     {
-//         display.clearDisplay();
+//         utility->display.clearDisplay();
 //         bool drewSelected = false;
 //         int count = 0;
 //         for (const auto &[key, value] : options)
 //         {
-//             display.setCursor(FIRST_X_COORD, ((count + drewSelected) * ROW_OFFSET) + FIRST_Y_COORD);
+//             utility->display.setCursor(FIRST_X_COORD, ((count + drewSelected) * ROW_OFFSET) + FIRST_Y_COORD);
 //             if ((count + 1) == selected)
 //             {
-//                 display.setTextColor(SELECTED_COLOR);
-//                 display.print(">");
-//                 display.print(key);
-//                 display.setCursor(FIRST_X_COORD, ((count + 1) * ROW_OFFSET) + FIRST_Y_COORD);
-//                 display.print("      ");
+//                 utility->display.setTextColor(SELECTED_COLOR);
+//                 utility->display.print(">");
+//                 utility->display.print(key);
+//                 utility->display.setCursor(FIRST_X_COORD, ((count + 1) * ROW_OFFSET) + FIRST_Y_COORD);
+//                 utility->display.print("      ");
 //                 for (int i = 0; i < numSuboptions; i++)
 //                 {
 //                     if (value[i] != "") // would need to track which suboption is selected as well?
 //                     {
-//                         display.print(value[i]);
-//                         display.print(" ");
+//                         utility->display.print(value[i]);
+//                         utility->display.print(" ");
 //                     }
 //                 }
 //                 drewSelected = true;
 //             }
 //             else
 //             {
-//                 display.setTextColor(UNSELECTED_COLOR);
-//                 display.print("  "); // number of spaces is based on current font's width of a space and > character
+//                 utility->display.setTextColor(UNSELECTED_COLOR);
+//                 utility->display.print("  "); // number of spaces is based on current font's width of a space and > character
 //             }
 //             count++;
 //         }

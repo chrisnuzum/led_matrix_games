@@ -1,16 +1,41 @@
+#ifndef _led_arcade_
+#define _led_arcade_
 
-#define PxMATRIX_double_buffer true // this doesn't do anything, it is all CAPSed in PxMatrix.h
+/*
+C:\Users\Christopher\Downloads\Px-Matrix-Pattern-Emulator-main
+That was without PlatformIO, not gonna work.
 
-// #include <testfile.h>
-#include <Arduino.h>
-#include <PxMatrix.h> // if issues down the road, PlatformIO Library manager installs latest release,
-                      //    but ArduinoIDE installs the lastest version of the master branch
-                      //    only the latest version works, maybe consider manually adding library to project
-                      // Definitely need to add my own because I made edits on line 766+ and 13 and 1042?
-                      // Should probably fork PxMatrix, push new commit, then use that
-                      // !!! DO THIS SOON
-                      // Check pull requests on GitHub, some good improvements
-                      // https://github.com/2dom/PxMatrix/compare/master...gcurtis79:PxMatrix:master
+C:\Users\Christopher\Downloads\Code\Adafruit_GFX_dummy_display-master
+That is a potential other option but having trouble getting it to build.
+
+
+This project is cloned from the good LED_Arcade project
+
+https://github.com/marcmerlin/ArduinoOnPc-FastLED-GFX-LEDMatrix/blob/master/examples_orig_tft/input/main.ino
+
+Use that repository and those examples
+
+
+For display, need to either:
+    A. Modify PxMatrix.h to use a buffer compatible with ArduinoOnPc's (probably dependent on whether building for PC or not)
+    B. Or use #if directives to choose what display header to use in main.cpp and Utility.h
+
+For controls:
+    Modify Utility.h to use SDL keyboard inputs if building for PC
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Try removing all of the PxMatrix.h includes except for in Utility.h.
+All other headers can just call utility.display()
+Then use an #if in Utility to set up proper display()
+
+Change ALL MATRIX_WIDTHs and MATRIX_HEIGHTs to uint16_ts for larger displays.
+
+*/
+
+// #define PC_BUILD
+
 #include <Utility.h>
 #include <Menu.h>
 #include <SnakeGame.h>
@@ -27,7 +52,7 @@ Ideas:
     -at the main menu both controllers are active
     -once a game and number of players is selected, only the controller that confirmed the game is active
     -that player becomes player 1 and the screen is rotated towards them, or there is an option to choose the screen rotation
-
+-at game over screen give option to return to main menu or play same game again
 
 TO-DO:
 -add autoplay/screensavers for each game with options for speed/size
@@ -80,6 +105,7 @@ First you need a color:
         uint8_t g = ((((color >> 5) & 0x3F) * 259) + 33) >> 6;          why not: ((color & 0x7e0) >> 3) + 1         -adding back the middle of the range of what could have been lost
         uint8_t b = (((color & 0x1F) * 527) + 23) >> 6;                 why not: ((color & 0x1f) << 3) + 3          -adding back the middle of the range of what could have been lost
                                                                                 ^my way consistently gets closer to original values over a large number of runs: https://cpp.sh/?source=%23include+%3Ciostream%3E%0A%23include+%3Cstring%3E%0A%23include+%3Ccmath%3E%0A%0Ausing+namespace+std%3B%0A%0Auint8_t+COLOR_DEPTH+%3D+8%3B%0A%0Auint16_t+toColor+(uint8_t+r%2C+uint8_t+g%2C+uint8_t+b)%0A%7B%0A++++return+((r+%26+0xF8)+%3C%3C+8)+%7C+((g+%26+0xFC)+%3C%3C+3)+%7C+(b+%3E%3E+3)%3B%0A%7D%0A%0Avoid+printValues+(uint8_t+r%2C+uint8_t+g%2C+uint8_t+b%2C+uint8_t+colorDepth)%0A%7B%0A++++uint16_t+fullColor+%3D+toColor(r%2C+g%2C+b)%3B%0A++++cout+%3C%3C+%22++++++++++++++R%2C+G%2C+B%3A+%22+%3C%3C+static_cast%3Cint%3E(r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(b)+%3C%3C+%22++-%3E+to+16-bit%3A+%22+%3C%3C+static_cast%3Cint%3E(fullColor)+%3C%3C+endl%3B%0A+++%0A++++%2F%2F+cout+%3C%3C+%22Converted+to+16-bit%3A+++%22+%3C%3C+fullColor+%3C%3C+endl%3B%0A++++uint8_t+new_r+%3D+((((fullColor+%3E%3E+11)+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++%2F%2F+5+bits%0A++++uint8_t+new_g+%3D+((((fullColor+%3E%3E+5)+%26+0x3F)+*+259)+%2B+33)+%3E%3E+6%3B++++++%2F%2F+6+bits%0A++++uint8_t+new_b+%3D+(((fullColor+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++++++++++%2F%2F+5+bits%0A++++cout+%3C%3C+%22Converted+back+to+RGB%3A+%22+%3C%3C+static_cast%3Cint%3E(new_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_b)+%3C%3C+endl%3B%0A++++uint8_t+shifted_r+%3D+new_r+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+shifted_g+%3D+new_g+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+shifted_b+%3D+new_b+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+half_shifted_r+%3D+new_r+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++uint8_t+half_shifted_g+%3D+new_g+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++uint8_t+half_shifted_b+%3D+new_b+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++cout+%3C%3C+%22+++Shifted+by+depth+%22+%3C%3C+static_cast%3Cint%3E(colorDepth)+%3C%3C+%22%3A+%22+%3C%3C+static_cast%3Cint%3E(shifted_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(shifted_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(shifted_b)%3B%0A++++cout+%3C%3C+%22++by+depth+%22+%3C%3C+static_cast%3Cint%3E(colorDepth+%2F+2)+%3C%3C+%22%3A+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_b)+%3C%3C+endl%3B%0A++++cout+%3C%3C+endl%3B%0A%7D%0A%0Avoid+printValuesFromFull+(uint16_t+fullColor%2C+uint8_t+colorDepth)%0A%7B+++%0A++++uint8_t+new_r+%3D+((((fullColor+%3E%3E+11)+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++%2F%2F+5+bits%0A++++uint8_t+new_g+%3D+((((fullColor+%3E%3E+5)+%26+0x3F)+*+259)+%2B+33)+%3E%3E+6%3B++++++%2F%2F+6+bits%0A++++uint8_t+new_b+%3D+(((fullColor+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++++++++++%2F%2F+5+bits%0A++++cout+%3C%3C+%22Converted+back+to+RGB%3A+%22+%3C%3C+static_cast%3Cint%3E(new_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_b)+%3C%3C+endl%3B%0A++++uint8_t+shifted_r+%3D+new_r+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+shifted_g+%3D+new_g+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+shifted_b+%3D+new_b+%3E%3E+(8+-+colorDepth)%3B%0A++++uint8_t+half_shifted_r+%3D+new_r+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++uint8_t+half_shifted_g+%3D+new_g+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++uint8_t+half_shifted_b+%3D+new_b+%3E%3E+(8+-+colorDepth+%2F+2)%3B%0A++++cout+%3C%3C+%22+++Shifted+by+depth+%22+%3C%3C+static_cast%3Cint%3E(colorDepth)+%3C%3C+%22%3A+%22+%3C%3C+static_cast%3Cint%3E(shifted_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(shifted_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(shifted_b)%3B%0A++++cout+%3C%3C+%22++by+depth+%22+%3C%3C+static_cast%3Cint%3E(colorDepth+%2F+2)+%3C%3C+%22%3A+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(half_shifted_b)+%3C%3C+endl%3B%0A++++cout+%3C%3C+endl%3B%0A%7D%0A%0Avoid+unpacker(uint8_t+r%2C+uint8_t+g%2C+uint8_t+b%2C+uint16_t+%26theirDiff%2C+uint16_t+%26myDiff)%0A%7B%0A++++uint16_t+fullColor+%3D+toColor(r%2C+g%2C+b)%3B%0A++++cout+%3C%3C+%22++++++++++++++R%2C+G%2C+B%3A+%22+%3C%3C+static_cast%3Cint%3E(r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(b)+%3C%3C+%22++-%3E+to+16-bit%3A+%22+%3C%3C+static_cast%3Cint%3E(fullColor)+%3C%3C+endl%3B%0A++++cout+%3C%3C+%22+++++++++++++++++++++++%22+%3C%3C+(r+%26+0xF8)+%3C%3C+%22+%22+%3C%3C+(g+%26+0xFC)+%3C%3C+%22+%22+%3C%3C+(b+%26+0xF8)+%3C%3C+endl%3B%0A++++uint8_t+new_r+%3D+((((fullColor+%3E%3E+11)+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++%2F%2F+5+bits%0A++++uint8_t+new_g+%3D+((((fullColor+%3E%3E+5)+%26+0x3F)+*+259)+%2B+33)+%3E%3E+6%3B++++++%2F%2F+6+bits%0A++++uint8_t+new_b+%3D+(((fullColor+%26+0x1F)+*+527)+%2B+23)+%3E%3E+6%3B+++++++++++++%2F%2F+5+bits%0A++++int+diff+%3D+abs(new_r+-+r)+%2B+abs(new_g+-+g)+%2B+abs(new_b+-+b)%3B%0A++++cout+%3C%3C+%22++++++++RGB+their+way%3A+%22+%3C%3C+static_cast%3Cint%3E(new_r)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_g)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_b)+%3C%3C+%22+++(%22+%3C%3C+new_r+-+r+%3C%3C+%22+%22+%3C%3C+new_g+-+g+%3C%3C+%22+%22+%3C%3C+new_b+-+b+%3C%3C+%22)%3A+%22+%3C%3C+diff+%3C%3C+endl%3B%0A++++uint8_t+new_r2+%3D+((fullColor+%26+0xf800)+%3E%3E+8)+%2B+3%3B+++++%2F%2F+5+bits%0A++++uint8_t+new_g2+%3D+((fullColor+%26+0x7e0)+%3E%3E+3)+%2B+1%3B++++++%2F%2F+6+bits%0A++++uint8_t+new_b2+%3D+((fullColor+%26+0x1f)+%3C%3C+3)+%2B+3%3B+++++++++++++%2F%2F+5+bits%0A++++int+diff2+%3D+abs(new_r2+-+r)+%2B+abs(new_g2+-+g)+%2B+abs(new_b2+-+b)%3B%0A++++cout+%3C%3C+%22+++++++++++RGB+my+way%3A+%22+%3C%3C+static_cast%3Cint%3E(new_r2)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_g2)+%3C%3C+%22+%22+%3C%3C+static_cast%3Cint%3E(new_b2)+%3C%3C+%22+++(%22+%3C%3C+new_r2+-+r+%3C%3C+%22+%22+%3C%3C+new_g2+-+g+%3C%3C+%22+%22+%3C%3C+new_b2+-+b+%3C%3C+%22)%3A+%22+%3C%3C+diff2+%3C%3C+endl%3B%0A++++theirDiff+%2B%3D+diff%3B%0A++++myDiff+%2B%3D+diff2%3B%0A++++if+(diff+%3D%3D+diff2)%0A++++%7B%0A++++++++cout+%3C%3C+%22TIE%22+%3C%3C+endl+%3C%3C+endl%3B%0A++++%7D%0A++++else+if+(diff+%3C+diff2)%0A++++%7B%0A++++++++cout+%3C%3C+%22THEIR+WAY+WINS%22+%3C%3C+endl+%3C%3C+endl%3B%0A++++%7D%0A++++else%0A++++%7B%0A++++++++cout+%3C%3C+%22MY+WAY+WINS%22+%3C%3C+endl+%3C%3C+endl%3B%0A++++%7D%0A%7D%0A%0Aint+main()%0A%7B%0A++++%2F%2F+uint8_t+red+%3D+0%3B%0A++++%2F%2F+uint8_t+green+%3D+0%3B%0A++++%2F%2F+uint8_t+blue+%3D+0%3B%0A++++%2F%2F+uint8_t+depth+%3D+0%3B%0A++++%2F%2F+string+sRed%3B%0A++++%2F%2F+string+sGreen%3B%0A++++%2F%2F+string+sBlue%3B%0A++++%2F%2F+string+sDepth%3B%0A++++%0A++++uint16_t+theirTotalDiff+%3D+0%3B%0A++++uint16_t+myTotalDiff+%3D+0%3B%0A++++srand+(time(NULL))%3B%0A++++%0A++++for+(int+i+%3D+0%3B+i+%3C+80%3B+i%2B%2B)%0A++++%7B%0A++++++++unpacker(rand()+%25+255%2C+rand()+%25+255%2C+rand()+%25+255%2C+theirTotalDiff%2C+myTotalDiff)%3B%0A++++%7D%0A++++cout+%3C%3C+%22+++++++++++THEIR+TOTAL%3A+%22+%3C%3C+theirTotalDiff+%3C%3C+%22+++MY+TOTAL%3A+%22+%3C%3C+myTotalDiff+%3C%3C+endl%3B%0A%7D
+        ^ I haven't implemented my way yet.
 3. drawPixel() functions then call fillMatrixBuffer(x, y, r, g, b)
     3a. first each color's offset value is subtracted from each color value (if color < offset, color is set to 0)
         by default all offsets are 0, can be changed with setColorOffset(r, g, b)
@@ -142,56 +168,35 @@ There are PxMATRIX_COLOR_DEPTH number of brightness levels for each color.
 
 */
 
-// Pins for LED MATRIX
-#define P_LAT 22
-#define P_A 19
-#define P_B 23
-#define P_C 18
-#define P_D 5
-#define P_E 15
-#define P_OE 16
-hw_timer_t *timer = NULL;
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
-uint8_t display_draw_time = 1; // 30-60 is usually fine              brightness but only used if fastupdate isn't used
+/*
+Options to fix code for matrix:
 
-uint8_t MATRIX_WIDTH = 64;
-uint8_t MATRIX_HEIGHT = 64;
-PxMATRIX display(MATRIX_WIDTH, MATRIX_HEIGHT, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
+THIS WORKED: 1. Try current implementation. (initDisplay() moved to setup() instead of Utility constructor)
+2. Run the interrupt on separate CPU core.
+    https://cfi.iitm.ac.in/elec-club/articles/pages/Easy/Dual%20Core%20Processing.html
 
-// uint16_t loops = 0;
-// uint16_t fps = 0;
-// unsigned long loop_time = 0;
+    Use this and in the task function do
+
+    while(true)
+        if (millis() - lastMillis >= 2ms)
+            display.display()
+3. Make interrupt function as simple as possible, just updates a global bool flag that tells loop to update display.
+    In interrupt function, set an updateDisplay flag that is set true after time passes. Check for this in main loop and call display.display().
+    Change main loop to
+    if (!gameRunning)
+        if (!in menu)
+
+    Then change menu functions to not use while(true)s
+
+
+
+*/
 
 bool gameRunning = false;
-
-void IRAM_ATTR display_updater()
-{
-    // Increment the counter and set the time of ISR
-    portENTER_CRITICAL_ISR(&timerMux);
-    display.display(display_draw_time);
-    portEXIT_CRITICAL_ISR(&timerMux);
-}
-
-void display_update_enable(bool is_enable)
-{
-    if (is_enable)
-    {
-        timer = timerBegin(0, 80, true);
-        timerAttachInterrupt(timer, &display_updater, true);
-        timerAlarmWrite(timer, 2000, true);
-        timerAlarmEnable(timer);
-    }
-    else
-    {
-        timerDetachInterrupt(timer);
-        timerAlarmDisable(timer);
-    }
-}
-
 SnakeGame *snakeGame = nullptr; // display wouldn't work right if not defining this later (in loop()) - see notes on 136/139 in setup() about .setDisplay()
 Tetris *tetris = nullptr;
 const uint8_t NUMBER_OF_GAMES = 2;
-Utility utility(MATRIX_WIDTH, MATRIX_HEIGHT, display);
+Utility utility = Utility();
 Menu menu(utility);
 int8_t selectedGame = -1;         // passed by ref
 int8_t selectedPlayerOption = -1; // passed by ref
@@ -199,7 +204,7 @@ int8_t lastPlayedGame = -1;
 BaseGame *games[NUMBER_OF_GAMES] = {snakeGame, tetris};
 BaseGame *game = nullptr;
 
-bool gameExists[2] = {false, false};
+bool gameExists[NUMBER_OF_GAMES] = {false, false};
 
 MenuItem gameMenuItems[NUMBER_OF_GAMES + 1];
 MenuItem snakeMenuItem("SNAKE");
@@ -246,28 +251,24 @@ void setUpMainMenu()
 
 void setup()
 {
-    //Serial.begin(115200); //  Serial being active slows down main loop a lot
+    Serial.begin(115200); //  Serial being active slows down main loop a lot
     Serial.println("Serial connection started");
 
-    // Define your display layout here, e.g. 1/8 step, and optional SPI inputs begin(row_pattern, CLK, MOSI, MISO, SS) //display.begin(8, 14, 13, 12, 4);
-    display.begin(32);
-    display.setFastUpdate(true);
+    initDisplay();
+    Serial.println("Display initialized");
+    utility.setDisplay();
 
-    display.setRotation(0);
-
-    display.clearDisplay();
-    display_update_enable(true);
-    // delay(2000);
-    display.setFont(utility.fonts.my5x5round);
-    utility.setDisplay(display); // why is this necessary? needs re-set after the update_enable. Also setting font after this line won't register
+    utility.display.setRotation(0);
+    utility.display.setFont(utility.fonts.my5x5round);
     setUpMainMenu();
-    menu.setDisplay(display); // this is also necessary like line 136 unless Menu object is defined in same block...
 }
 
 void loop()
 {                     // https://stackoverflow.com/questions/32002392/assigning-a-derived-object-to-a-base-class-object-without-object-slicing
     if (!gameRunning) // TODO: cleanup/destruct games when switching to one after playing another
     {
+        utility.display.setRotation(0);
+        utility.display.setFont(utility.fonts.my5x5round);
         menu.doMenu(gameMenuItems, selectedGame, selectedPlayerOption);
         Serial.print("Game index: ");
         Serial.println(selectedGame);
@@ -311,16 +312,17 @@ void loop()
                 {
                     break;
                 }
+
                 switch (chosenOption)
                 {
                 case 0:
                     snakeGame->setNumApples(options[0].getValue());
                     break;
                 case 1:
-                    snakeGame->setStartSpeed(options[0].getValue());
+                    snakeGame->setStartSpeed(options[1].getValue());
                     break;
                 case 2:
-                    snakeGame->setMaxSpeed(options[0].getValue());
+                    snakeGame->setMaxSpeed(options[2].getValue());
                     break;
                 case 3:
                     gameRunning = true;
@@ -394,29 +396,29 @@ void loop()
 // Point drawPoints[] = snakeGame.loopGame();       //couldn't actually be an array cuz of set size unless it contains all points in matrix
 // for (Point p : drawPoints)
 // {
-//  display.drawPixel(p.x, p.y, p.color);
+//  utility.display.drawPixel(p.x, p.y, p.color);
 // }
 
 // void scroll_text(uint8_t ypos, unsigned long scroll_delay, String text, uint8_t colorR, uint8_t colorG, uint8_t colorB) {
 //   uint16_t text_length = text.length();
-//   display.setTextWrap(false);  // we don't wrap text so it scrolls nicely
-//   display.setTextSize(1);
-//   display.setRotation(0);
-//   display.setTextColor(display.color565(colorR, colorG, colorB));
+//   utility.display.setTextWrap(false);  // we don't wrap text so it scrolls nicely
+//   utility.display.setTextSize(1);
+//   utility.display.setRotation(0);
+//   utility.display.setTextColor(utility.display.color565(colorR, colorG, colorB));
 
 //   // Assuming 5 pixel average character width
 //   for (int xpos = MATRIX_WIDTH; xpos > -(MATRIX_WIDTH + text_length * 5); xpos--) {
-//     display.setTextColor(display.color565(colorR, colorG, colorB));
-//     display.clearDisplay();
-//     display.setCursor(xpos, ypos);
-//     display.println(text);
+//     utility.display.setTextColor(utility.display.color565(colorR, colorG, colorB));
+//     utility.display.clearDisplay();
+//     utility.display.setCursor(xpos, ypos);
+//     utility.display.println(text);
 //     delay(scroll_delay);
 //     yield();
 
 //     // This might smooth the transition a bit if we go slow
-//     // display.setTextColor(display.color565(colorR/4,colorG/4,colorB/4));
-//     // display.setCursor(xpos-1,ypos);
-//     // display.println(text);
+//     // utility.display.setTextColor(utility.display.color565(colorR/4,colorG/4,colorB/4));
+//     // utility.display.setCursor(xpos-1,ypos);
+//     // utility.display.println(text);
 
 //     delay(scroll_delay / 5);
 //     yield();
@@ -535,3 +537,5 @@ void loop()
 //     items[i] = item;
 //     Serial.println("added item to items");
 // }
+
+#endif

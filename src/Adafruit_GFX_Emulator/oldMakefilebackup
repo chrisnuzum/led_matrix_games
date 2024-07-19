@@ -1,0 +1,109 @@
+EXE_NAME := Matrix_Display
+
+.PHONY: all clean print
+all: $(EXE_NAME)
+
+EMULATOR_LIBS := Adafruit_GFX_dummy_display
+EMULATOR_LIBS += Adafruit-GFX-Library
+EMULATOR_LIBS += Arduino
+
+LIBRARIES := BaseGame
+LIBRARIES += Menu
+LIBRARIES += MyDisplay
+LIBRARIES += MyInputs
+LIBRARIES += SnakeGame
+LIBRARIES += Tetris
+LIBRARIES += Utility
+
+BUILD_ROOT := build
+EMULATOR_ROOT := $(shell dirname $(abspath $(firstword $(MAKEFILE_LIST))))
+OTHER_ROOT := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
+OTHER_ROOT2 := $(abspath .)
+OTHER_ROOT3 := $(realpath .)
+PARENT_ROOT := $(abspath ../../)
+# $(info EMULATOR_ROOT="$(EMULATOR_ROOT)")
+
+$(shell mkdir -p $(BUILD_ROOT))
+
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -g -std=gnu17 -lm $(shell sdl2-config --cflags) -DARDUINO=123 -DPC_BUILD
+CXXFLAGS = -Wall -Wextra -Wno-unused-parameter -g -std=gnu++20 $(shell sdl2-config --cflags) -DARDUINO=123 -DPC_BUILD
+LDFLAGS = -Wl,--gc-sections $(shell sdl2-config --libs)
+
+DEPDIR := $(BUILD_ROOT)
+DEPFLAGS = -MT $@ -MMD -MP -MF $(DEPDIR)/$*.Td
+POSTCOMPILE = @mv -f $(DEPDIR)/$*.Td $(DEPDIR)/$*.d && touch $@
+
+INCLUDES := -I$(EMULATOR_ROOT)
+INCLUDES += -I../
+INCLUDES += -IC:/Users/Christopher/Documents/PlatformIO/Projects/LED_Arcade_Emulator/.pio/libdeps/esp32doit-devkit-v1/LinkedList
+# $(info INCLUDES="$(INCLUDES)")
+SRC_CXX_ROOT := $(wildcard *.cpp)
+# SRC_CXX_ROOT += ../LED_Arcade.cpp
+# $(info SRC_CXX_ROOT="$(SRC_CXX_ROOT)")
+
+define add_lib
+SRC_C    += $(shell find $1 -name "*.c")
+SRC_CXX  += $(shell find $1 -name "*.cpp")
+INCLUDES += -I$1
+endef
+
+# $(foreach lib, $(EMULATOR_LIBS), $(eval $(call add_lib,$(EMULATOR_ROOT)/libs/$(lib))))
+$(foreach lib, $(EMULATOR_LIBS), $(eval $(call add_lib,libs/$(lib))))
+$(foreach lib, $(LIBRARIES), $(eval $(call add_lib,../../lib/$(lib))))
+
+# $(info INCLUDES="$(INCLUDES)")
+# CXXFLAGS += $(INCLUDES)
+
+# $(info SRC_C="$(SRC_C)")
+# $(info SRC_CXX="$(SRC_CXX)")
+# OBJECTS := $(foreach item, $(SRC_C:%.c=%.o),$(BUILD_ROOT)/$(shell realpath --relative-to=$(EMULATOR_ROOT) $(item)))
+# OBJECTS += $(foreach item, $(SRC_CXX:%.cpp=%.o),$(BUILD_ROOT)/$(shell realpath --relative-to=$(EMULATOR_ROOT) $(item)))
+OBJECTS := $(foreach item, $(SRC_C:%.c=%.o),$(BUILD_ROOT)/$(item))
+OBJECTS += $(foreach item, $(SRC_CXX:%.cpp=%.o),$(BUILD_ROOT)/$(item))
+OBJECTS += $(foreach item, $(SRC_CXX_ROOT:%.cpp=%.o),$(BUILD_ROOT)/$(item))
+# $(info OBJECTS="$(OBJECTS)")
+SRCS := $(foreach item, $(SRC_C),$(shell echo "$(item)" | sed 's#\:#\\\:#g'))
+SRCS += $(foreach item, $(SRC_CXX),$(shell echo "$(item)" | sed 's#\:#\\\:#g'))
+SRCS += $(foreach item, $(SRC_CXX_ROOT),$(shell echo "$(item)" | sed 's#\:#\\\:#g'))
+# $(info SRCS="$(SRCS)")
+
+$(EXE_NAME): $(OBJECTS)
+	$(CXX) $(INCLUDES) $(OBJECTS) $(LDFLAGS) -o $@
+	@size $@.exe
+
+$(BUILD_ROOT)/%.o : $(EMULATOR_ROOT)/%.c $(DEPDIR)/%.d
+	@mkdir -p `dirname $@`
+	$(CC) $(DEPFLAGS) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(POSTCOMPILE)
+
+$(BUILD_ROOT)/%.o : $(EMULATOR_ROOT)/%.cpp $(DEPDIR)/%.d
+	@mkdir -p `dirname $@`
+	$(CXX) $(DEPFLAGS) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(POSTCOMPILE)
+
+$(DEPDIR)/%.d: ;
+.PRECIOUS: $(DEPDIR)/%.d
+
+include $(wildcard $(patsubst %,$(DEPDIR)/%.d,$(basename $(SRCS))))
+
+clean:
+	rm -r $(BUILD_ROOT)
+	rm $(EXE_NAME)
+
+print:
+	$(info MAKEFILE_LIST="$(MAKEFILE_LIST)")
+	$(info EMULATOR_ROOT="$(EMULATOR_ROOT)")
+	$(info BUILD_ROOT="$(BUILD_ROOT)")
+	$(info EMULATOR_LIBS="$(EMULATOR_LIBS)")
+	$(info LIBRARIES="$(LIBRARIES)")
+	$(info SRC_C="$(SRC_C)")
+	$(info SRC_CXX="$(SRC_CXX)")
+	$(info SRC_CXX_ROOT="$(SRC_CXX_ROOT)")
+	$(info INCLUDES="$(INCLUDES)")
+	$(info OBJECTS="$(OBJECTS)")
+	$(info SRCS="$(SRCS)")
+	$(info INCLUDES="$(INCLUDES)")
+	$(info OTHER_ROOT="$(OTHER_ROOT)")
+	$(info OTHER_ROOT2="$(OTHER_ROOT2)")
+	$(info OTHER_ROOT3="$(OTHER_ROOT3)")
+	$(info PARENT_ROOT="$(PARENT_ROOT)")
