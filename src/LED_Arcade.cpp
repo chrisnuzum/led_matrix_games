@@ -189,6 +189,10 @@ THIS WORKED: 1. Try current implementation. (initDisplay() moved to setup() inst
     Then change menu functions to not use while(true)s
 
 
+Interesting reads for better code:
+https://stackoverflow.com/questions/23258650/sleep1-and-sdl-delay1-takes-15-ms
+https://stackoverflow.com/questions/34854951/sleep-or-wait-that-doesnt-stop-the-whole-program
+
 
 */
 

@@ -3,6 +3,18 @@
 
 // #define PC_BUILD
 
+/*
+SDL inputs:
+
+https://wiki.libsdl.org/SDL2/SDL_GetKeyboardState
+https://stackoverflow.com/questions/27414548/sdl-timers-and-waitevent
+https://stackoverflow.com/questions/48226816/sdl-window-freezes
+https://stackoverflow.com/questions/12050234/closing-an-sdl-window-without-quitting-sdl
+https://stackoverflow.com/questions/47046276/c-and-sdl-quit-from-function
+
+
+*/
+
 #include <Arduino.h>
 
 #ifndef PC_BUILD
