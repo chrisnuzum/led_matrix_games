@@ -1,6 +1,6 @@
 # LED Matrix Games
 
-This project uses the [PxMatrix](https://github.com/2dom/PxMatrix/tree/master) library to display some games on a 64x64 LED matrix. They run on an ESP32 and are controlled by an arcade stick and 2 buttons per player, as well as an additional Start button.
+This project uses the [PxMatrix](https://github.com/2dom/PxMatrix/tree/master) library to display some games on a 64x64 LED matrix. They run on an ESP32 and are controlled by an arcade stick and 2 buttons per player, as well as an additional Start button. I use PlatformIO in VS Code.
 
 The code was written to be able to easily support any size LED matrix and a variable number of players.
 
