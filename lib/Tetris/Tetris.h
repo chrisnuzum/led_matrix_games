@@ -94,10 +94,11 @@ Ideas to avoid issues:
 
 /*
 TODO:
-implement rotation kicks
-when moving side-to-side, wait a longer period of time before moving at the MOVE_DELAY rate
-!!!!When going from autoplay to 2 player game hangs!!!!
-B_P1 not working, but works in menu. Could be some weird pointer/memory bug or something in Utility.h
+-implement rotation kicks
+-when moving side-to-side, wait a longer period of time before moving at the MOVE_DELAY rate
+-!!!!When going from autoplay to 2 player game hangs!!!!
+-Not showing last piece that ends the game (on desktop at least)
+-B_P1 not working, but works in menu. Could be some weird pointer/memory bug or something in Utility.h
 
 MAYBE:
 ghost pieces to see where piece will land?
@@ -107,6 +108,10 @@ ghost pieces to see where piece will land?
         -check each column under each segment for tallest occupied space (can start at top or bottom)
         -highest piece just gets piece drawn at 1 space above it
         -this stays unless piece moves left or right or rotates
+
+Autoplay implementation (currently chooses random position and rotation):
+-Brute force: check every rotation and horizontal position for the one that results in the lowest possible position
+
 
 */
 
@@ -132,6 +137,7 @@ public:
     // bool justStarted;
 
 private:
+    static const uint8_t MAX_PLAYERS_SUPPORTED = 2;
     static const uint8_t NUM_PIECES = 7;
     static const uint8_t NUM_ROTATIONS = 4;
     static const uint8_t NUM_PIECE_SEGMENTS = 4; // tetrominos
@@ -333,8 +339,8 @@ private:
         void resetBoard();
     };
 
-    TetrisBoard *boards[2] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
-    uint16_t tempBoards[2][BOARD_HEIGHT][BOARD_WIDTH] = {0};
+    TetrisBoard *boards[MAX_PLAYERS_SUPPORTED] = {}; // initializes to nullptrs, probably need a destructor to clear this out when switching games
+    uint16_t tempBoards[MAX_PLAYERS_SUPPORTED][BOARD_HEIGHT][BOARD_WIDTH] = {0};
 
     AutoTetrisBoard *autoBoard = nullptr;
     uint16_t autoTempBoard[64][64] = {0};

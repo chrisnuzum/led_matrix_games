@@ -4,3 +4,4 @@
 .vscode/launch.json
 .vscode/ipch
 src/Adafruit_GFX_Emulator/build/
+lib/Pacman/Pacman_textures.png

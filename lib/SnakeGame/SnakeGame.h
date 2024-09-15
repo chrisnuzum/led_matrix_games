@@ -12,17 +12,21 @@ Changes:
     -I've seen an apple on top of the initial snake position when the game begins in regular mode (not auto)
         -when that happens, the apple disappears when the snake begins moving but nothing is added to the score and a new apple is not created
             -the space is probably cleared when the snake leaves it but the apple is still there (just invisible)
+-!!!!at menu, choosing Auto then pressing B to go back to the main menu then choosing 1P causes the game to be in a broken state
+    -OR, playing Auto, then quitting and trying to play 1P
+-!!!!when choosing 5 apples, it only makes 4 the first time. Choosing 5 apples for a 2nd playthrough works
 -Only draw what is necessary, don't clear screen > DONE but needs added to auto snake
 -Make winner message indicate the position of the player with an arrow.
 -#BUG_1 getNewApplePosition() could lock up if there are a lot of spaces occupied or unlucky RNG
     -I found that if there are no open spaces for a new apple the game just hangs
--Sometimes setting apples to 5 only makes 4 appear?
+        -Fix: calculate max number of spaces on board (FIELD_WIDTH * FIELD_HEIGHT)
 
 AI:
 -for auto snake, maybe keep track of min/max X & Y occupied by snake and aim for more open part of screen if snake spans all the way across?
 
 Ideas:
 -add an option to just stay at same speed whole game
+-if pixel size is large enough, round the corners of apples and snake head/tail
 -each player can choose their color
 -Use SPIFFS to store a high score file
 

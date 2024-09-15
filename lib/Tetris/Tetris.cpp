@@ -617,7 +617,7 @@ void Tetris::checkForInput()
             _b = utility->inputs.B_P2;
         }
 
-        if (millis() - boards[i]->lastMove > MOVE_DELAY)
+        if (millis() - boards[i]->lastMove > MOVE_DELAY) // this should only matter when the direction is being held, not spam-pressed?
         {
             if (_left)
             {
@@ -703,7 +703,8 @@ void Tetris::gameOver()
             }
         }
     }
-    delay(GAME_OVER_DELAY);
+    // delay(GAME_OVER_DELAY);
+    utility->delayWhileDisplaying(GAME_OVER_DELAY);
 }
 
 bool Tetris::loopGame()
@@ -725,7 +726,9 @@ bool Tetris::loopGame()
                 drawBoard(i + 1);
                 drawScore(i + 1);
             }
-            delay(1000);
+            utility->display.display();
+            // delay(1000);
+            utility->delayWhileDisplaying(1000);
             justStarted = false;
         }
 
@@ -1072,7 +1075,9 @@ bool Tetris::autoLoopGame()
         BOARD_X_POSITION = 0;
         BOARD_Y_POSITION = 0;
         autoDrawBoard();
-        delay(1000);
+        utility->display.display();
+        // delay(1000);
+        utility->delayWhileDisplaying(1000);
         justStarted = false;
     }
 
@@ -1106,7 +1111,8 @@ bool Tetris::autoLoopGame()
                         autoTempBoard[_row][_col] = 0;
                     }
                 }
-                delay(GAME_OVER_DELAY);
+                // delay(GAME_OVER_DELAY);
+                utility->delayWhileDisplaying(GAME_OVER_DELAY);
                 utility->display.clearDisplay();
             }
         }

@@ -31,7 +31,7 @@ Adafruit_GFX_dummy_display::Adafruit_GFX_dummy_display(int16_t w, int16_t h, uin
                                                                                              renderer_(NULL),
                                                                                              zoom_ratio_(zoom)
 {
-   initWindowAndRendered(w, h);
+   initializer(w, h);
 }
 
 Adafruit_GFX_dummy_display::~Adafruit_GFX_dummy_display()
@@ -45,7 +45,11 @@ Adafruit_GFX_dummy_display::~Adafruit_GFX_dummy_display()
 
 void Adafruit_GFX_dummy_display::display(void)
 {
+   SDL_SetRenderTarget(renderer_, NULL);
+   SDL_RenderCopy(renderer_, texture_, NULL, NULL); // copies entire texture to the window, stretches to fill
    SDL_RenderPresent(renderer_);
+   // clearDisplay();
+   SDL_SetRenderTarget(renderer_, texture_);
 }
 
 void Adafruit_GFX_dummy_display::clearDisplay(void)
@@ -89,12 +93,14 @@ void Adafruit_GFX_dummy_display::drawPixel(int16_t x, int16_t y, uint16_t color)
    else
    {
       SDL_Rect r;
-      // r.x = x * zoom_ratio_ - (zoom_ratio_ / 2);
-      // r.y = y * zoom_ratio_ - (zoom_ratio_ / 2);
-      r.x = x * zoom_ratio_;
-      r.y = y * zoom_ratio_;
-      r.w = zoom_ratio_;
-      r.h = zoom_ratio_;
+      // r.x = x * zoom_ratio_;
+      // r.y = y * zoom_ratio_;
+      // r.w = zoom_ratio_;
+      // r.h = zoom_ratio_;
+      r.x = x;
+      r.y = y;
+      r.w = 1;
+      r.h = 1;
       if (SDL_RenderFillRect(renderer_, &r) != 0)
       {
          fprintf(stderr, "Error during SDL_SetRenderDrawRect : %s", SDL_GetError());
@@ -135,10 +141,14 @@ void Adafruit_GFX_dummy_display::drawFastVLine(int16_t x, int16_t y, int16_t h, 
       h = 1;
       break;
    }
-   r.x = x * zoom_ratio_;
-   r.y = y * zoom_ratio_;
-   r.w = w * zoom_ratio_;
-   r.h = h * zoom_ratio_;
+   // r.x = x * zoom_ratio_;
+   // r.y = y * zoom_ratio_;
+   // r.w = w * zoom_ratio_;
+   // r.h = h * zoom_ratio_;
+   r.x = x;
+   r.y = y;
+   r.w = w;
+   r.h = h;
    if (SDL_RenderFillRect(renderer_, &r) != 0)
    {
       fprintf(stderr, "Error during SDL_SetRenderDrawRect : %s", SDL_GetError());
@@ -173,10 +183,14 @@ void Adafruit_GFX_dummy_display::drawFastHLine(int16_t x, int16_t y, int16_t w, 
       w = 1;
       break;
    }
-   r.x = x * zoom_ratio_;
-   r.y = y * zoom_ratio_;
-   r.w = w * zoom_ratio_;
-   r.h = h * zoom_ratio_;
+   // r.x = x * zoom_ratio_;
+   // r.y = y * zoom_ratio_;
+   // r.w = w * zoom_ratio_;
+   // r.h = h * zoom_ratio_;
+   r.x = x;
+   r.y = y;
+   r.w = w;
+   r.h = h;
    if (SDL_RenderFillRect(renderer_, &r) != 0)
    {
       fprintf(stderr, "Error during SDL_SetRenderDrawRect : %s", SDL_GetError());
@@ -221,10 +235,14 @@ void Adafruit_GFX_dummy_display::fillRect(int16_t x, int16_t y, int16_t w, int16
    }
    setColor(color);
    SDL_Rect r;
-   r.x = x * zoom_ratio_;
-   r.y = y * zoom_ratio_;
-   r.w = w * zoom_ratio_;
-   r.h = h * zoom_ratio_;
+   // r.x = x * zoom_ratio_;
+   // r.y = y * zoom_ratio_;
+   // r.w = w * zoom_ratio_;
+   // r.h = h * zoom_ratio_;
+   r.x = x;
+   r.y = y;
+   r.w = w;
+   r.h = h;
    if (SDL_RenderFillRect(renderer_, &r) != 0)
    {
       fprintf(stderr, "Error during SDL_SetRenderDrawRect : %s", SDL_GetError());
@@ -245,7 +263,7 @@ uint16_t Adafruit_GFX_dummy_display::color565(uint8_t r, uint8_t g, uint8_t b)
    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
 }
 
-void Adafruit_GFX_dummy_display::initWindowAndRendered(int16_t w, int16_t h)
+void Adafruit_GFX_dummy_display::initializer(int16_t w, int16_t h)
 {
    bool _error = false;
    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0)
@@ -260,12 +278,16 @@ void Adafruit_GFX_dummy_display::initWindowAndRendered(int16_t w, int16_t h)
       fprintf(stderr, "Error SDL_CreateWindow : %s", SDL_GetError());
       _error = true;
    }
-   renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
+   renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE);
    if (renderer_ == NULL)
    {
       fprintf(stderr, "Error SDL_CreateRenderer : %s", SDL_GetError());
       _error = true;
    }
+   texture_ = SDL_CreateTexture(renderer_, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, w, h);
+   SDL_SetTextureBlendMode(texture_, SDL_BLENDMODE_NONE);
+   SDL_SetRenderTarget(renderer_, texture_);
+
    if (_error)
    {
       if (renderer_ != NULL)

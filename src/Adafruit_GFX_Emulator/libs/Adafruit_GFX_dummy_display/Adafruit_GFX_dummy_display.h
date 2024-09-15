@@ -31,15 +31,27 @@
 #include "Adafruit_GFX.h"
 #include <SDL.h>
 // Added next 2 to include path in .vscode/c_cpp_properties.json
+// ^PlatformIO recreates this file so they get removed, now added them to platformio.ini
 // "C:/msys64/ucrt64/include/SDL2",
 // "C:/msys64/ucrt64/lib/gcc/x86_64-w64-mingw32/14.1.0/include",
 
 // check setRotation()?
 
+/*
+SDL_Renderer by default points to SDL_Window. SDL's rendering functions operate on a backbuffer.
+After SDL_RenderPresent, the backbuffer should be considered invalidated after each present; do not
+assume that previous contents will exist between frames. You are strongly encouraged to call
+SDL_RenderClear() to initialize the backbuffer before starting each new frame's drawing, even if you
+plan to overwrite every pixel.
+
+SDL_Texture is used to maintain the active frame. SDL_SetRenderTarget() makes the renderer point to
+this texture so that the rendering functions operate on the texture instead of the backbuffer.
+*/
+
 class Adafruit_GFX_dummy_display : public Adafruit_GFX
 {
 public:
-    Adafruit_GFX_dummy_display(int16_t w, int16_t h, uint8_t zoom = 1); // Constructor
+    Adafruit_GFX_dummy_display(int16_t w, int16_t h, uint8_t zoom = 1);
     ~Adafruit_GFX_dummy_display();
     void display(void);
     void clearDisplay(void);
@@ -53,10 +65,11 @@ public:
     uint16_t color565(uint8_t r, uint8_t g, uint8_t b);
 
 private:
-    void initWindowAndRendered(int16_t w, int16_t h);
+    void initializer(int16_t w, int16_t h);
     void setColor(uint16_t color);
     SDL_Window *window_;
     SDL_Renderer *renderer_;
+    SDL_Texture *texture_;
     uint8_t zoom_ratio_;
 };
 

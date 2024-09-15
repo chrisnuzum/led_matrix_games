@@ -45,7 +45,6 @@ Add all of my fonts to the project directory
 
 
 */
-
 class Utility
 {
 private:
@@ -123,6 +122,25 @@ public:
     MyInputs inputs;
     Fonts fonts;
     Colors colors;
+
+    void delayWhileDisplaying(uint32_t msDelay)
+    {
+#ifdef PC_BUILD
+        delay(msDelay)
+#else
+        uint32_t begin = millis();
+        display.display();
+        uint32_t _lastDisplayUpdate = millis();
+        while (millis() < begin + msDelay)
+        {
+            if (millis() - _lastDisplayUpdate > DISPLAY_UPDATE_TIME)
+            {
+                display.display();
+                _lastDisplayUpdate = millis();
+            }
+        }
+#endif
+    }
 
     void setDisplay()
     {

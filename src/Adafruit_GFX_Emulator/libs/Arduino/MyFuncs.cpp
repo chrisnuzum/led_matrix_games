@@ -1,8 +1,18 @@
 #include "MyFuncs.h"
 
-void delay(Uint32 ms)
+void delay(Uint32 delayTime)
 {
-    SDL_Delay(ms);
+    Uint32 beginTime = SDL_GetTicks();
+    SDL_Event evt;
+    bool _running = true;
+    while (_running && SDL_GetTicks() < beginTime + delayTime)
+    {
+        SDL_Delay(1);
+        SDL_PollEvent(&evt); // without polling for events, the window will show "Not responding" during long delays
+        if (evt.type == SDL_QUIT)
+            _running = false;
+    }
+    // SDL_Delay(delayTime);
 }
 
 Uint32 millis()

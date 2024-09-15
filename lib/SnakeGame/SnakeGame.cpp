@@ -75,7 +75,7 @@ Point SnakeGame::Snake::getNextPosition()
         return Point(head.x - 1, head.y);
     case RIGHT:
         return Point(head.x + 1, head.y);
-    default: // NOT VALID aimedDirection
+    default: // aimedDirection is not valid
         return Point();
     }
 }
@@ -121,7 +121,7 @@ Point SnakeGame::getNewApplePosition()
 {
     int x, y;
     bool newPositionInvalid = false;
-    // int _count = 0;
+
     do
     {
         newPositionInvalid = false;
@@ -493,6 +493,8 @@ void SnakeGame::gameOver()
         utility->display.print(s->score);
     }
 
+    utility->display.display();
+
     resetSnakes();
 
     for (int i = 0; i < numApples; i++)
@@ -502,7 +504,8 @@ void SnakeGame::gameOver()
 
     updateDelay = MAX_DELAY;
 
-    delay(GAME_OVER_DELAY);
+    // delay(GAME_OVER_DELAY);
+    utility->delayWhileDisplaying(GAME_OVER_DELAY);
 }
 
 bool SnakeGame::loopGame()
@@ -520,7 +523,9 @@ bool SnakeGame::loopGame()
         {
             drawApple(i);
         }
-        delay(1000);
+        utility->display.display();
+        // delay(1000);
+        utility->delayWhileDisplaying(1000);
         justStarted = false;
     }
 
@@ -533,8 +538,8 @@ bool SnakeGame::loopGame()
         {
             msPrevious = millis();
 
-            bool appleEatenByAnySnake = false; // would it be better if these were declared outside of the loop? so it isn't
-            bool snakeCollision = false;       // allocating new memory every time the loop runs
+            bool appleEatenByAnySnake = false;
+            bool snakeCollision = false;
 
             for (int i = 0; i < numPlayers; i++)
             {
@@ -588,7 +593,9 @@ bool SnakeGame::loopGame()
 
             if (snakeCollision)
             {
-                delay(3000);
+                // delay(3000);
+                utility->delayWhileDisplaying(3000);
+                // maybe flash the segment that caused the game to end?
 
                 gameOver();
                 return false;
@@ -797,7 +804,9 @@ bool SnakeGame::autoLoopGame()
         {
             drawApple(i);
         }
-        delay(1000);
+        utility->display.display();
+        // delay(1000);
+        utility->delayWhileDisplaying(1000);
         justStarted = false;
     }
 
@@ -1028,7 +1037,8 @@ bool SnakeGame::autoLoopGame()
                 {
                     resetApple(i);
                 }
-                delay(GAME_OVER_DELAY);
+                // delay(GAME_OVER_DELAY);
+                utility->delayWhileDisplaying(GAME_OVER_DELAY);
                 utility->display.clearDisplay();
                 // gameOver();
                 // return false;

@@ -2,46 +2,56 @@
 #define _mymenu_
 
 #include <Arduino.h>
-// #include <PxMatrix.h>
 #include <Utility.h>
-// #include <BaseGame.h>
 
-// #include <map>
-// #include <functional>
-// #include <string>
-
-/*
-Ideas:
-
--default controls and screen orientation based on controller that selects the game
-    -at the main menu both controllers are active
-    -once a game and number of players is selected, only the controller that confirmed the game is active
-    -that player becomes player 1 and the screen is rotated towards them, or there is an option to choose the screen rotation
-
-
-TO-DO:
--add autoplay/screensavers for each game with options for speed/size
-    -Snake
-        -basic autoplay added, fails when the snake gets decently long
-        -probably bugs in the current desired implementation
-        -add options for number of apples, size of grid/pixels, and colors
-    -Tetris
-        -basic autoplay added, just fills screen with tiny pieces
-        -placement is random, could add functionality to maybe fill the first half of the screen randomly and then start trying to pick placement and clear lines
-        -add options for pixel size, colors, show/hide score
--add Back option to menus
--make more robust menu system with options and a preview of game being played
-*/
 /*
 MENU:
-    -ideally, there would be a gameplay preview immediately showing the selected game
-        -this would be easiest to do at the bottom of the screen but might be hard for Tetris
-    -each game would define its own options within its .h file
-    -these would be read once the game is selected
-    -using 5x5 font, 64 width should fit at least 12 characters across, but most characters are 3 wide, 5 tall, so 20ish should fit across
-    -utility->display.getTextBounds() to get coordinates and size of space that a string will fill
-        -could use this to see if a string will fit on a line
-        -last 4 parameters are 2 int16_t for x & y and 2 uint16_t for w & h, these are passed by reference so will update the passed vars
+-ideally, there would be a gameplay preview immediately showing the selected game
+    -this would be easiest to do at the bottom of the screen but might be hard for Tetris
+-each game would define its own options within its .h file
+-these would be read once the game is selected
+-using 5x5 font, 64 width should fit at least 12 characters across, but most characters are 3 wide, 5 tall, so 20ish should fit across
+-utility->display.getTextBounds() to get coordinates and size of space that a string will fill
+    -could use this to see if a string will fit on a line
+    -last 4 parameters are 2 int16_t for x & y and 2 uint16_t for w & h, these are passed by reference so will update the passed vars
+
+-Pause screen can have a text menu overlay to resume, quit, or restart
+-Put name of game and number of players selected at top of Options screen
+-Add "Back" option to menu screens (while keeping B for back functionality)
+-Game over screen (and pause screens) should have options to replay or exit to the main menu
+-Options that are displayed should take into account the number of players selected (autoplay might have different options)
+-Implement more option types: color chooser, pixel size, boolean, as well as dependent option types (are only enabled if another option is enabled)
+
+Notes:
+-To implement some of this functionality, the menu system needs big changes
+-Pause menu overlay menus would require a second display buffer as a layer over the game's layer (which would need to be copied)
+    -These functions could be placed in Utility.h
+        1. Game is paused. Call utility->storeCurrentScreen().
+            -This copies the buffer/texture to a variable in Utility (or possibly in PxMatrix/dummy_display).
+                -For PxMatrix, it will require adding a function to access the private buffer pointer
+                -For Adafruit_GFX_dummy_display, it will need to store the current Texture
+                    -https://stackoverflow.com/questions/51121457/sdl-layered-rendering-system
+        2. Draw the stored layer.
+            -For PxMatrix, I will need a fillMatrixBuffer() that takes in a buffer (or uses a stored one in the library)
+            -For Adafruit_GFX_dummy_display, I simply point the renderer to the window and copy the texture
+        3. Draw the menu.
+            -Call menu-drawing functions normally but without clearing the screen first.
+        4. Any time the screen is changed from an input, clear screen and repeat 2 and 3.
+-OR games themselves redraw the game state using their own functions and then draw the current menu state on top of that
+-Either way, the current menu functionality takes control in a while() loop and handles inputs itself until an option is selected
+-To fix this:
+    -New functions could be added so that every time the menu state changes (user selects a different option), the function
+        returns back to the game. If nothing was selected, the game clears the screen, draws the paused game state, then
+        calls the menu handler again which draws the new state of the menu (different option selected)
+    -Or the current functions could be modified with this same functionality
+-Another potential desired functionality would be to create a menu within a limited part of the screen
+    -So a game over/score screen is displayed by the game, and then the game requests a replay/quit menu from Menu.h on the
+        bottom half of the screen (sends coordinates to menu function)
+-When displayed over a game, it would be nice if the background behind the menu was dimmed. This is not possible in Menu.h without
+    an alpha channel, which isn't feasible after research.
+    -So to implement this, games would need to change the colors that are used in the pause screen. So dimming the whole screen
+        makes more sense than just where the menu text would be.
+
 
 >Snake
    Auto  1P  2P
@@ -96,7 +106,7 @@ enum ItemType
 
 class MenuItem // all-encompassing item object with type
 {              // might also want a boolean type, as well as certain options that depend on the state of another option to
-private:       //   determine if they are enabled or not
+private:       //   determine if they are enabled or not; also a color option; pixel size option that shows a square of different sizes
     ItemType type = ItemType::basicItem;
     const char *itemName;
 
@@ -149,9 +159,6 @@ class Menu
 {
 private:
     Utility *utility;
-    // PxMATRIX display;
-    // const uint8_t MATRIX_WIDTH;
-    // const uint8_t MATRIX_HEIGHT;
 
     const uint8_t FIRST_X_COORD = 1;
     const uint8_t FIRST_Y_COORD = 5;
@@ -193,14 +200,24 @@ private:
                 }
             }
         }
+        utility->display.display();
     }
 
     int8_t setOptions(MenuItem items[], uint8_t numItems, int8_t previousFocusedItemIndex)
     {
         uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
         displayOptionsMenu(items, numItems, focusedItemIndex);
+        unsigned long _lastDisplayUpdate = 0;
         while (true)
         {
+#ifndef PC_BUILD
+            if (millis() - _lastDisplayUpdate > DISPLAY_UPDATE_TIME)
+            {
+                utility->display.display();
+                _lastDisplayUpdate = millis();
+            }
+#endif
+            delay(1);
             utility->inputs.update();
             bool _up = utility->inputs.UP_P1 || utility->inputs.UP_P2;
             bool _down = utility->inputs.DOWN_P1 || utility->inputs.DOWN_P2;
@@ -322,14 +339,26 @@ private:
                 utility->display.print(items[i].itemName);
             }
         }
+        utility->display.display();
     }
 
-    uint8_t selectItem(MenuItem items[], uint8_t numItems)
+    // uint8_t selectItem(MenuItem items[], uint8_t numItems)
+    uint8_t selectItem(MenuItem items[], uint8_t numItems, int8_t previousFocusedItemIndex)
     {
-        uint8_t focusedItemIndex = 0;
+        uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
+        // uint8_t focusedItemIndex = 0;
         displayMenuWithOptionsBelow(items, numItems, focusedItemIndex);
+        unsigned long _lastDisplayUpdate = 0;
         while (true)
         {
+#ifndef PC_BUILD
+            if (millis() - _lastDisplayUpdate > DISPLAY_UPDATE_TIME)
+            {
+                utility->display.display();
+                _lastDisplayUpdate = millis();
+            }
+#endif
+            delay(1);
             utility->inputs.update();
             bool _up = utility->inputs.UP_P1 || utility->inputs.UP_P2;
             bool _down = utility->inputs.DOWN_P1 || utility->inputs.DOWN_P2;
@@ -364,8 +393,17 @@ private:
         int8_t focusedSubitemIndex = items[selectedItem].selectedSubitem;
         displayMenuWithOptionsBelow(items, numItems, selectedItem); // probably not necessary because it should already be displayed
 
+        unsigned long _lastDisplayUpdate = 0;
         while (true)
         {
+#ifndef PC_BUILD
+            if (millis() - _lastDisplayUpdate > DISPLAY_UPDATE_TIME)
+            {
+                utility->display.display();
+                _lastDisplayUpdate = millis();
+            }
+#endif
+            delay(1);
             utility->inputs.update();
             bool _left = utility->inputs.LEFT_P1 || utility->inputs.LEFT_P2;
             bool _right = utility->inputs.RIGHT_P1 || utility->inputs.RIGHT_P2;
@@ -415,29 +453,22 @@ private:
     }
 
 public:
-    Menu(Utility &utility) : utility(&utility) //,
-                                               //  display(utility.display) //,
-                                               //  MATRIX_WIDTH(utility.MATRIX_WIDTH),
-                                               //  MATRIX_HEIGHT(utility.MATRIX_HEIGHT)
+    Menu(Utility &utility) : utility(&utility)
     {
     }
-
-    // void setDisplay(PxMATRIX d)
-    // {
-    //     this->display = d;
-    // }
 
     template <size_t num_items>                                                              // could add this same template to the private functions
     void doMenu(MenuItem (&items)[num_items], int8_t &selectedItem, int8_t &selectedSubitem) // = NULL)
     {
         // if (selectedSubitem != NULL)
         // {
-        int8_t tempSelectedItem;
+        int8_t tempSelectedItem = -1;
         int8_t tempSelectedSubitem = -1;
 
         while (tempSelectedSubitem == -1)
         {
-            tempSelectedItem = selectItem(items, num_items);
+            // tempSelectedItem = selectItem(items, num_items);
+            tempSelectedItem = selectItem(items, num_items, tempSelectedItem);
             tempSelectedSubitem = selectSubitem(items, num_items, tempSelectedItem);
         }
 
@@ -447,6 +478,22 @@ public:
         // else
         // {
         // }
+    }
+    // ^I'm going to split this up into selecting top item then the subitem (2 functions)
+    // The new functions will return every time the screen changes state as well so that if a menu is drawn
+    // over a game, the game can clear the screen, draw the game state, then call this function again to draw
+    // the new menu state
+    template <size_t num_items>
+    void doTopMenu(MenuItem (&items)[num_items], int8_t &selectedItem)
+    {
+        int8_t tempSelectedItem = -1;
+
+        while (tempSelectedItem == -1)
+        {
+            tempSelectedItem = selectItem(items, num_items, tempSelectedItem);
+        }
+
+        selectedItem = tempSelectedItem;
     }
 
     template <size_t num_items>
@@ -484,6 +531,10 @@ public:
 };
 
 #endif
+
+// #include <map>
+// #include <functional>
+// #include <string>
 
 // struct ItemWithSubitems
 // {

@@ -27,20 +27,27 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-// #include "../LED_Arcade.cpp"
 
 /*
-need to implement:
-random():
-millis(): https://wiki.libsdl.org/SDL2/SDL_GetTicks     -DONE
-delay(): https://wiki.libsdl.org/SDL2/SDL_Delay         -DONE
+Display is wonky. With a timer set up in MyDisplay.cpp, there are many visual artifacts. It probably interrupts
+updating the texture/renderer to draw.
 
-Serial not found??                                      -DONE
+Other option is to check ticks in the main loop and then call display.display() after the update delay has passed.
+I can't do that here because this does not have access to the display object. Doing it in LED_Arcade.cpp means I
+might as well just move this main() function there in an #ifdef directive. This option has a few issues:
+    -Menu uses a while loop and doesn't return until the user has selected an option. This means that navigating
+        the menu wouldn't trigger display refreshes. Could probably just add display.display() to the menu.displayBlah() functions.
+    -Any delay will block display updates as well. This isn't necessarily a problem unless delays are used within a block
+        with display changes in between, like the current Snake gameOver screen. display.display() can manually be added after
+        the delays.
+This method is probably ideal overall for both the matrix and SDL
+
+Maybe?:
+-Move main() from emulator.cpp to here and enclose it in an #ifdef PC_BUILD
+    -Probably need to modify the Makefile after doing that....
 
 */
 #include <Arduino.h>
-// #include "libs/Arduino/MySerial.h"
-// #include "libs/Arduino/MyFuncs.h"
 
 extern void setup();
 extern void loop();
@@ -49,12 +56,11 @@ int main(int argc, char *argv[])
 {
     srand((unsigned int)millis());
     int running = 1;
-    /* Calling Arduino like setup() */
+
     setup();
+
     while (running)
     {
-        // SDL_Delay(10);   this could help with high CPU usage
-        /* Calling Arduino loop() forever until user presses the quit arrow */
         loop();
     }
     return 0;
