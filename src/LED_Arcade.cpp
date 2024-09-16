@@ -58,8 +58,6 @@ https://stackoverflow.com/questions/34854951/sleep-or-wait-that-doesnt-stop-the-
 
 // #define PC_BUILD
 
-// MAKEFILE BREAKS ON THIS FILE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 #include <Utility.h>
 #include <Menu.h>
 #include <SnakeGame.h>
