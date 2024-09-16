@@ -126,7 +126,7 @@ public:
     void delayWhileDisplaying(uint32_t msDelay)
     {
 #ifdef PC_BUILD
-        delay(msDelay)
+        delay(msDelay);
 #else
         uint32_t begin = millis();
         display.display();

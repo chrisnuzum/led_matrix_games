@@ -23,6 +23,7 @@ TO-DO:
 -Change ALL MATRIX_WIDTHs and MATRIX_HEIGHTs to uint16_ts for larger displays.
 -Replace all unsigned longs with uint_32t
 -Fork PxMatrix and push changes to it, use that version in MyDisplay.h (see note there)
+-Address all the warnings when building the Windows version with the makefile
 -Display
     -get rid of matrix interrupt in MyDisplay.h - DONE
     -add display.display() in the main loop() with #ifdef - DONE
@@ -56,6 +57,8 @@ https://stackoverflow.com/questions/34854951/sleep-or-wait-that-doesnt-stop-the-
 */
 
 // #define PC_BUILD
+
+// MAKEFILE BREAKS ON THIS FILE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #include <Utility.h>
 #include <Menu.h>

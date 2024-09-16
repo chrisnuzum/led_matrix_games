@@ -207,7 +207,9 @@ private:
     {
         uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
         displayOptionsMenu(items, numItems, focusedItemIndex);
+#ifndef PC_BUILD
         unsigned long _lastDisplayUpdate = 0;
+#endif
         while (true)
         {
 #ifndef PC_BUILD
@@ -348,7 +350,9 @@ private:
         uint8_t focusedItemIndex = previousFocusedItemIndex >= 0 ? previousFocusedItemIndex : 0;
         // uint8_t focusedItemIndex = 0;
         displayMenuWithOptionsBelow(items, numItems, focusedItemIndex);
+#ifndef PC_BUILD
         unsigned long _lastDisplayUpdate = 0;
+#endif
         while (true)
         {
 #ifndef PC_BUILD
@@ -392,8 +396,9 @@ private:
     {
         int8_t focusedSubitemIndex = items[selectedItem].selectedSubitem;
         displayMenuWithOptionsBelow(items, numItems, selectedItem); // probably not necessary because it should already be displayed
-
+#ifndef PC_BUILD
         unsigned long _lastDisplayUpdate = 0;
+#endif
         while (true)
         {
 #ifndef PC_BUILD
